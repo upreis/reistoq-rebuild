@@ -75,7 +75,7 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Header */}
         <div className="p-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
             <img 
               src="/lovable-uploads/78a28708-1e34-459a-b347-1c12a0b5b9e7.png" 
               alt="REISTOQ Logo" 
@@ -100,14 +100,11 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === '/'}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 ${getNavClasses(item.url)}`}
+                      className={`flex items-center gap-3 px-3 py-3 mb-2 rounded-lg text-sm transition-colors duration-200 ${getNavClasses(item.url)}`}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
                       {!collapsed && (
-                        <div>
-                          <div className="font-medium">{item.title}</div>
-                          <div className="text-xs text-muted-foreground">{item.description}</div>
-                        </div>
+                        <div className="font-medium">{item.title}</div>
                       )}
                     </NavLink>
                   </SidebarMenuButton>
