@@ -83,11 +83,11 @@
     --accent: 43 96% 56%;              /* REISTOQ Gold accent */
     --accent-foreground: 214 100% 14%; /* Navy text on gold */
     
-    /* Cards & Surfaces - WHITE CARDS THAT STAND OUT */
-    --card: 0 0% 100%;                 /* Pure white cards */
-    --card-foreground: 214 100% 14%;   /* Navy text on white cards */
-    --popover: 0 0% 100%;              /* White popovers */
-    --popover-foreground: 214 100% 14%; /* Navy text */
+    /* Cards & Surfaces - DARK CARDS FOR BETTER CONTRAST */
+    --card: 215 25% 22%;               /* Dark cards for better contrast */
+    --card-foreground: 0 0% 100%;      /* White text on dark cards */
+    --popover: 215 25% 22%;            /* Dark popovers */
+    --popover-foreground: 0 0% 100%;   /* White text */
     
     /* Secondary & Muted */
     --secondary: 215 25% 27%;          /* Darker secondary */
@@ -168,5 +168,14 @@
   
   .transition-smooth {
     transition: var(--transition-all);
+  }
+  
+  /* Table improvements for dark mode */
+  .table-row-hover {
+    @apply hover:bg-muted/30 transition-colors;
+  }
+  
+  .table-header {
+    @apply bg-muted/20 border-b-2 border-border;
   }
 }

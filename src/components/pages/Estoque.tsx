@@ -216,42 +216,42 @@ export function Estoque() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Atual</TableHead>
-                  <TableHead>Mínimo</TableHead>
-                  <TableHead>Máximo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground">SKU</TableHead>
+                  <TableHead className="text-muted-foreground">Produto</TableHead>
+                  <TableHead className="text-muted-foreground">Atual</TableHead>
+                  <TableHead className="text-muted-foreground">Mínimo</TableHead>
+                  <TableHead className="text-muted-foreground">Máximo</TableHead>
+                  <TableHead className="text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {produtos.map((produto) => {
                   const statusInfo = getStatusBadge(produto);
                   return (
-                    <TableRow key={produto.id}>
-                      <TableCell className="font-medium">{produto.sku_interno}</TableCell>
+                    <TableRow key={produto.id} className="border-border hover:bg-muted/50">
+                      <TableCell className="font-medium text-foreground">{produto.sku_interno}</TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{produto.nome}</div>
+                          <div className="font-medium text-foreground">{produto.nome}</div>
                           {produto.categoria && (
                             <div className="text-sm text-muted-foreground">{produto.categoria}</div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{produto.quantidade_atual}</TableCell>
-                      <TableCell>{produto.estoque_minimo}</TableCell>
-                      <TableCell>{produto.estoque_maximo}</TableCell>
+                      <TableCell className="text-foreground">{produto.quantidade_atual}</TableCell>
+                      <TableCell className="text-foreground">{produto.estoque_minimo}</TableCell>
+                      <TableCell className="text-foreground">{produto.estoque_maximo}</TableCell>
                       <TableCell>
-                        <Badge variant={statusInfo.variant}>
+                        <Badge variant={statusInfo.variant} className="text-xs">
                           {statusInfo.texto}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">Editar</Button>
-                          <Button size="sm" variant="secondary">Movimentar</Button>
+                          <Button size="sm" variant="outline" className="text-xs">Editar</Button>
+                          <Button size="sm" variant="secondary" className="text-xs">Movimentar</Button>
                         </div>
                       </TableCell>
                     </TableRow>
