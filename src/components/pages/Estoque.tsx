@@ -1,4 +1,4 @@
-import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Image, Edit, Trash2 } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
