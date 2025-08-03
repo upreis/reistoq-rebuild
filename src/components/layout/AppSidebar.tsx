@@ -8,7 +8,6 @@ import {
   Settings,
   Building2
 } from "lucide-react";
-import { ReistoqLogo } from "@/components/ui/reistoq-logo";
 import {
   Sidebar,
   SidebarContent,
@@ -82,7 +81,11 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-elegant">
-              <ReistoqLogo size={20} />
+              <img 
+                src="/lovable-uploads/bb169aaa-4a45-4eae-9ca4-e8e4e1ca5196.png" 
+                alt="REISTOQ" 
+                className="w-6 h-6 object-contain"
+              />
             </div>
             {!collapsed && (
               <div>
