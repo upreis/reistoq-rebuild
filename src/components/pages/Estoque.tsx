@@ -79,45 +79,52 @@ export function Estoque() {
         </div>
       </div>
 
-      {/* File Management */}
-      <EstoqueFileManager onUploadSuccess={recarregarDados} />
+      {/* File Management and Filters */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* File Management */}
+        <div>
+          <EstoqueFileManager onUploadSuccess={recarregarDados} />
+        </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Busque e filtre produtos por nome, SKU ou categoria
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar por nome ou SKU..."
-                className="pl-10"
-                value={filtros.busca}
-                onChange={(e) => atualizarFiltros({ busca: e.target.value })}
-              />
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+            <CardDescription>
+              Busque e filtre produtos por nome, SKU ou categoria
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome ou SKU..."
+                  className="pl-10"
+                  value={filtros.busca}
+                  onChange={(e) => atualizarFiltros({ busca: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  placeholder="Categoria..."
+                  value={filtros.categoria}
+                  onChange={(e) => atualizarFiltros({ categoria: e.target.value })}
+                />
+                <Input
+                  placeholder="Status..."
+                  value={filtros.status}
+                  onChange={(e) => atualizarFiltros({ status: e.target.value })}
+                />
+              </div>
+              <Button variant="outline" onClick={limparFiltros} className="w-full">
+                <Filter className="mr-2 h-4 w-4" />
+                Limpar Filtros
+              </Button>
             </div>
-            <Input
-              placeholder="Categoria..."
-              value={filtros.categoria}
-              onChange={(e) => atualizarFiltros({ categoria: e.target.value })}
-            />
-            <Input
-              placeholder="Status..."
-              value={filtros.status}
-              onChange={(e) => atualizarFiltros({ status: e.target.value })}
-            />
-            <Button variant="outline" onClick={limparFiltros}>
-              <Filter className="mr-2 h-4 w-4" />
-              Limpar Filtros
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
