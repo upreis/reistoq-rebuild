@@ -43,14 +43,14 @@
     --destructive-foreground: 0 0% 100%;
     
     /* Sidebar - Light Theme */
-    --sidebar-background: 220 13% 18%;
-    --sidebar-foreground: 220 9% 46%;
-    --sidebar-primary: 220 13% 91%;
-    --sidebar-primary-foreground: 220 9% 9%;
-    --sidebar-accent: 220 13% 28%;
-    --sidebar-accent-foreground: 220 9% 91%;
-    --sidebar-border: 220 13% 22%;
-    --sidebar-ring: 217 72% 53%;
+    --sidebar-background: 0 0% 100%;   /* White sidebar */
+    --sidebar-foreground: 214 100% 14%; /* Navy text */
+    --sidebar-primary: 43 96% 56%;     /* Gold active items */
+    --sidebar-primary-foreground: 214 100% 14%; /* Navy text on gold */
+    --sidebar-accent: 210 40% 96%;     /* Light gray hover */
+    --sidebar-accent-foreground: 214 100% 14%; /* Navy text */
+    --sidebar-border: 214 32% 91%;     /* Subtle border */
+    --sidebar-ring: 43 96% 56%;        /* Gold focus ring */
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(214 100% 14%), hsl(43 96% 56%));
@@ -109,14 +109,14 @@
     --destructive-foreground: 0 0% 100%;
     
     /* Sidebar - Dark Theme */
-    --sidebar-background: 220 13% 18%;
-    --sidebar-foreground: 220 9% 46%;
-    --sidebar-primary: 220 13% 91%;
-    --sidebar-primary-foreground: 220 9% 9%;
-    --sidebar-accent: 220 13% 28%;
-    --sidebar-accent-foreground: 220 9% 91%;
-    --sidebar-border: 220 13% 22%;
-    --sidebar-ring: 217 72% 53%;
+    --sidebar-background: 215 30% 15%; /* Darker sidebar background */
+    --sidebar-foreground: 0 0% 100%;   /* White text */
+    --sidebar-primary: 43 96% 56%;     /* Gold active items */
+    --sidebar-primary-foreground: 214 100% 14%; /* Navy text on gold */
+    --sidebar-accent: 215 25% 25%;     /* Lighter hover in dark */
+    --sidebar-accent-foreground: 0 0% 100%; /* White text */
+    --sidebar-border: 215 25% 25%;     /* Subtle border */
+    --sidebar-ring: 43 96% 56%;        /* Gold focus ring */
     
     /* Gradients for dark mode */
     --gradient-primary: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 66%));
