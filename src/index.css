@@ -5,21 +5,36 @@
 
 @layer base {
   :root {
-    /* Core Brand Colors */
-    --primary: 210 100% 50%;          /* Professional Blue */
+    /* REISTOQ Corporate Brand Colors - Light Theme */
+    --background: 248 100% 98%;        /* Clean light gray #f8fafc */
+    --foreground: 214 100% 14%;        /* Navy blue text #1e3a8a */
+    --primary: 214 100% 14%;           /* Navy blue primary #1e3a8a */
     --primary-foreground: 0 0% 100%;   /* White text on primary */
-    --primary-hover: 210 100% 45%;     /* Darker blue for hover */
-    --primary-light: 210 100% 95%;     /* Light blue background */
+    --primary-hover: 214 100% 12%;     /* Darker navy for hover */
+    --primary-light: 214 100% 95%;     /* Light navy background */
     
-    /* Secondary Colors */
-    --secondary: 210 25% 98%;          /* Very light blue-gray */
-    --secondary-foreground: 210 15% 25%; /* Dark blue-gray text */
+    /* Accent - REISTOQ Gold */
+    --accent: 43 96% 56%;              /* REISTOQ Gold #fbbf24 */
+    --accent-foreground: 214 100% 14%; /* Navy text on gold */
     
-    /* Accent Colors */
-    --accent: 197 100% 50%;            /* Cyan accent */
-    --accent-foreground: 0 0% 100%;    /* White text on accent */
+    /* Cards & Surfaces */
+    --card: 0 0% 100%;                 /* Pure white cards */
+    --card-foreground: 214 100% 14%;   /* Navy text on cards */
+    --popover: 0 0% 100%;              /* White popovers */
+    --popover-foreground: 214 100% 14%; /* Navy text */
     
-    /* Success/Warning/Error */
+    /* Secondary & Muted */
+    --secondary: 210 40% 96%;          /* Light gray secondary */
+    --secondary-foreground: 214 100% 14%; /* Navy text */
+    --muted: 210 40% 96%;              /* Muted background */
+    --muted-foreground: 214 50% 40%;   /* Medium navy text */
+    
+    /* Borders & Inputs */
+    --border: 214 32% 91%;             /* Subtle borders */
+    --input: 210 40% 98%;              /* Input background */
+    --ring: 214 100% 14%;              /* Focus ring (navy) */
+    
+    /* Status Colors */
     --success: 142 76% 36%;            /* Green */
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;             /* Orange */
@@ -27,100 +42,86 @@
     --destructive: 0 84% 60%;          /* Red */
     --destructive-foreground: 0 0% 100%;
     
-    /* Neutral Colors */
-    --background: 0 0% 100%;           /* White */
-    --foreground: 210 15% 15%;         /* Very dark blue-gray */
-    --card: 0 0% 100%;                 /* White cards */
-    --card-foreground: 210 15% 15%;    /* Dark text on cards */
-    --popover: 0 0% 100%;              /* White popovers */
-    --popover-foreground: 210 15% 15%; /* Dark text */
-    
-    /* Muted Colors */
-    --muted: 210 25% 96%;              /* Light gray background */
-    --muted-foreground: 210 10% 45%;   /* Medium gray text */
-    
-    /* Border & Input */
-    --border: 210 20% 88%;             /* Light border */
-    --input: 210 20% 90%;              /* Input background */
-    --ring: 210 100% 50%;              /* Focus ring (primary) */
-    
-    /* Sidebar specific */
-    --sidebar-background: 210 30% 8%;  /* Dark blue-gray */
-    --sidebar-foreground: 210 20% 90%; /* Light text */
-    --sidebar-primary: 210 100% 55%;   /* Bright blue for active items */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 30% 15%;     /* Darker for hover */
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 210 30% 15%;     /* Subtle border */
-    --sidebar-ring: 210 100% 55%;      /* Focus ring */
+    /* Sidebar - Light Theme */
+    --sidebar-background: 0 0% 100%;   /* White sidebar */
+    --sidebar-foreground: 214 100% 14%; /* Navy text */
+    --sidebar-primary: 43 96% 56%;     /* Gold active items */
+    --sidebar-primary-foreground: 214 100% 14%; /* Navy text on gold */
+    --sidebar-accent: 210 40% 96%;     /* Light gray hover */
+    --sidebar-accent-foreground: 214 100% 14%; /* Navy text */
+    --sidebar-border: 214 32% 91%;     /* Subtle border */
+    --sidebar-ring: 43 96% 56%;        /* Gold focus ring */
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 50%), hsl(197 100% 50%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 25% 98%), hsl(210 25% 96%));
+    --gradient-primary: linear-gradient(135deg, hsl(214 100% 14%), hsl(43 96% 56%));
+    --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 66%));
+    --gradient-subtle: linear-gradient(180deg, hsl(248 100% 98%), hsl(210 40% 96%));
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(210 20% 0% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(210 20% 0% / 0.1), 0 2px 4px -2px hsl(210 20% 0% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(210 20% 0% / 0.1), 0 4px 6px -4px hsl(210 20% 0% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(210 20% 0% / 0.1), 0 8px 10px -6px hsl(210 20% 0% / 0.1);
+    --shadow-sm: 0 1px 2px 0 hsl(214 20% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(214 20% 0% / 0.1), 0 2px 4px -2px hsl(214 20% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(214 20% 0% / 0.1), 0 4px 6px -4px hsl(214 20% 0% / 0.1);
+    --shadow-elegant: 0 8px 30px -12px hsl(214 100% 14% / 0.25);
     
-    /* Animation */
-    --transition-all: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Animations */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-colors: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Core Brand Colors - adjusted for dark mode */
-    --primary: 210 100% 60%;           /* Brighter blue for dark */
-    --primary-foreground: 210 30% 8%;  /* Dark text on primary */
-    --primary-hover: 210 100% 65%;     /* Even brighter for hover */
-    --primary-light: 210 100% 15%;     /* Dark blue background */
+    /* REISTOQ Corporate Brand Colors - Dark Theme */
+    --background: 215 28% 17%;         /* Sophisticated dark gray #1f2937 */
+    --foreground: 0 0% 100%;           /* Pure white text */
+    --primary: 43 96% 56%;             /* REISTOQ Gold primary #fbbf24 */
+    --primary-foreground: 214 100% 14%; /* Navy text on gold */
+    --primary-hover: 43 96% 60%;       /* Brighter gold for hover */
+    --primary-light: 43 96% 15%;       /* Dark gold background */
     
-    /* Secondary Colors */
-    --secondary: 210 30% 12%;          /* Dark blue-gray */
-    --secondary-foreground: 210 25% 85%; /* Light text */
+    /* Accent */
+    --accent: 43 96% 56%;              /* REISTOQ Gold accent */
+    --accent-foreground: 214 100% 14%; /* Navy text on gold */
     
-    /* Accent Colors */
-    --accent: 197 100% 60%;            /* Brighter cyan for dark */
-    --accent-foreground: 210 30% 8%;   /* Dark text on accent */
+    /* Cards & Surfaces - WHITE CARDS THAT STAND OUT */
+    --card: 0 0% 100%;                 /* Pure white cards */
+    --card-foreground: 214 100% 14%;   /* Navy text on white cards */
+    --popover: 0 0% 100%;              /* White popovers */
+    --popover-foreground: 214 100% 14%; /* Navy text */
     
-    /* Success/Warning/Error - adjusted for dark */
+    /* Secondary & Muted */
+    --secondary: 215 25% 27%;          /* Darker secondary */
+    --secondary-foreground: 0 0% 100%; /* White text */
+    --muted: 215 25% 27%;              /* Muted background */
+    --muted-foreground: 215 15% 70%;   /* Light gray text */
+    
+    /* Borders & Inputs */
+    --border: 215 25% 27%;             /* Dark borders */
+    --input: 215 25% 27%;              /* Dark input background */
+    --ring: 43 96% 56%;                /* Gold focus ring */
+    
+    /* Status Colors - enhanced for dark */
     --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
     --warning: 38 92% 60%;
+    --warning-foreground: 0 0% 100%;
     --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 100%;
     
-    /* Neutral Colors */
-    --background: 210 30% 8%;          /* Very dark blue-gray */
-    --foreground: 210 25% 95%;         /* Very light text */
-    --card: 210 30% 10%;               /* Dark cards */
-    --card-foreground: 210 25% 90%;    /* Light text on cards */
-    --popover: 210 30% 10%;            /* Dark popovers */
-    --popover-foreground: 210 25% 90%; /* Light text */
-    
-    /* Muted Colors */
-    --muted: 210 30% 15%;              /* Dark gray background */
-    --muted-foreground: 210 20% 65%;   /* Medium light text */
-    
-    /* Border & Input */
-    --border: 210 30% 18%;             /* Dark border */
-    --input: 210 30% 15%;              /* Dark input background */
-    --ring: 210 100% 60%;              /* Focus ring */
-    
-    /* Sidebar specific - darker in dark mode */
-    --sidebar-background: 210 35% 6%;  /* Even darker */
-    --sidebar-foreground: 210 25% 85%; /* Light text */
-    --sidebar-primary: 210 100% 65%;   /* Brighter blue */
-    --sidebar-primary-foreground: 210 30% 8%;
-    --sidebar-accent: 210 30% 12%;     /* Lighter for hover in dark */
-    --sidebar-accent-foreground: 210 25% 95%;
-    --sidebar-border: 210 30% 12%;     /* Subtle border */
-    --sidebar-ring: 210 100% 65%;
+    /* Sidebar - Dark Theme */
+    --sidebar-background: 215 30% 15%; /* Darker sidebar background */
+    --sidebar-foreground: 0 0% 100%;   /* White text */
+    --sidebar-primary: 43 96% 56%;     /* Gold active items */
+    --sidebar-primary-foreground: 214 100% 14%; /* Navy text on gold */
+    --sidebar-accent: 215 25% 25%;     /* Lighter hover in dark */
+    --sidebar-accent-foreground: 0 0% 100%; /* White text */
+    --sidebar-border: 215 25% 25%;     /* Subtle border */
+    --sidebar-ring: 43 96% 56%;        /* Gold focus ring */
     
     /* Gradients for dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 60%), hsl(197 100% 60%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 30% 10%), hsl(210 30% 8%));
+    --gradient-primary: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 66%));
+    --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 46%));
+    --gradient-subtle: linear-gradient(180deg, hsl(215 28% 17%), hsl(215 25% 20%));
   }
 }
 
@@ -162,7 +163,7 @@
   }
   
   .shadow-elegant {
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-elegant);
   }
   
   .transition-smooth {

@@ -130,10 +130,11 @@ const config: Config = {
         "slide-in-right": "slide-in-right 0.3s ease-out",
       },
       boxShadow: {
-        elegant: "var(--shadow-lg)",
+        elegant: "var(--shadow-elegant)",
       },
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
+        "gradient-accent": "var(--gradient-accent)",
         "gradient-subtle": "var(--gradient-subtle)",
       },
     },
