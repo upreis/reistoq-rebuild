@@ -24,44 +24,37 @@ const menuItems = [
   { 
     id: "dashboard", 
     title: "Dashboard", 
-    icon: BarChart3,
-    description: "Visão geral e métricas"
+    icon: BarChart3
   },
   { 
     id: "pedidos", 
     title: "Pedidos", 
-    icon: ShoppingCart,
-    description: "Integração Tiny ERP"
+    icon: ShoppingCart
   },
   { 
     id: "estoque", 
     title: "Estoque", 
-    icon: Package,
-    description: "Controle de produtos"
+    icon: Package
   },
   { 
     id: "depara", 
     title: "DE/PARA", 
-    icon: ArrowLeftRight,
-    description: "Mapeamento SKUs"
+    icon: ArrowLeftRight
   },
   { 
     id: "historico", 
     title: "Histórico", 
-    icon: History,
-    description: "Log de operações"
+    icon: History
   },
   { 
     id: "scanner", 
     title: "Scanner", 
-    icon: ScanLine,
-    description: "Código de barras"
+    icon: ScanLine
   },
   { 
     id: "configuracoes", 
     title: "Configurações", 
-    icon: Settings,
-    description: "APIs e preferências"
+    icon: Settings
   },
 ];
 
@@ -75,10 +68,10 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"}>
+    <Sidebar className={collapsed ? "w-16" : "w-60"}>
       <SidebarContent>
         {/* Logo/Brand */}
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-elegant">
               <img 
@@ -96,28 +89,25 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           </div>
         </div>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+        <SidebarGroup className="px-3 py-2">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => onTabChange(item.id)}
                     className={`
-                      transition-all duration-200
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                      transition-all duration-200 text-sm font-medium
                       ${activeTab === item.id 
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" 
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       }
                     `}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
                     {!collapsed && (
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{item.title}</span>
-                        <span className="text-xs opacity-70">{item.description}</span>
-                      </div>
+                      <span className="truncate">{item.title}</span>
                     )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
