@@ -90,24 +90,24 @@ export function Estoque() {
                 Busque e filtre produtos por nome, SKU ou categoria
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Buscar por nome ou SKU..."
-                    className="pl-10 h-9"
-                    value={filtros.busca}
-                    onChange={(e) => atualizarFiltros({ busca: e.target.value })}
-                  />
-                </div>
+            <CardContent className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome ou SKU..."
+                  className="pl-10 h-9"
+                  value={filtros.busca}
+                  onChange={(e) => atualizarFiltros({ busca: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-3">
                 <Input
                   placeholder="Categoria..."
-                  className="h-9 w-32"
+                  className="h-9 flex-1"
                   value={filtros.categoria}
                   onChange={(e) => atualizarFiltros({ categoria: e.target.value })}
                 />
-                <Button variant="outline" onClick={limparFiltros} className="h-9">
+                <Button variant="outline" onClick={limparFiltros} className="h-9 px-4">
                   <Filter className="mr-2 h-4 w-4" />
                   Limpar Filtros
                 </Button>
