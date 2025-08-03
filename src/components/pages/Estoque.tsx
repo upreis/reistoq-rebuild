@@ -80,41 +80,41 @@ export function Estoque() {
       </div>
 
       {/* Filters and File Management */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
         {/* Filters */}
-        <div className="xl:col-span-4">
+        <div className="xl:col-span-3">
           <Card className="h-full">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Filtros</CardTitle>
-              <CardDescription className="text-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Filtros</CardTitle>
+              <CardDescription className="text-xs">
                 Busque e filtre produtos por nome, SKU ou categoria
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3 w-3" />
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3 w-3" />
                   <Input
                     placeholder="Buscar por nome ou SKU..."
-                    className="pl-9 h-8 text-sm"
+                    className="pl-7 h-7 text-xs"
                     value={filtros.busca}
                     onChange={(e) => atualizarFiltros({ busca: e.target.value })}
                   />
                 </div>
                 <Input
                   placeholder="Categoria..."
-                  className="h-8 text-sm w-32"
+                  className="h-7 text-xs w-28"
                   value={filtros.categoria}
                   onChange={(e) => atualizarFiltros({ categoria: e.target.value })}
                 />
                 <Input
                   placeholder="Status..."
-                  className="h-8 text-sm w-32"
+                  className="h-7 text-xs w-28"
                   value={filtros.status}
                   onChange={(e) => atualizarFiltros({ status: e.target.value })}
                 />
-                <Button variant="outline" onClick={limparFiltros} className="h-8 text-sm px-3">
-                  <Filter className="mr-1 h-3 w-3" />
+                <Button variant="outline" onClick={limparFiltros} className="h-7 text-xs px-2">
+                  <Filter className="mr-1 h-2 w-2" />
                   Limpar
                 </Button>
               </div>
