@@ -1,4 +1,4 @@
-import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Image } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useEstoque } from "@/hooks/useEstoque";
+import { EstoqueFileManager } from "@/components/estoque/EstoqueFileManager";
 
 export function Estoque() {
   const { 
@@ -77,6 +78,9 @@ export function Estoque() {
           </Button>
         </div>
       </div>
+
+      {/* File Management */}
+      <EstoqueFileManager onUploadSuccess={recarregarDados} />
 
       {/* Filters */}
       <Card>
@@ -217,11 +221,17 @@ export function Estoque() {
             <Table>
               <TableHeader>
                 <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground">Código de Barras</TableHead>
                   <TableHead className="text-muted-foreground">SKU</TableHead>
                   <TableHead className="text-muted-foreground">Produto</TableHead>
-                  <TableHead className="text-muted-foreground">Atual</TableHead>
+                  <TableHead className="text-muted-foreground">Categoria</TableHead>
+                  <TableHead className="text-muted-foreground">Qtd Atual</TableHead>
                   <TableHead className="text-muted-foreground">Mínimo</TableHead>
                   <TableHead className="text-muted-foreground">Máximo</TableHead>
+                  <TableHead className="text-muted-foreground">Localização</TableHead>
+                  <TableHead className="text-muted-foreground">Preço Custo</TableHead>
+                  <TableHead className="text-muted-foreground">Preço Venda</TableHead>
+                  <TableHead className="text-muted-foreground">Imagem</TableHead>
                   <TableHead className="text-muted-foreground">Status</TableHead>
                   <TableHead className="text-muted-foreground">Ações</TableHead>
                 </TableRow>
@@ -231,27 +241,51 @@ export function Estoque() {
                   const statusInfo = getStatusBadge(produto);
                   return (
                     <TableRow key={produto.id} className="border-border hover:bg-muted/50">
-                      <TableCell className="font-medium text-foreground">{produto.sku_interno}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-foreground">{produto.nome}</div>
-                          {produto.categoria && (
-                            <div className="text-sm text-muted-foreground">{produto.categoria}</div>
-                          )}
-                        </div>
+                      <TableCell className="text-foreground">
+                        {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
                       </TableCell>
-                      <TableCell className="text-foreground">{produto.quantidade_atual}</TableCell>
+                      <TableCell className="font-medium text-foreground">{produto.sku_interno}</TableCell>
+                      <TableCell className="font-medium text-foreground">{produto.nome}</TableCell>
+                      <TableCell className="text-foreground">
+                        {produto.categoria || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell className="text-foreground font-medium">{produto.quantidade_atual}</TableCell>
                       <TableCell className="text-foreground">{produto.estoque_minimo}</TableCell>
                       <TableCell className="text-foreground">{produto.estoque_maximo}</TableCell>
+                      <TableCell className="text-foreground">
+                        {produto.localizacao || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        {formatarMoeda(produto.preco_custo || 0)}
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        {formatarMoeda(produto.preco_venda || 0)}
+                      </TableCell>
+                      <TableCell>
+                        {produto.url_imagem ? (
+                          <img 
+                            src={produto.url_imagem} 
+                            alt={produto.nome}
+                            className="w-8 h-8 object-cover rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+                            <Image className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={statusInfo.variant} className="text-xs">
                           {statusInfo.texto}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="text-xs">Editar</Button>
-                          <Button size="sm" variant="secondary" className="text-xs">Movimentar</Button>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="text-xs px-2">Editar</Button>
+                          <Button size="sm" variant="secondary" className="text-xs px-2">Movimentar</Button>
                         </div>
                       </TableCell>
                     </TableRow>
