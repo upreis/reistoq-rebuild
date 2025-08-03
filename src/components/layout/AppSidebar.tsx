@@ -1,13 +1,7 @@
-import { 
-  BarChart3, 
-  ShoppingCart, 
-  Package, 
-  ArrowLeftRight, 
-  History, 
-  ScanLine, 
-  Settings,
-  Building2
-} from "lucide-react";
+import React from 'react';
+import { Crown, Home, Package, ShoppingCart, ScanLine, BarChart3, Settings, History } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useTheme } from '@/hooks/use-theme';
 import {
   Sidebar,
   SidebarContent,
@@ -18,110 +12,100 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
-const menuItems = [
-  { 
-    id: "dashboard", 
-    title: "Dashboard", 
-    icon: BarChart3,
-    description: "Visão geral do sistema"
+const navigationItems = [
+  {
+    title: 'Dashboard',
+    url: '/',
+    icon: Home,
+    description: 'Visão geral'
   },
-  { 
-    id: "estoque", 
-    title: "Estoque", 
+  {
+    title: 'Estoque',
+    url: '/estoque',
     icon: Package,
-    description: "Gerenciar produtos"
+    description: 'Gestão de produtos'
   },
-  { 
-    id: "pedidos", 
-    title: "Pedidos", 
+  {
+    title: 'Pedidos',
+    url: '/pedidos',
     icon: ShoppingCart,
-    description: "Gerenciar pedidos"
+    description: 'Gestão de pedidos'
   },
-  { 
-    id: "scanner", 
-    title: "Scanner", 
+  {
+    title: 'Scanner',
+    url: '/scanner',
     icon: ScanLine,
-    description: "Leitor de código"
+    description: 'Leitor de códigos'
   },
-  { 
-    id: "depara", 
-    title: "De/Para", 
-    icon: ArrowLeftRight,
-    description: "Mapeamento SKUs"
-  },
-  { 
-    id: "historico", 
-    title: "Histórico", 
+  {
+    title: 'Histórico',
+    url: '/historico',
     icon: History,
-    description: "Logs do sistema"
+    description: 'Histórico de ações'
   },
-  { 
-    id: "configuracoes", 
-    title: "Configurações", 
+  {
+    title: 'Configurações',
+    url: '/configuracoes',
     icon: Settings,
-    description: "Configurar sistema"
-  },
+    description: 'Configurações do sistema'
+  }
 ];
 
-interface AppSidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
-
-export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
+export function AppSidebar() {
   const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const location = useLocation();
+  const { theme } = useTheme();
+  const collapsed = state === 'collapsed';
+  
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
+
+  const getNavClasses = (path: string) => {
+    return isActive(path) 
+      ? 'bg-accent/10 text-accent border-r-2 border-accent' 
+      : 'text-sidebar-foreground hover:bg-accent/5 hover:text-accent';
+  };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"}>
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarContent>
-        {/* Logo/Brand */}
-        <div className="p-4 border-b border-sidebar-border">
+        {/* Header */}
+        <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-elegant">
-              <img 
-                src="/lovable-uploads/bb169aaa-4a45-4eae-9ca4-e8e4e1ca5196.png" 
-                alt="REISTOQ" 
-                className="w-6 h-6 object-contain"
-              />
-            </div>
+            <Crown className={`h-8 w-8 flex-shrink-0 ${theme === 'dark' ? 'text-yellow-500' : 'text-blue-600'}`} />
             {!collapsed && (
               <div>
-                <h1 className="font-bold text-lg text-accent">REISTOQ</h1>
-                <p className="text-sm text-sidebar-foreground/70">Sistema de Gestão</p>
+                <span className="text-xl font-bold text-accent">REISTOQ</span>
+                <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
               </div>
             )}
           </div>
         </div>
 
-        <SidebarGroup className="px-2 py-2">
+        <SidebarGroup>
+          {!collapsed && <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>}
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    onClick={() => onTabChange(item.id)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                      transition-all duration-200
-                      ${collapsed ? 'justify-center' : ''}
-                      ${activeTab === item.id 
-                        ? "bg-accent/15 border-2 border-accent text-accent" 
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/30 border-2 border-transparent"
-                      }
-                    `}
-                  >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    {!collapsed && (
-                      <div className="flex flex-col items-start text-left">
-                        <span className={`text-sm font-medium ${activeTab === item.id ? 'text-accent' : ''}`}>
-                          {item.title}
-                        </span>
-                        <span className="text-xs text-sidebar-foreground/60">{item.description}</span>
-                      </div>
-                    )}
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === '/'}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 ${getNavClasses(item.url)}`}
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      {!collapsed && (
+                        <div>
+                          <div className="font-medium">{item.title}</div>
+                          <div className="text-xs text-muted-foreground">{item.description}</div>
+                        </div>
+                      )}
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
