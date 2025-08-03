@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Home, Package, ShoppingCart, ScanLine, BarChart3, Settings, History } from 'lucide-react';
+import { Home, Package, ShoppingCart, ScanLine, BarChart3, Settings, History, ArrowLeftRight } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -19,37 +19,43 @@ const navigationItems = [
     title: 'Dashboard',
     url: '/',
     icon: Home,
-    description: 'Visão geral'
+    description: 'Visão geral do sistema'
   },
   {
     title: 'Estoque',
     url: '/estoque',
     icon: Package,
-    description: 'Gestão de produtos'
+    description: 'Gerenciar produtos'
   },
   {
     title: 'Pedidos',
     url: '/pedidos',
     icon: ShoppingCart,
-    description: 'Gestão de pedidos'
+    description: 'Gerenciar pedidos'
   },
   {
     title: 'Scanner',
     url: '/scanner',
     icon: ScanLine,
-    description: 'Leitor de códigos'
+    description: 'Leitor de código'
+  },
+  {
+    title: 'De/Para',
+    url: '/de-para',
+    icon: ArrowLeftRight,
+    description: 'Mapeamento SKUs'
   },
   {
     title: 'Histórico',
     url: '/historico',
     icon: History,
-    description: 'Histórico de ações'
+    description: 'Logs do sistema'
   },
   {
     title: 'Configurações',
     url: '/configuracoes',
     icon: Settings,
-    description: 'Configurações do sistema'
+    description: 'Configurar sistema'
   }
 ];
 
@@ -65,13 +71,14 @@ export function AppSidebar() {
   };
 
   const getNavClasses = (path: string) => {
-    return isActive(path) 
-      ? 'bg-accent/10 text-accent border-r-2 border-accent' 
-      : 'text-sidebar-foreground hover:bg-accent/5 hover:text-accent';
+    if (isActive(path)) {
+      return 'bg-transparent text-accent relative before:absolute before:inset-0 before:rounded-lg before:border-2 before:border-accent before:bg-accent/10';
+    }
+    return 'text-sidebar-foreground hover:bg-accent/5 hover:text-accent transition-all duration-200';
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar-background">
       <SidebarContent>
         {/* Header */}
         <div className="p-6 border-b border-sidebar-border">
@@ -91,20 +98,20 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
+          {!collapsed && <SidebarGroupLabel className="text-sidebar-foreground/60 px-3 py-2">Menu Principal</SidebarGroupLabel>}
+          <SidebarGroupContent className="px-3">
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end={item.url === '/'}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 ${getNavClasses(item.url)}`}
+                      className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all duration-200 ${getNavClasses(item.url)}`}
                     >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
                       {!collapsed && (
-                        <div>
+                        <div className="flex-1">
                           <div className="font-medium">{item.title}</div>
                           <div className="text-xs text-muted-foreground">{item.description}</div>
                         </div>
