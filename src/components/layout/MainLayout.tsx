@@ -17,7 +17,7 @@ export function MainLayout() {
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1">
           <Header />
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/estoque" element={<Estoque />} />

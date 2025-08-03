@@ -1,7 +1,8 @@
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Search, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,61 +41,103 @@ export function Header() {
     : user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm px-6 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-4">
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
-        <div className="hidden md:block">
-          <h2 className="text-lg font-semibold gradient-primary bg-clip-text text-transparent">
-            Sistema de Gestão de Estoque
-          </h2>
-          <p className="text-sm text-muted-foreground">Bem-vindo ao REISTOQ</p>
+    <header className="sticky top-0 z-50 h-16 border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-full items-center justify-between px-4 md:px-6">
+        {/* Left Section - Sidebar Trigger & Logo */}
+        <div className="flex items-center gap-4">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+          
+          <div className="hidden md:flex items-center gap-3">
+            <img 
+              src="/lovable-uploads/d88642c1-1622-40fe-88ea-8c1ac40156a5.png" 
+              alt="REISTOQ Logo" 
+              className="h-8 w-8 object-contain"
+            />
+            <div>
+              <span className="text-lg font-bold text-accent">REISTOQ</span>
+              <p className="text-xs text-muted-foreground hidden lg:block">Sistema de Gestão</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-3">
-        {/* Theme Toggle */}
-        <ThemeToggle />
-        
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative hover:bg-accent/10 transition-colors">
-          <Bell className="h-4 w-4" />
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-destructive text-destructive-foreground">
-            3
-          </Badge>
-        </Button>
+        {/* Center Section - Search Bar */}
+        <div className="flex-1 max-w-md mx-4 hidden sm:block">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar produtos, pedidos..."
+              className="pl-10 bg-muted/50 border-muted-foreground/20 focus:border-accent transition-colors"
+            />
+          </div>
+        </div>
 
-        {/* User Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="Usuário" />
-                <AvatarFallback className="bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {user?.user_metadata?.nome_exibicao || user?.email}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Right Section - Actions */}
+        <div className="flex items-center gap-2">
+          {/* Search button for mobile */}
+          <Button variant="ghost" size="icon" className="sm:hidden">
+            <Search className="h-4 w-4" />
+          </Button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
+          {/* New Button */}
+          <Button 
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium hidden sm:flex"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo
+          </Button>
+
+          {/* Notifications */}
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-4 w-4" />
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-destructive text-destructive-foreground">
+              3
+            </Badge>
+          </Button>
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/placeholder-avatar.jpg" alt="Usuário" />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-background border border-border shadow-lg" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user_metadata?.nome_exibicao || user?.email}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Perfil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configurações</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
