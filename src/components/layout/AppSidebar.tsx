@@ -77,7 +77,7 @@ export function AppSidebar() {
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <img 
-              src="/lovable-uploads/d88642c1-1622-40fe-88ea-8c1ac40156a5.png" 
+              src="/lovable-uploads/78a28708-1e34-459a-b347-1c12a0b5b9e7.png" 
               alt="REISTOQ Logo" 
               className="h-16 w-16 flex-shrink-0 object-contain"
             />
