@@ -41,6 +41,7 @@ export function EstoqueFiltros({
     };
   }
 
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
@@ -64,7 +65,7 @@ export function EstoqueFiltros({
 
           {/* Filtros em grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Select value={filtros.categoria || 'all'} onValueChange={(value) => onAtualizarFiltros({ categoria: value === 'all' ? '' : value })}>
+            <Select value={filtros.categoria === '' ? 'all' : (filtros.categoria || 'all')} onValueChange={(value) => onAtualizarFiltros({ categoria: value === 'all' ? '' : value })}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
@@ -78,7 +79,7 @@ export function EstoqueFiltros({
               </SelectContent>
             </Select>
 
-            <Select value={filtros.status || 'all'} onValueChange={(value) => onAtualizarFiltros({ status: value === 'all' ? '' : value })}>
+            <Select value={filtros.status === '' ? 'all' : (filtros.status || 'all')} onValueChange={(value) => onAtualizarFiltros({ status: value === 'all' ? '' : value })}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Status do Estoque" />
               </SelectTrigger>
