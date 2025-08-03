@@ -16,14 +16,26 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Redirect if already authenticated
+    // Check for existing session and set up auth listener
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate("/");
       }
     };
+    
     checkAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session && event === 'SIGNED_IN') {
+          navigate("/");
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
