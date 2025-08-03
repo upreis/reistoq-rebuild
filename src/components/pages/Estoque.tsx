@@ -14,10 +14,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useEstoque } from "@/hooks/useEstoque";
+import { useEstoquePaginado } from "@/hooks/useEstoquePaginado";
+import { useRelatorios } from "@/hooks/useRelatorios";
 import { EstoqueFileManager } from "@/components/estoque/EstoqueFileManager";
 import { ProdutoDetalhesModal } from "@/components/estoque/ProdutoDetalhesModal";
 import { ProdutoEditModal } from "@/components/estoque/ProdutoEditModal";
 import { ProdutoImageUpload } from "@/components/estoque/ProdutoImageUpload";
+import { EstoqueHeader } from "@/components/estoque/EstoqueHeader";
+import { EstoqueFiltros } from "@/components/estoque/EstoqueFiltros";
+import { EstoqueMetricas } from "@/components/estoque/EstoqueMetricas";
+import { EstoqueTabela } from "@/components/estoque/EstoqueTabela";
+import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
+import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
+import { MovimentacoesRecentes } from "@/components/estoque/MovimentacoesRecentes";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 export function Estoque() {
@@ -32,11 +43,44 @@ export function Estoque() {
     recarregarDados 
   } = useEstoque();
 
+  const {
+    produtosPaginados,
+    paginaAtual,
+    totalPaginas,
+    itemInicial,
+    itemFinal,
+    totalItens,
+    irParaPagina,
+    proximaPagina,
+    paginaAnterior
+  } = useEstoquePaginado({ produtos, itensPorPagina: 20 });
+
   const [produtoSelecionado, setProdutoSelecionado] = useState<any>(null);
   const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
   const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
+  const [modalMovimentacaoAberto, setModalMovimentacaoAberto] = useState(false);
+  const [modalNovoProdutoAberto, setModalNovoProdutoAberto] = useState(false);
   const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
+  const { toast } = useToast();
+  const { gerarRelatorio, enviarAlertas, downloadRelatorio } = useRelatorios();
+
+  const handleGerarRelatorio = async (tipo: string) => {
+    try {
+      const relatorio = await gerarRelatorio({ tipo: tipo as any });
+      downloadRelatorio(relatorio, tipo);
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    }
+  };
+
+  const handleEnviarAlertas = async () => {
+    try {
+      await enviarAlertas();
+    } catch (error) {
+      console.error('Erro ao enviar alertas:', error);
+    }
+  };
 
   const abrirDetalhes = (produto: any) => {
     setProdutoSelecionado(produto);
@@ -48,9 +92,20 @@ export function Estoque() {
     setModalEdicaoAberto(true);
   };
 
+  const abrirMovimentacao = (produto: any) => {
+    setProdutoSelecionado(produto);
+    setModalMovimentacaoAberto(true);
+  };
+
+  const abrirNovoProduto = () => {
+    setModalNovoProdutoAberto(true);
+  };
+
   const fecharModais = () => {
     setModalDetalhesAberto(false);
     setModalEdicaoAberto(false);
+    setModalMovimentacaoAberto(false);
+    setModalNovoProdutoAberto(false);
     setProdutoSelecionado(null);
   };
 
@@ -71,7 +126,7 @@ export function Estoque() {
       setProdutosSelecionados([]);
       setTodosSeleccionados(false);
     } else {
-      setProdutosSelecionados(produtos.map(produto => produto.id));
+      setProdutosSelecionados(produtosPaginados.map(produto => produto.id));
       setTodosSeleccionados(true);
     }
   };
@@ -79,26 +134,35 @@ export function Estoque() {
   const handleExcluirSelecionados = async () => {
     if (produtosSelecionados.length === 0) return;
     
-    // Implementar lógica de exclusão aqui
-    console.log('Excluir produtos:', produtosSelecionados);
-    setProdutosSelecionados([]);
-    setTodosSeleccionados(false);
-  };
+    if (!confirm(`Tem certeza que deseja excluir ${produtosSelecionados.length} produto(s)?`)) {
+      return;
+    }
 
-  const formatarMoeda = (valor: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
-  };
+    try {
+      const { error } = await supabase
+        .from('produtos')
+        .update({ ativo: false })
+        .in('id', produtosSelecionados);
 
-  const getStatusBadge = (produto: any) => {
-    if (produto.quantidade_atual === 0) {
-      return { variant: 'destructive' as const, texto: 'Crítico' };
-    } else if (produto.quantidade_atual <= produto.estoque_minimo) {
-      return { variant: 'destructive' as const, texto: 'Baixo' };
-    } else {
-      return { variant: 'default' as const, texto: 'Normal' };
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Produtos excluídos",
+        description: `${produtosSelecionados.length} produto(s) foram excluídos com sucesso.`,
+      });
+
+      setProdutosSelecionados([]);
+      setTodosSeleccionados(false);
+      recarregarDados();
+    } catch (error: any) {
+      console.error('Erro ao excluir produtos:', error);
+      toast({
+        title: "Erro ao excluir produtos",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -117,136 +181,30 @@ export function Estoque() {
       </div>
     );
   }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Controle de Estoque</h1>
-          <p className="text-muted-foreground">Gestão completa de produtos e movimentações</p>
-        </div>
-        <div className="flex gap-2">
-          {produtosSelecionados.length > 0 && (
-            <Button 
-              variant="destructive" 
-              onClick={handleExcluirSelecionados}
-              className="mr-2"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir Selecionados ({produtosSelecionados.length})
-            </Button>
-          )}
-          <Button variant="outline" onClick={recarregarDados} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-          <Button variant="premium">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Produto
-          </Button>
-        </div>
-      </div>
+      <EstoqueHeader 
+        produtosSelecionados={produtosSelecionados}
+        loading={loading}
+        onRefresh={recarregarDados}
+        onExcluirSelecionados={handleExcluirSelecionados}
+        onNovoProduto={abrirNovoProduto}
+      />
 
       {/* Filters and File Management */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {/* Filters */}
-        <Card className="h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Filtros</CardTitle>
-            <CardDescription className="text-sm">
-              Busque e filtre produtos por nome, SKU ou categoria
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nome ou SKU..."
-                  className="pl-10 h-9"
-                  value={filtros.busca}
-                  onChange={(e) => atualizarFiltros({ busca: e.target.value })}
-                />
-              </div>
-              <Input
-                placeholder="Categoria..."
-                className="h-9 w-32"
-                value={filtros.categoria}
-                onChange={(e) => atualizarFiltros({ categoria: e.target.value })}
-              />
-              <Button variant="outline" onClick={limparFiltros} className="h-9">
-                <Filter className="mr-2 h-4 w-4" />
-                Limpar Filtros
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* File Management */}
+        <EstoqueFiltros 
+          filtros={filtros}
+          onAtualizarFiltros={atualizarFiltros}
+          onLimparFiltros={limparFiltros}
+        />
         <EstoqueFileManager onUploadSuccess={recarregarDados} />
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Produtos
-            </CardTitle>
-            <Package className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground">{metricas.totalProdutos.toLocaleString()}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Produtos cadastrados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Produtos em Alerta
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-accent" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground">{metricas.produtosAlerta}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Estoque baixo ou crítico
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Valor Total Estoque
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-secondary" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-32" />
-            ) : (
-              <div className="text-2xl font-bold text-foreground">
-                {formatarMoeda(metricas.valorTotalEstoque)}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Valor total em estoque
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <EstoqueMetricas metricas={metricas} loading={loading} />
 
       {/* Stock Table */}
       <Card>
@@ -257,160 +215,31 @@ export function Estoque() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex space-x-4">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ))}
-            </div>
-          ) : produtos.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum produto encontrado</h3>
-              <p className="text-muted-foreground">
-                {filtros.busca || filtros.categoria || filtros.status 
-                  ? "Tente ajustar os filtros ou adicione um novo produto"
-                  : "Comece adicionando seus primeiros produtos"}
-              </p>
-              <Button className="mt-4" variant="premium">
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Produto
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border">
-                  <TableHead className="text-muted-foreground w-12">
-                    <Checkbox
-                      checked={todosSeleccionados}
-                      onCheckedChange={toggleSelecionarTodos}
-                    />
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">Código de Barras</TableHead>
-                  <TableHead className="text-muted-foreground w-40">SKU</TableHead>
-                  <TableHead className="text-muted-foreground w-60">Produto</TableHead>
-                  <TableHead className="text-muted-foreground">Categoria</TableHead>
-                  <TableHead className="text-muted-foreground">Qtd Atual</TableHead>
-                  <TableHead className="text-muted-foreground">Mínimo</TableHead>
-                  <TableHead className="text-muted-foreground">Máximo</TableHead>
-                  <TableHead className="text-muted-foreground">Localização</TableHead>
-                  <TableHead className="text-muted-foreground">Preço Custo</TableHead>
-                  <TableHead className="text-muted-foreground">Preço Venda</TableHead>
-                  <TableHead className="text-muted-foreground">Imagem</TableHead>
-                  <TableHead className="text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-muted-foreground">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {produtos.map((produto) => {
-                  const statusInfo = getStatusBadge(produto);
-                  return (
-                     <TableRow 
-                       key={produto.id} 
-                       className="border-border hover:bg-muted/50 cursor-pointer"
-                       onClick={() => abrirDetalhes(produto)}
-                     >
-                       <TableCell onClick={(e) => e.stopPropagation()}>
-                         <Checkbox
-                           checked={produtosSelecionados.includes(produto.id)}
-                           onCheckedChange={() => toggleSelecionarProduto(produto.id)}
-                         />
-                       </TableCell>
-                       <TableCell className="text-foreground">
-                         {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
-                       </TableCell>
-                       <TableCell className="font-medium text-foreground max-w-40 truncate" title={produto.sku_interno}>
-                         {produto.sku_interno}
-                       </TableCell>
-                       <TableCell className="font-medium text-foreground max-w-60 truncate" title={produto.nome}>
-                         {produto.nome}
-                       </TableCell>
-                       <TableCell className="text-foreground">
-                         {produto.categoria || <span className="text-muted-foreground">-</span>}
-                       </TableCell>
-                       <TableCell className="text-foreground font-medium">{produto.quantidade_atual}</TableCell>
-                       <TableCell className="text-foreground">{produto.estoque_minimo}</TableCell>
-                       <TableCell className="text-foreground">{produto.estoque_maximo}</TableCell>
-                       <TableCell className="text-foreground">
-                         {produto.localizacao || <span className="text-muted-foreground">-</span>}
-                       </TableCell>
-                       <TableCell className="text-foreground">
-                         {formatarMoeda(produto.preco_custo || 0)}
-                       </TableCell>
-                       <TableCell className="text-foreground">
-                         {formatarMoeda(produto.preco_venda || 0)}
-                       </TableCell>
-                       <TableCell onClick={(e) => e.stopPropagation()}>
-                         <ProdutoImageUpload
-                           produtoId={produto.id}
-                           currentImageUrl={produto.url_imagem}
-                           onImageUploaded={handleImageUploaded}
-                         />
-                       </TableCell>
-                       <TableCell>
-                         <Badge variant={statusInfo.variant} className="text-xs">
-                           {statusInfo.texto}
-                         </Badge>
-                       </TableCell>
-                       <TableCell onClick={(e) => e.stopPropagation()}>
-                         <div className="flex gap-1">
-                           <Button 
-                             size="sm" 
-                             variant="outline" 
-                             className="text-xs px-2"
-                             onClick={() => abrirEdicao(produto)}
-                           >
-                             <Edit className="h-3 w-3" />
-                           </Button>
-                           <Button size="sm" variant="secondary" className="text-xs px-2">
-                             Movimentar
-                           </Button>
-                         </div>
-                       </TableCell>
-                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+          <EstoqueTabela 
+            produtos={produtosPaginados}
+            loading={loading}
+            produtosSelecionados={produtosSelecionados}
+            todosSeleccionados={todosSeleccionados}
+            paginaAtual={paginaAtual}
+            totalPaginas={totalPaginas}
+            itemInicial={itemInicial}
+            itemFinal={itemFinal}
+            totalItens={totalItens}
+            onSelecionarProduto={toggleSelecionarProduto}
+            onSelecionarTodos={toggleSelecionarTodos}
+            onAbrirDetalhes={abrirDetalhes}
+            onAbrirEdicao={abrirEdicao}
+            onMovimentar={abrirMovimentacao}
+            onImageUploaded={handleImageUploaded}
+            onPaginar={irParaPagina}
+            onPaginaAnterior={paginaAnterior}
+            onProximaPagina={proximaPagina}
+          />
         </CardContent>
       </Card>
 
       {/* Recent Movements */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Movimentações Recentes</CardTitle>
-          <CardDescription>
-            Últimas entradas e saídas de estoque
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-sm font-medium">Entrada - SKU-001234</p>
-                <p className="text-xs text-muted-foreground">+50 unidades | há 2 horas</p>
-              </div>
-              <Badge variant="secondary">Entrada</Badge>
-            </div>
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-sm font-medium">Saída - SKU-001235</p>
-                <p className="text-xs text-muted-foreground">-25 unidades | há 4 horas</p>
-              </div>
-              <Badge variant="destructive">Saída</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <MovimentacoesRecentes />
 
       {/* Modais */}
       <ProdutoDetalhesModal
@@ -424,6 +253,19 @@ export function Estoque() {
         isOpen={modalEdicaoAberto}
         onClose={fecharModais}
         onSave={recarregarDados}
+      />
+
+      <MovimentacaoModal
+        produto={produtoSelecionado}
+        isOpen={modalMovimentacaoAberto}
+        onClose={fecharModais}
+        onSuccess={recarregarDados}
+      />
+
+      <NovoProdutoModal
+        isOpen={modalNovoProdutoAberto}
+        onClose={fecharModais}
+        onSuccess={recarregarDados}
       />
     </div>
   );

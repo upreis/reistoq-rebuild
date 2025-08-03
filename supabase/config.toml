@@ -1,1 +1,7 @@
 project_id = "tdjyfqnxvjgossuncpwm"
+
+[functions.alertas-estoque]
+verify_jwt = false
+
+[functions.relatorio-estoque]
+verify_jwt = false

@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,14 +17,29 @@ export function EstoqueFiltros({
   onAtualizarFiltros,
   onLimparFiltros
 }: EstoqueFiltrosProps) {
+  const [buscaLocal, setBuscaLocal] = useState(filtros.busca);
+
+  const debouncedBusca = useCallback(
+    debounce((valor: string) => {
+      onAtualizarFiltros({ busca: valor });
+    }, 300),
+    [onAtualizarFiltros]
+  );
+
   const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Debounce da busca
-    const timer = setTimeout(() => {
-      onAtualizarFiltros({ busca: e.target.value });
-    }, 300);
-    
-    return () => clearTimeout(timer);
+    const valor = e.target.value;
+    setBuscaLocal(valor);
+    debouncedBusca(valor);
   };
+
+  // Função debounce helper
+  function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), delay);
+    };
+  }
 
   return (
     <Card className="h-full">
@@ -41,7 +57,7 @@ export function EstoqueFiltros({
             <Input
               placeholder="Buscar por nome, SKU ou código de barras..."
               className="pl-10 h-9"
-              defaultValue={filtros.busca}
+              value={buscaLocal}
               onChange={handleBuscaChange}
             />
           </div>
