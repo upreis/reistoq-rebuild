@@ -187,7 +187,7 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-lg">Importar/Exportar Estoque</CardTitle>
         <CardDescription>
