@@ -106,17 +106,17 @@ export function Configuracoes() {
                 <strong>Como encontrar seu Token do Tiny ERP:</strong>
                 <ol className="list-decimal list-inside mt-2 space-y-1">
                   <li>Acesse sua conta no Tiny ERP</li>
-                  <li>Vá em "Configurações" → "API"</li>
+                  <li>Vá em "Configurações" → "Geral" → "Token API"</li>
                   <li>Clique em "Gerar Nova Chave de API"</li>
                   <li>Copie o token gerado e cole no campo abaixo</li>
                 </ol>
                 <Button 
                   variant="link" 
                   className="p-0 h-auto mt-2"
-                  onClick={() => window.open('https://www.tiny.com.br/', '_blank')}
+                  onClick={() => window.open('https://erp.tiny.com.br/configuracoes_api_web_services', '_blank')}
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
-                  Abrir Tiny ERP
+                  Ir direto para Token API
                 </Button>
               </AlertDescription>
             </Alert>
