@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.relatorio-estoque]
 verify_jwt = false
+
+[functions.previsao-reposicao]
+verify_jwt = false
