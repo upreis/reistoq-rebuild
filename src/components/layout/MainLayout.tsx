@@ -9,6 +9,7 @@ import { Estoque } from '@/components/pages/Estoque';
 import { Scanner } from '@/components/pages/Scanner';
 import { Historico } from '@/components/pages/Historico';
 import { Configuracoes } from '@/components/pages/Configuracoes';
+import { DePara } from '@/components/pages/DePara';
 
 export function MainLayout() {
   return (
@@ -22,6 +23,7 @@ export function MainLayout() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/pedidos" element={<Pedidos />} />
+              <Route path="/depara" element={<DePara />} />
               <Route path="/scanner" element={<Scanner />} />
               <Route path="/historico" element={<Historico />} />
               <Route path="/configuracoes" element={<Configuracoes />} />

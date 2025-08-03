@@ -34,6 +34,12 @@ const navigationItems = [
     description: 'Gestão de pedidos'
   },
   {
+    title: 'DE/PARA',
+    url: '/depara',
+    icon: BarChart3,
+    description: 'Mapeamento de SKUs'
+  },
+  {
     title: 'Scanner',
     url: '/scanner',
     icon: ScanLine,
