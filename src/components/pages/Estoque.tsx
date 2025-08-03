@@ -191,6 +191,8 @@ export function Estoque() {
         onRefresh={recarregarDados}
         onExcluirSelecionados={handleExcluirSelecionados}
         onNovoProduto={abrirNovoProduto}
+        onGerarRelatorio={handleGerarRelatorio}
+        onEnviarAlertas={handleEnviarAlertas}
       />
 
       {/* Filters and File Management */}

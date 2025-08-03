@@ -64,12 +64,12 @@ export function EstoqueFiltros({
 
           {/* Filtros em grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Select value={filtros.categoria} onValueChange={(value) => onAtualizarFiltros({ categoria: value })}>
+            <Select value={filtros.categoria || 'all'} onValueChange={(value) => onAtualizarFiltros({ categoria: value === 'all' ? '' : value })}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
+                <SelectItem value="all">Todas as categorias</SelectItem>
                 <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
                 <SelectItem value="Roupas">Roupas</SelectItem>
                 <SelectItem value="Casa">Casa</SelectItem>
@@ -78,12 +78,12 @@ export function EstoqueFiltros({
               </SelectContent>
             </Select>
 
-            <Select value={filtros.status} onValueChange={(value) => onAtualizarFiltros({ status: value })}>
+            <Select value={filtros.status || 'all'} onValueChange={(value) => onAtualizarFiltros({ status: value === 'all' ? '' : value })}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Status do Estoque" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="baixo">Estoque Baixo</SelectItem>
                 <SelectItem value="critico">Estoque Crítico</SelectItem>
