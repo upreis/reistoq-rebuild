@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Home, Package, ShoppingCart, ScanLine, BarChart3, Settings, History } from 'lucide-react';
+import { Crown, Home, Package, ShoppingCart, ScanLine, ArrowLeftRight, Settings, History } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -36,7 +36,7 @@ const navigationItems = [
   {
     title: 'DE/PARA',
     url: '/depara',
-    icon: BarChart3,
+    icon: ArrowLeftRight,
     description: 'Mapeamento de SKUs'
   },
   {
