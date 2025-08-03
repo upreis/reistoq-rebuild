@@ -1,9 +1,10 @@
-import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Image, Edit } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Image, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -34,6 +35,8 @@ export function Estoque() {
   const [produtoSelecionado, setProdutoSelecionado] = useState<any>(null);
   const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
   const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
+  const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
+  const [todosSeleccionados, setTodosSeleccionados] = useState(false);
 
   const abrirDetalhes = (produto: any) => {
     setProdutoSelecionado(produto);
@@ -53,6 +56,33 @@ export function Estoque() {
 
   const handleImageUploaded = () => {
     recarregarDados();
+  };
+
+  const toggleSelecionarProduto = (produtoId: string) => {
+    setProdutosSelecionados(prev => 
+      prev.includes(produtoId) 
+        ? prev.filter(id => id !== produtoId)
+        : [...prev, produtoId]
+    );
+  };
+
+  const toggleSelecionarTodos = () => {
+    if (todosSeleccionados) {
+      setProdutosSelecionados([]);
+      setTodosSeleccionados(false);
+    } else {
+      setProdutosSelecionados(produtos.map(produto => produto.id));
+      setTodosSeleccionados(true);
+    }
+  };
+
+  const handleExcluirSelecionados = async () => {
+    if (produtosSelecionados.length === 0) return;
+    
+    // Implementar lógica de exclusão aqui
+    console.log('Excluir produtos:', produtosSelecionados);
+    setProdutosSelecionados([]);
+    setTodosSeleccionados(false);
   };
 
   const formatarMoeda = (valor: number) => {
@@ -96,6 +126,16 @@ export function Estoque() {
           <p className="text-muted-foreground">Gestão completa de produtos e movimentações</p>
         </div>
         <div className="flex gap-2">
+          {produtosSelecionados.length > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={handleExcluirSelecionados}
+              className="mr-2"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir Selecionados ({produtosSelecionados.length})
+            </Button>
+          )}
           <Button variant="outline" onClick={recarregarDados} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
@@ -248,9 +288,15 @@ export function Estoque() {
             <Table>
               <TableHeader>
                 <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground w-12">
+                    <Checkbox
+                      checked={todosSeleccionados}
+                      onCheckedChange={toggleSelecionarTodos}
+                    />
+                  </TableHead>
                   <TableHead className="text-muted-foreground">Código de Barras</TableHead>
-                  <TableHead className="text-muted-foreground">SKU</TableHead>
-                  <TableHead className="text-muted-foreground">Produto</TableHead>
+                  <TableHead className="text-muted-foreground w-40">SKU</TableHead>
+                  <TableHead className="text-muted-foreground w-60">Produto</TableHead>
                   <TableHead className="text-muted-foreground">Categoria</TableHead>
                   <TableHead className="text-muted-foreground">Qtd Atual</TableHead>
                   <TableHead className="text-muted-foreground">Mínimo</TableHead>
@@ -272,11 +318,21 @@ export function Estoque() {
                        className="border-border hover:bg-muted/50 cursor-pointer"
                        onClick={() => abrirDetalhes(produto)}
                      >
+                       <TableCell onClick={(e) => e.stopPropagation()}>
+                         <Checkbox
+                           checked={produtosSelecionados.includes(produto.id)}
+                           onCheckedChange={() => toggleSelecionarProduto(produto.id)}
+                         />
+                       </TableCell>
                        <TableCell className="text-foreground">
                          {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
                        </TableCell>
-                       <TableCell className="font-medium text-foreground">{produto.sku_interno}</TableCell>
-                       <TableCell className="font-medium text-foreground">{produto.nome}</TableCell>
+                       <TableCell className="font-medium text-foreground max-w-40 truncate" title={produto.sku_interno}>
+                         {produto.sku_interno}
+                       </TableCell>
+                       <TableCell className="font-medium text-foreground max-w-60 truncate" title={produto.nome}>
+                         {produto.nome}
+                       </TableCell>
                        <TableCell className="text-foreground">
                          {produto.categoria || <span className="text-muted-foreground">-</span>}
                        </TableCell>
