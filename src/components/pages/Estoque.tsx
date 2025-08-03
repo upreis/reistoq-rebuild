@@ -1,4 +1,4 @@
-import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Image } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw, Image, Edit } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,10 @@ import {
 } from "@/components/ui/table";
 import { useEstoque } from "@/hooks/useEstoque";
 import { EstoqueFileManager } from "@/components/estoque/EstoqueFileManager";
+import { ProdutoDetalhesModal } from "@/components/estoque/ProdutoDetalhesModal";
+import { ProdutoEditModal } from "@/components/estoque/ProdutoEditModal";
+import { ProdutoImageUpload } from "@/components/estoque/ProdutoImageUpload";
+import { useState } from "react";
 
 export function Estoque() {
   const { 
@@ -26,6 +30,30 @@ export function Estoque() {
     limparFiltros, 
     recarregarDados 
   } = useEstoque();
+
+  const [produtoSelecionado, setProdutoSelecionado] = useState<any>(null);
+  const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
+  const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
+
+  const abrirDetalhes = (produto: any) => {
+    setProdutoSelecionado(produto);
+    setModalDetalhesAberto(true);
+  };
+
+  const abrirEdicao = (produto: any) => {
+    setProdutoSelecionado(produto);
+    setModalEdicaoAberto(true);
+  };
+
+  const fecharModais = () => {
+    setModalDetalhesAberto(false);
+    setModalEdicaoAberto(false);
+    setProdutoSelecionado(null);
+  };
+
+  const handleImageUploaded = () => {
+    recarregarDados();
+  };
 
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -239,55 +267,59 @@ export function Estoque() {
                 {produtos.map((produto) => {
                   const statusInfo = getStatusBadge(produto);
                   return (
-                    <TableRow key={produto.id} className="border-border hover:bg-muted/50">
-                      <TableCell className="text-foreground">
-                        {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
-                      </TableCell>
-                      <TableCell className="font-medium text-foreground">{produto.sku_interno}</TableCell>
-                      <TableCell className="font-medium text-foreground">{produto.nome}</TableCell>
-                      <TableCell className="text-foreground">
-                        {produto.categoria || <span className="text-muted-foreground">-</span>}
-                      </TableCell>
-                      <TableCell className="text-foreground font-medium">{produto.quantidade_atual}</TableCell>
-                      <TableCell className="text-foreground">{produto.estoque_minimo}</TableCell>
-                      <TableCell className="text-foreground">{produto.estoque_maximo}</TableCell>
-                      <TableCell className="text-foreground">
-                        {produto.localizacao || <span className="text-muted-foreground">-</span>}
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {formatarMoeda(produto.preco_custo || 0)}
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {formatarMoeda(produto.preco_venda || 0)}
-                      </TableCell>
-                      <TableCell>
-                        {produto.url_imagem ? (
-                          <img 
-                            src={produto.url_imagem} 
-                            alt={produto.nome}
-                            className="w-8 h-8 object-cover rounded"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
-                            <Image className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusInfo.variant} className="text-xs">
-                          {statusInfo.texto}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="outline" className="text-xs px-2">Editar</Button>
-                          <Button size="sm" variant="secondary" className="text-xs px-2">Movimentar</Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                     <TableRow 
+                       key={produto.id} 
+                       className="border-border hover:bg-muted/50 cursor-pointer"
+                       onClick={() => abrirDetalhes(produto)}
+                     >
+                       <TableCell className="text-foreground">
+                         {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
+                       </TableCell>
+                       <TableCell className="font-medium text-foreground">{produto.sku_interno}</TableCell>
+                       <TableCell className="font-medium text-foreground">{produto.nome}</TableCell>
+                       <TableCell className="text-foreground">
+                         {produto.categoria || <span className="text-muted-foreground">-</span>}
+                       </TableCell>
+                       <TableCell className="text-foreground font-medium">{produto.quantidade_atual}</TableCell>
+                       <TableCell className="text-foreground">{produto.estoque_minimo}</TableCell>
+                       <TableCell className="text-foreground">{produto.estoque_maximo}</TableCell>
+                       <TableCell className="text-foreground">
+                         {produto.localizacao || <span className="text-muted-foreground">-</span>}
+                       </TableCell>
+                       <TableCell className="text-foreground">
+                         {formatarMoeda(produto.preco_custo || 0)}
+                       </TableCell>
+                       <TableCell className="text-foreground">
+                         {formatarMoeda(produto.preco_venda || 0)}
+                       </TableCell>
+                       <TableCell onClick={(e) => e.stopPropagation()}>
+                         <ProdutoImageUpload
+                           produtoId={produto.id}
+                           currentImageUrl={produto.url_imagem}
+                           onImageUploaded={handleImageUploaded}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <Badge variant={statusInfo.variant} className="text-xs">
+                           {statusInfo.texto}
+                         </Badge>
+                       </TableCell>
+                       <TableCell onClick={(e) => e.stopPropagation()}>
+                         <div className="flex gap-1">
+                           <Button 
+                             size="sm" 
+                             variant="outline" 
+                             className="text-xs px-2"
+                             onClick={() => abrirEdicao(produto)}
+                           >
+                             <Edit className="h-3 w-3" />
+                           </Button>
+                           <Button size="sm" variant="secondary" className="text-xs px-2">
+                             Movimentar
+                           </Button>
+                         </div>
+                       </TableCell>
+                     </TableRow>
                   );
                 })}
               </TableBody>
@@ -323,6 +355,20 @@ export function Estoque() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modais */}
+      <ProdutoDetalhesModal
+        produto={produtoSelecionado}
+        isOpen={modalDetalhesAberto}
+        onClose={fecharModais}
+      />
+
+      <ProdutoEditModal
+        produto={produtoSelecionado}
+        isOpen={modalEdicaoAberto}
+        onClose={fecharModais}
+        onSave={recarregarDados}
+      />
     </div>
   );
 }
