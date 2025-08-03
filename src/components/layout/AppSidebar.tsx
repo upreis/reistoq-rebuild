@@ -104,19 +104,21 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
                   <SidebarMenuButton
                     onClick={() => onTabChange(item.id)}
                     className={`
-                      w-full flex items-center gap-3 px-3 py-3 rounded-lg
+                      w-full flex items-center gap-3 px-4 py-3 rounded-lg
                       transition-all duration-200
                       ${collapsed ? 'justify-center' : ''}
                       ${activeTab === item.id 
-                        ? "bg-accent/20 text-accent border border-accent/30" 
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        ? "bg-accent/15 border-2 border-accent text-accent" 
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/30 border-2 border-transparent"
                       }
                     `}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0" />
                     {!collapsed && (
                       <div className="flex flex-col items-start text-left">
-                        <span className="text-sm font-medium">{item.title}</span>
+                        <span className={`text-sm font-medium ${activeTab === item.id ? 'text-accent' : ''}`}>
+                          {item.title}
+                        </span>
                         <span className="text-xs text-sidebar-foreground/60">{item.description}</span>
                       </div>
                     )}
