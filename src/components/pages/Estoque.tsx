@@ -1,7 +1,9 @@
-import { Package, AlertTriangle, TrendingUp, Plus } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Plus, Search, Filter, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -10,35 +12,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const estoqueExample = [
-  {
-    sku: "SKU-001234",
-    produto: "Produto A - Variação 1",
-    atual: 45,
-    minimo: 50,
-    maximo: 200,
-    status: "baixo"
-  },
-  {
-    sku: "SKU-001235", 
-    produto: "Produto B - Variação 2",
-    atual: 120,
-    minimo: 30,
-    maximo: 150,
-    status: "normal"
-  },
-  {
-    sku: "SKU-001236",
-    produto: "Produto C - Variação 3", 
-    atual: 0,
-    minimo: 20,
-    maximo: 100,
-    status: "critico"
-  }
-];
+import { useEstoque } from "@/hooks/useEstoque";
 
 export function Estoque() {
+  const { 
+    produtos, 
+    metricas, 
+    loading, 
+    error, 
+    filtros, 
+    atualizarFiltros, 
+    limparFiltros, 
+    recarregarDados 
+  } = useEstoque();
+
+  const formatarMoeda = (valor: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
+  };
+
+  const getStatusBadge = (produto: any) => {
+    if (produto.quantidade_atual === 0) {
+      return { variant: 'destructive' as const, texto: 'Crítico' };
+    } else if (produto.quantidade_atual <= produto.estoque_minimo) {
+      return { variant: 'destructive' as const, texto: 'Baixo' };
+    } else {
+      return { variant: 'default' as const, texto: 'Normal' };
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar dados</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={recarregarDados}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -47,11 +66,54 @@ export function Estoque() {
           <h1 className="text-3xl font-bold text-foreground">Controle de Estoque</h1>
           <p className="text-muted-foreground">Gestão completa de produtos e movimentações</p>
         </div>
-        <Button variant="premium">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Produto
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={recarregarDados} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button variant="premium">
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+          <CardDescription>
+            Busque e filtre produtos por nome, SKU ou categoria
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar por nome ou SKU..."
+                className="pl-10"
+                value={filtros.busca}
+                onChange={(e) => atualizarFiltros({ busca: e.target.value })}
+              />
+            </div>
+            <Input
+              placeholder="Categoria..."
+              value={filtros.categoria}
+              onChange={(e) => atualizarFiltros({ categoria: e.target.value })}
+            />
+            <Input
+              placeholder="Status..."
+              value={filtros.status}
+              onChange={(e) => atualizarFiltros({ status: e.target.value })}
+            />
+            <Button variant="outline" onClick={limparFiltros}>
+              <Filter className="mr-2 h-4 w-4" />
+              Limpar Filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -63,10 +125,13 @@ export function Estoque() {
             <Package className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">8,562</div>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground">{metricas.totalProdutos.toLocaleString()}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 mr-1" />
-              +3% vs. mês anterior
+              Produtos cadastrados
             </p>
           </CardContent>
         </Card>
@@ -79,7 +144,11 @@ export function Estoque() {
             <AlertTriangle className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">23</div>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground">{metricas.produtosAlerta}</div>
+            )}
             <p className="text-xs text-muted-foreground">
               Estoque baixo ou crítico
             </p>
@@ -94,7 +163,13 @@ export function Estoque() {
             <TrendingUp className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">R$ 2.4M</div>
+            {loading ? (
+              <Skeleton className="h-8 w-32" />
+            ) : (
+              <div className="text-2xl font-bold text-foreground">
+                {formatarMoeda(metricas.valorTotalEstoque)}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Valor total em estoque
             </p>
@@ -111,48 +186,80 @@ export function Estoque() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Atual</TableHead>
-                <TableHead>Mínimo</TableHead>
-                <TableHead>Máximo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {estoqueExample.map((item) => (
-                <TableRow key={item.sku}>
-                  <TableCell className="font-medium">{item.sku}</TableCell>
-                  <TableCell>{item.produto}</TableCell>
-                  <TableCell>{item.atual}</TableCell>
-                  <TableCell>{item.minimo}</TableCell>
-                  <TableCell>{item.maximo}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        item.status === 'critico' ? 'destructive' :
-                        item.status === 'baixo' ? 'destructive' :
-                        'default'
-                      }
-                    >
-                      {item.status === 'critico' ? 'Crítico' :
-                       item.status === 'baixo' ? 'Baixo' : 'Normal'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">Editar</Button>
-                      <Button size="sm" variant="secondary">Movimentar</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex space-x-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : produtos.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum produto encontrado</h3>
+              <p className="text-muted-foreground">
+                {filtros.busca || filtros.categoria || filtros.status 
+                  ? "Tente ajustar os filtros ou adicione um novo produto"
+                  : "Comece adicionando seus primeiros produtos"}
+              </p>
+              <Button className="mt-4" variant="premium">
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Produto
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Atual</TableHead>
+                  <TableHead>Mínimo</TableHead>
+                  <TableHead>Máximo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {produtos.map((produto) => {
+                  const statusInfo = getStatusBadge(produto);
+                  return (
+                    <TableRow key={produto.id}>
+                      <TableCell className="font-medium">{produto.sku_interno}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{produto.nome}</div>
+                          {produto.categoria && (
+                            <div className="text-sm text-muted-foreground">{produto.categoria}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{produto.quantidade_atual}</TableCell>
+                      <TableCell>{produto.estoque_minimo}</TableCell>
+                      <TableCell>{produto.estoque_maximo}</TableCell>
+                      <TableCell>
+                        <Badge variant={statusInfo.variant}>
+                          {statusInfo.texto}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">Editar</Button>
+                          <Button size="sm" variant="secondary">Movimentar</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
