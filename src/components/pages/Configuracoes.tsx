@@ -1,4 +1,4 @@
-import { Settings, Key, Bell, Database, Zap } from "lucide-react";
+import { Settings, Key, Bell, Database, Zap, ExternalLink, HelpCircle, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +6,66 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Configuracoes() {
+  const [tinyToken, setTinyToken] = useState("");
+  const [telegramToken, setTelegramToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSaveConfig = async () => {
+    setLoading(true);
+    try {
+      // Salvar configurações no Supabase
+      const updates = [];
+      
+      if (tinyToken) {
+        updates.push(
+          supabase
+            .from('configuracoes')
+            .upsert({ chave: 'tiny_token', valor: tinyToken, tipo: 'string' })
+        );
+      }
+      
+      if (telegramToken) {
+        updates.push(
+          supabase
+            .from('configuracoes')
+            .upsert({ chave: 'telegram_token', valor: telegramToken, tipo: 'string' })
+        );
+      }
+      
+      if (telegramChatId) {
+        updates.push(
+          supabase
+            .from('configuracoes')
+            .upsert({ chave: 'telegram_chat_id', valor: telegramChatId, tipo: 'string' })
+        );
+      }
+
+      await Promise.all(updates);
+      
+      toast({
+        title: "Configurações salvas",
+        description: "As configurações foram atualizadas com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível salvar as configurações.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -37,32 +95,58 @@ export function Configuracoes() {
                 <h3 className="text-lg font-medium text-foreground">Tiny ERP</h3>
                 <p className="text-sm text-muted-foreground">Integração para pedidos e clientes</p>
               </div>
-              <Badge variant="default">Conectado</Badge>
+              <Badge variant={tinyToken ? "default" : "secondary"}>
+                {tinyToken ? "Configurado" : "Pendente"}
+              </Badge>
             </div>
+
+            <Alert>
+              <HelpCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Como encontrar seu Token do Tiny ERP:</strong>
+                <ol className="list-decimal list-inside mt-2 space-y-1">
+                  <li>Acesse sua conta no Tiny ERP</li>
+                  <li>Vá em "Configurações" → "API"</li>
+                  <li>Clique em "Gerar Nova Chave de API"</li>
+                  <li>Copie o token gerado e cole no campo abaixo</li>
+                </ol>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto mt-2"
+                  onClick={() => window.open('https://www.tiny.com.br/', '_blank')}
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Abrir Tiny ERP
+                </Button>
+              </AlertDescription>
+            </Alert>
             
             <div className="space-y-3">
               <div>
                 <Label htmlFor="tiny-token">Token de API</Label>
                 <Input 
                   id="tiny-token"
-                  type="password"
-                  placeholder="••••••••••••••••"
-                  value="abc123def456"
-                />
-              </div>
-              <div>
-                <Label htmlFor="tiny-url">URL Base</Label>
-                <Input 
-                  id="tiny-url"
-                  placeholder="https://api.tiny.com.br"
-                  value="https://api.tiny.com.br"
+                  type="text"
+                  placeholder="Cole aqui o token do Tiny ERP"
+                  value={tinyToken}
+                  onChange={(e) => setTinyToken(e.target.value)}
                 />
               </div>
             </div>
             
             <div className="flex gap-2">
-              <Button variant="secondary">Testar Conexão</Button>
-              <Button variant="outline">Atualizar</Button>
+              <Button 
+                variant="secondary" 
+                disabled={!tinyToken}
+                onClick={() => {
+                  toast({
+                    title: "Teste de conexão",
+                    description: "Funcionalidade será implementada em breve.",
+                  });
+                }}
+              >
+                Testar Conexão
+              </Button>
             </div>
           </div>
 
@@ -75,16 +159,43 @@ export function Configuracoes() {
                 <h3 className="text-lg font-medium text-foreground">Telegram Bot</h3>
                 <p className="text-sm text-muted-foreground">Notificações automáticas</p>
               </div>
-              <Badge variant="secondary">Configurado</Badge>
+              <Badge variant={telegramToken && telegramChatId ? "default" : "secondary"}>
+                {telegramToken && telegramChatId ? "Configurado" : "Pendente"}
+              </Badge>
             </div>
+
+            <Alert>
+              <MessageSquare className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Como configurar o Telegram:</strong>
+                <ol className="list-decimal list-inside mt-2 space-y-1">
+                  <li>Abra o Telegram e procure por "@BotFather"</li>
+                  <li>Digite "/newbot" e siga as instruções</li>
+                  <li>Copie o token do bot criado</li>
+                  <li>Adicione o bot ao seu grupo/canal</li>
+                  <li>Para obter o Chat ID, adicione "@userinfobot" ao grupo</li>
+                  <li>Digite "/start" no @userinfobot para ver o Chat ID</li>
+                </ol>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto mt-2"
+                  onClick={() => window.open('https://t.me/botfather', '_blank')}
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Abrir BotFather
+                </Button>
+              </AlertDescription>
+            </Alert>
             
             <div className="space-y-3">
               <div>
                 <Label htmlFor="telegram-token">Bot Token</Label>
                 <Input 
                   id="telegram-token"
-                  type="password"
-                  placeholder="••••••••••••••••"
+                  type="text"
+                  placeholder="123456789:ABCdefGhIJKlmNOPQRstUVwxyZ"
+                  value={telegramToken}
+                  onChange={(e) => setTelegramToken(e.target.value)}
                 />
               </div>
               <div>
@@ -92,11 +203,24 @@ export function Configuracoes() {
                 <Input 
                   id="chat-id"
                   placeholder="-1001234567890"
+                  value={telegramChatId}
+                  onChange={(e) => setTelegramChatId(e.target.value)}
                 />
               </div>
             </div>
             
-            <Button variant="secondary">Enviar Teste</Button>
+            <Button 
+              variant="secondary"
+              disabled={!telegramToken || !telegramChatId}
+              onClick={() => {
+                toast({
+                  title: "Teste de mensagem",
+                  description: "Funcionalidade será implementada em breve.",
+                });
+              }}
+            >
+              Enviar Teste
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -227,8 +351,13 @@ export function Configuracoes() {
             </div>
           </div>
           
-          <Button variant="premium" className="w-full">
-            Salvar Configurações
+          <Button 
+            variant="premium" 
+            className="w-full"
+            onClick={handleSaveConfig}
+            disabled={loading}
+          >
+            {loading ? "Salvando..." : "Salvar Configurações"}
           </Button>
         </CardContent>
       </Card>
