@@ -27,6 +27,7 @@ import { EstoqueTabela } from "@/components/estoque/EstoqueTabela";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
 import { MovimentacoesRecentes } from "@/components/estoque/MovimentacoesRecentes";
+import { PrevisaoReposicaoModal } from "@/components/estoque/PrevisaoReposicaoModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -60,6 +61,7 @@ export function Estoque() {
   const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
   const [modalMovimentacaoAberto, setModalMovimentacaoAberto] = useState(false);
   const [modalNovoProdutoAberto, setModalNovoProdutoAberto] = useState(false);
+  const [modalPrevisaoAberto, setModalPrevisaoAberto] = useState(false);
   const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const { toast } = useToast();
@@ -101,11 +103,17 @@ export function Estoque() {
     setModalNovoProdutoAberto(true);
   };
 
+  const abrirPrevisao = (produto: any) => {
+    setProdutoSelecionado(produto);
+    setModalPrevisaoAberto(true);
+  };
+
   const fecharModais = () => {
     setModalDetalhesAberto(false);
     setModalEdicaoAberto(false);
     setModalMovimentacaoAberto(false);
     setModalNovoProdutoAberto(false);
+    setModalPrevisaoAberto(false);
     setProdutoSelecionado(null);
   };
 
@@ -236,6 +244,7 @@ export function Estoque() {
             onPaginar={irParaPagina}
             onPaginaAnterior={paginaAnterior}
             onProximaPagina={proximaPagina}
+            onAbrirPrevisao={abrirPrevisao}
           />
         </CardContent>
       </Card>
@@ -268,6 +277,12 @@ export function Estoque() {
         isOpen={modalNovoProdutoAberto}
         onClose={fecharModais}
         onSuccess={recarregarDados}
+      />
+
+      <PrevisaoReposicaoModal
+        produto={produtoSelecionado}
+        isOpen={modalPrevisaoAberto}
+        onClose={fecharModais}
       />
     </div>
   );

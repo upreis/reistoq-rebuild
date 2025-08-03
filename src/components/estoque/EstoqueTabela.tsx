@@ -1,4 +1,4 @@
-import { Package, Edit, ArrowUpDown } from "lucide-react";
+import { Package, Edit, ArrowUpDown, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,6 +42,7 @@ interface EstoqueTabelaProps {
   onPaginar: (pagina: number) => void;
   onPaginaAnterior: () => void;
   onProximaPagina: () => void;
+  onAbrirPrevisao?: (produto: Produto) => void;
 }
 
 export function EstoqueTabela({
@@ -62,7 +63,8 @@ export function EstoqueTabela({
   onImageUploaded,
   onPaginar,
   onPaginaAnterior,
-  onProximaPagina
+  onProximaPagina,
+  onAbrirPrevisao
 }: EstoqueTabelaProps) {
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -233,6 +235,17 @@ export function EstoqueTabela({
                     >
                       Movimentar
                     </Button>
+                    {onAbrirPrevisao && (
+                      <Button 
+                        size="sm" 
+                        variant="premium" 
+                        className="text-xs px-2"
+                        onClick={() => onAbrirPrevisao(produto)}
+                        title="Previsão IA"
+                      >
+                        <Brain className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

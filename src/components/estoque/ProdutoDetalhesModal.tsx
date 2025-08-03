@@ -7,6 +7,10 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ProdutoHistoricoTimeline } from './ProdutoHistoricoTimeline';
+import { ProdutoQRCode } from './ProdutoQRCode';
 
 interface Produto {
   id: string;
@@ -71,127 +75,162 @@ export const ProdutoDetalhesModal: React.FC<ProdutoDetalhesModalProps> = ({
           <DialogTitle className="text-xl">Detalhes do Produto</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Imagem do Produto */}
-          <div className="flex justify-center">
-            {produto.url_imagem ? (
-              <img
-                src={produto.url_imagem}
-                alt={produto.nome}
-                className="w-48 h-48 object-cover rounded-lg border"
+        <Tabs defaultValue="detalhes" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
+            <TabsTrigger value="qrcode">QR Code</TabsTrigger>
+            <TabsTrigger value="acoes">Ações</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="detalhes" className="space-y-6 mt-6">
+            {/* Imagem do Produto */}
+            <div className="flex justify-center">
+              {produto.url_imagem ? (
+                <img
+                  src={produto.url_imagem}
+                  alt={produto.nome}
+                  className="w-48 h-48 object-cover rounded-lg border"
+                />
+              ) : (
+                <div className="w-48 h-48 bg-muted rounded-lg border flex items-center justify-center">
+                  <span className="text-muted-foreground">Sem imagem</span>
+                </div>
+              )}
+            </div>
+
+            {/* Informações Básicas */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">{produto.nome}</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">SKU Interno:</span>
+                  <p className="text-sm">{produto.sku_interno}</p>
+                </div>
+                
+                {produto.codigo_barras && (
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Código de Barras:</span>
+                    <p className="text-sm">{produto.codigo_barras}</p>
+                  </div>
+                )}
+                
+                {produto.categoria && (
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Categoria:</span>
+                    <p className="text-sm">{produto.categoria}</p>
+                  </div>
+                )}
+                
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Status:</span>
+                  <p className="text-sm">{getStatusBadge(produto.quantidade_atual, produto.estoque_minimo, produto.estoque_maximo)}</p>
+                </div>
+              </div>
+
+              {produto.descricao && (
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Descrição:</span>
+                  <p className="text-sm mt-1">{produto.descricao}</p>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Informações de Estoque */}
+            <div>
+              <h4 className="font-semibold mb-3">Informações de Estoque</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <span className="text-sm text-muted-foreground">Quantidade Atual</span>
+                  <p className="text-2xl font-bold">{produto.quantidade_atual}</p>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <span className="text-sm text-muted-foreground">Estoque Mínimo</span>
+                  <p className="text-lg font-semibold">{produto.estoque_minimo}</p>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <span className="text-sm text-muted-foreground">Estoque Máximo</span>
+                  <p className="text-lg font-semibold">{produto.estoque_maximo}</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Informações Financeiras */}
+            <div>
+              <h4 className="font-semibold mb-3">Informações Financeiras</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Preço de Custo:</span>
+                  <p className="text-lg font-semibold">{formatarMoeda(produto.preco_custo)}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Preço de Venda:</span>
+                  <p className="text-lg font-semibold">{formatarMoeda(produto.preco_venda)}</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Informações Adicionais */}
+            <div>
+              <h4 className="font-semibold mb-3">Informações Adicionais</h4>
+              <div className="space-y-2">
+                {produto.localizacao && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Localização:</span>
+                    <span className="text-sm">{produto.localizacao}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Criado em:</span>
+                  <span className="text-sm">{formatarData(produto.created_at)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Atualizado em:</span>
+                  <span className="text-sm">{formatarData(produto.updated_at)}</span>
+                </div>
+                {produto.ultima_movimentacao && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Última Movimentação:</span>
+                    <span className="text-sm">{formatarData(produto.ultima_movimentacao)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="historico" className="mt-6">
+            <ProdutoHistoricoTimeline produtoId={produto.id} limite={20} />
+          </TabsContent>
+
+          <TabsContent value="qrcode" className="mt-6">
+            <div className="flex justify-center">
+              <ProdutoQRCode 
+                produto={{
+                  id: produto.id,
+                  sku_interno: produto.sku_interno,
+                  nome: produto.nome,
+                  codigo_barras: produto.codigo_barras
+                }}
               />
-            ) : (
-              <div className="w-48 h-48 bg-muted rounded-lg border flex items-center justify-center">
-                <span className="text-muted-foreground">Sem imagem</span>
-              </div>
-            )}
-          </div>
-
-          {/* Informações Básicas */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">{produto.nome}</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">SKU Interno:</span>
-                <p className="text-sm">{produto.sku_interno}</p>
-              </div>
-              
-              {produto.codigo_barras && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Código de Barras:</span>
-                  <p className="text-sm">{produto.codigo_barras}</p>
-                </div>
-              )}
-              
-              {produto.categoria && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Categoria:</span>
-                  <p className="text-sm">{produto.categoria}</p>
-                </div>
-              )}
-              
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Status:</span>
-                <p className="text-sm">{getStatusBadge(produto.quantidade_atual, produto.estoque_minimo, produto.estoque_maximo)}</p>
-              </div>
             </div>
+          </TabsContent>
 
-            {produto.descricao && (
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Descrição:</span>
-                <p className="text-sm mt-1">{produto.descricao}</p>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Informações de Estoque */}
-          <div>
-            <h4 className="font-semibold mb-3">Informações de Estoque</h4>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <span className="text-sm text-muted-foreground">Quantidade Atual</span>
-                <p className="text-2xl font-bold">{produto.quantidade_atual}</p>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <span className="text-sm text-muted-foreground">Estoque Mínimo</span>
-                <p className="text-lg font-semibold">{produto.estoque_minimo}</p>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <span className="text-sm text-muted-foreground">Estoque Máximo</span>
-                <p className="text-lg font-semibold">{produto.estoque_maximo}</p>
-              </div>
+          <TabsContent value="acoes" className="mt-6">
+            <div className="text-center p-8">
+              <h4 className="font-semibold mb-4">Ações do Produto</h4>
+              <p className="text-muted-foreground mb-4">
+                Funcionalidades adicionais em breve...
+              </p>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Informações Financeiras */}
-          <div>
-            <h4 className="font-semibold mb-3">Informações Financeiras</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Preço de Custo:</span>
-                <p className="text-lg font-semibold">{formatarMoeda(produto.preco_custo)}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Preço de Venda:</span>
-                <p className="text-lg font-semibold">{formatarMoeda(produto.preco_venda)}</p>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Informações Adicionais */}
-          <div>
-            <h4 className="font-semibold mb-3">Informações Adicionais</h4>
-            <div className="space-y-2">
-              {produto.localizacao && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Localização:</span>
-                  <span className="text-sm">{produto.localizacao}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Criado em:</span>
-                <span className="text-sm">{formatarData(produto.created_at)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Atualizado em:</span>
-                <span className="text-sm">{formatarData(produto.updated_at)}</span>
-              </div>
-              {produto.ultima_movimentacao && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Última Movimentação:</span>
-                  <span className="text-sm">{formatarData(produto.ultima_movimentacao)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
