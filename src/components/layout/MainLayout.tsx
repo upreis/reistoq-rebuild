@@ -8,7 +8,6 @@ import { Pedidos } from '@/components/pages/Pedidos';
 import { Estoque } from '@/components/pages/Estoque';
 import { Scanner } from '@/components/pages/Scanner';
 import { Historico } from '@/components/pages/Historico';
-import { DePara } from '@/components/pages/DePara';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 
 export function MainLayout() {
@@ -24,7 +23,6 @@ export function MainLayout() {
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/pedidos" element={<Pedidos />} />
               <Route path="/scanner" element={<Scanner />} />
-              <Route path="/de-para" element={<DePara />} />
               <Route path="/historico" element={<Historico />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
             </Routes>
