@@ -79,7 +79,7 @@ export function AppSidebar() {
             <img 
               src="/lovable-uploads/d88642c1-1622-40fe-88ea-8c1ac40156a5.png" 
               alt="REISTOQ Logo" 
-              className="h-8 w-8 flex-shrink-0 object-contain"
+              className="h-12 w-12 flex-shrink-0 object-contain"
             />
             {!collapsed && (
               <div>
