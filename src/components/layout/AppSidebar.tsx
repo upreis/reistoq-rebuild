@@ -80,8 +80,12 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
         {/* Logo/Brand */}
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center shadow-md">
+              <img 
+                src="/src/assets/logo.png" 
+                alt="REISTOQ" 
+                className="w-5 h-5 object-contain brightness-0 invert"
+              />
             </div>
             {!collapsed && (
               <div>

@@ -1,6 +1,7 @@
 import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,18 +40,23 @@ export function Header() {
     : user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
+    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm px-6 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
         <div className="hidden md:block">
-          <h2 className="text-lg font-semibold text-foreground">Sistema de Gestão de Estoque</h2>
+          <h2 className="text-lg font-semibold gradient-primary bg-clip-text text-transparent">
+            Sistema de Gestão de Estoque
+          </h2>
           <p className="text-sm text-muted-foreground">Bem-vindo ao REISTOQ</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+        
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative hover:bg-accent/10 transition-colors">
           <Bell className="h-4 w-4" />
           <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-destructive text-destructive-foreground">
             3

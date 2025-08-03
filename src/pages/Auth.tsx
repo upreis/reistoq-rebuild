@@ -124,12 +124,16 @@ export default function Auth() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl border-border/50">
         <CardHeader className="text-center pb-6">
-          <div className="mx-auto w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mb-4">
-            <Building2 className="w-6 h-6 text-white" />
+          <div className="mx-auto w-16 h-16 gradient-primary rounded-xl flex items-center justify-center mb-4 shadow-elegant">
+            <img 
+              src="/src/assets/logo.png" 
+              alt="REISTOQ Logo" 
+              className="w-10 h-10 object-contain brightness-0 invert"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">REISTOQ</CardTitle>
+          <CardTitle className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">REISTOQ</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Sistema de Gestão de Estoque
+            Sistema de Gestão de Estoque Profissional
           </CardDescription>
         </CardHeader>
         

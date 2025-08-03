@@ -1,136 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* REISTOQ Design System - Sistema de Gestão de Estoque Empresarial
-All colors MUST be HSL. Inspirado em dashboards modernos como Tiny ERP.
-*/
-
 @layer base {
   :root {
-    /* Background & Surfaces */
-    --background: 220 15% 98%;
-    --foreground: 220 20% 14%;
+    /* Core Brand Colors */
+    --primary: 210 100% 50%;          /* Professional Blue */
+    --primary-foreground: 0 0% 100%;   /* White text on primary */
+    --primary-hover: 210 100% 45%;     /* Darker blue for hover */
+    --primary-light: 210 100% 95%;     /* Light blue background */
     
-    /* Cards & Elevated Surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 14%;
+    /* Secondary Colors */
+    --secondary: 210 25% 98%;          /* Very light blue-gray */
+    --secondary-foreground: 210 15% 25%; /* Dark blue-gray text */
     
-    /* Popover & Tooltips */
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 14%;
+    /* Accent Colors */
+    --accent: 197 100% 50%;            /* Cyan accent */
+    --accent-foreground: 0 0% 100%;    /* White text on accent */
     
-    /* Primary Brand - Professional Blue */
-    --primary: 217 91% 32%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 28%;
-    --primary-light: 217 91% 95%;
-    
-    /* Secondary - Success Green */
-    --secondary: 142 76% 36%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-hover: 142 76% 32%;
-    --secondary-light: 142 76% 95%;
-    
-    /* Muted & Subtle */
-    --muted: 220 13% 96%;
-    --muted-foreground: 220 13% 50%;
-    
-    /* Accent - Warning Orange */
-    --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 38 92% 95%;
-    
-    /* Destructive - Error Red */
-    --destructive: 0 84% 60%;
+    /* Success/Warning/Error */
+    --success: 142 76% 36%;            /* Green */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;             /* Orange */
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;          /* Red */
     --destructive-foreground: 0 0% 100%;
-    --destructive-light: 0 84% 95%;
     
-    /* Borders & Inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 32%;
+    /* Neutral Colors */
+    --background: 0 0% 100%;           /* White */
+    --foreground: 210 15% 15%;         /* Very dark blue-gray */
+    --card: 0 0% 100%;                 /* White cards */
+    --card-foreground: 210 15% 15%;    /* Dark text on cards */
+    --popover: 0 0% 100%;              /* White popovers */
+    --popover-foreground: 210 15% 15%; /* Dark text */
     
-    /* Layout */
-    --radius: 0.75rem;
-
-    /* Sidebar System */
-    --sidebar-background: 220 15% 99%;
-    --sidebar-foreground: 220 20% 14%;
-    --sidebar-primary: 217 91% 32%;
+    /* Muted Colors */
+    --muted: 210 25% 96%;              /* Light gray background */
+    --muted-foreground: 210 10% 45%;   /* Medium gray text */
+    
+    /* Border & Input */
+    --border: 210 20% 88%;             /* Light border */
+    --input: 210 20% 90%;              /* Input background */
+    --ring: 210 100% 50%;              /* Focus ring (primary) */
+    
+    /* Sidebar specific */
+    --sidebar-background: 210 30% 8%;  /* Dark blue-gray */
+    --sidebar-foreground: 210 20% 90%; /* Light text */
+    --sidebar-primary: 210 100% 55%;   /* Bright blue for active items */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 91% 95%;
-    --sidebar-accent-foreground: 217 91% 32%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 32%;
+    --sidebar-accent: 210 30% 15%;     /* Darker for hover */
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 210 30% 15%;     /* Subtle border */
+    --sidebar-ring: 210 100% 55%;      /* Focus ring */
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 50%), hsl(197 100% 50%));
+    --gradient-subtle: linear-gradient(180deg, hsl(210 25% 98%), hsl(210 25% 96%));
     
-    /* Custom REISTOQ Tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 32%), hsl(217 91% 42%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
-    --shadow-elegant: 0 10px 30px -10px hsl(217 91% 32% / 0.15);
-    --shadow-glow: 0 0 40px hsl(217 91% 32% / 0.1);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(210 20% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(210 20% 0% / 0.1), 0 2px 4px -2px hsl(210 20% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(210 20% 0% / 0.1), 0 4px 6px -4px hsl(210 20% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(210 20% 0% / 0.1), 0 8px 10px -6px hsl(210 20% 0% / 0.1);
+    
+    /* Animation */
+    --transition-all: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-colors: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark Mode - Background & Surfaces */
-    --background: 220 20% 6%;
-    --foreground: 220 15% 95%;
+    /* Core Brand Colors - adjusted for dark mode */
+    --primary: 210 100% 60%;           /* Brighter blue for dark */
+    --primary-foreground: 210 30% 8%;  /* Dark text on primary */
+    --primary-hover: 210 100% 65%;     /* Even brighter for hover */
+    --primary-light: 210 100% 15%;     /* Dark blue background */
     
-    /* Cards & Elevated Surfaces */
-    --card: 220 20% 8%;
-    --card-foreground: 220 15% 95%;
+    /* Secondary Colors */
+    --secondary: 210 30% 12%;          /* Dark blue-gray */
+    --secondary-foreground: 210 25% 85%; /* Light text */
     
-    /* Popover & Tooltips */
-    --popover: 220 20% 8%;
-    --popover-foreground: 220 15% 95%;
+    /* Accent Colors */
+    --accent: 197 100% 60%;            /* Brighter cyan for dark */
+    --accent-foreground: 210 30% 8%;   /* Dark text on accent */
     
-    /* Primary Brand - Bright Blue in Dark */
-    --primary: 217 91% 55%;
-    --primary-foreground: 220 20% 6%;
-    --primary-hover: 217 91% 60%;
-    --primary-light: 217 91% 15%;
-    
-    /* Secondary - Bright Green in Dark */
-    --secondary: 142 76% 50%;
-    --secondary-foreground: 220 20% 6%;
-    --secondary-hover: 142 76% 55%;
-    --secondary-light: 142 76% 15%;
-    
-    /* Muted & Subtle */
-    --muted: 220 13% 12%;
-    --muted-foreground: 220 13% 65%;
-    
-    /* Accent - Bright Orange in Dark */
-    --accent: 38 92% 60%;
-    --accent-foreground: 220 20% 6%;
-    --accent-light: 38 92% 15%;
-    
-    /* Destructive - Bright Red in Dark */
+    /* Success/Warning/Error - adjusted for dark */
+    --success: 142 76% 45%;
+    --warning: 38 92% 60%;
     --destructive: 0 84% 65%;
-    --destructive-foreground: 220 20% 6%;
-    --destructive-light: 0 84% 15%;
     
-    /* Borders & Inputs */
-    --border: 220 13% 18%;
-    --input: 220 13% 18%;
-    --ring: 217 91% 55%;
+    /* Neutral Colors */
+    --background: 210 30% 8%;          /* Very dark blue-gray */
+    --foreground: 210 25% 95%;         /* Very light text */
+    --card: 210 30% 10%;               /* Dark cards */
+    --card-foreground: 210 25% 90%;    /* Light text on cards */
+    --popover: 210 30% 10%;            /* Dark popovers */
+    --popover-foreground: 210 25% 90%; /* Light text */
     
-    /* Sidebar Dark Mode */
-    --sidebar-background: 220 20% 4%;
-    --sidebar-foreground: 220 15% 95%;
-    --sidebar-primary: 217 91% 55%;
-    --sidebar-primary-foreground: 220 20% 4%;
-    --sidebar-accent: 217 91% 15%;
-    --sidebar-accent-foreground: 217 91% 55%;
-    --sidebar-border: 220 13% 18%;
-    --sidebar-ring: 217 91% 55%;
+    /* Muted Colors */
+    --muted: 210 30% 15%;              /* Dark gray background */
+    --muted-foreground: 210 20% 65%;   /* Medium light text */
     
-    /* Dark Mode Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 55%), hsl(217 91% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 50%), hsl(142 76% 60%));
-    --shadow-elegant: 0 10px 30px -10px hsl(217 91% 55% / 0.25);
-    --shadow-glow: 0 0 40px hsl(217 91% 55% / 0.15);
+    /* Border & Input */
+    --border: 210 30% 18%;             /* Dark border */
+    --input: 210 30% 15%;              /* Dark input background */
+    --ring: 210 100% 60%;              /* Focus ring */
+    
+    /* Sidebar specific - darker in dark mode */
+    --sidebar-background: 210 35% 6%;  /* Even darker */
+    --sidebar-foreground: 210 25% 85%; /* Light text */
+    --sidebar-primary: 210 100% 65%;   /* Brighter blue */
+    --sidebar-primary-foreground: 210 30% 8%;
+    --sidebar-accent: 210 30% 12%;     /* Lighter for hover in dark */
+    --sidebar-accent-foreground: 210 25% 95%;
+    --sidebar-border: 210 30% 12%;     /* Subtle border */
+    --sidebar-ring: 210 100% 65%;
+    
+    /* Gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 60%), hsl(197 100% 60%));
+    --gradient-subtle: linear-gradient(180deg, hsl(210 30% 10%), hsl(210 30% 8%));
   }
 }
 
@@ -138,8 +128,44 @@ All colors MUST be HSL. Inspirado em dashboards modernos como Tiny ERP.
   * {
     @apply border-border;
   }
-
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+  
+  .shadow-elegant {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-all);
   }
 }
