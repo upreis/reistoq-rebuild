@@ -76,7 +76,11 @@ export function AppSidebar() {
         {/* Header */}
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <Crown className={`h-8 w-8 flex-shrink-0 ${theme === 'dark' ? 'text-yellow-500' : 'text-blue-600'}`} />
+            <img 
+              src="/lovable-uploads/cece4f09-5a82-45ec-a712-fd6aabb235e9.png" 
+              alt="REISTOQ Logo" 
+              className="h-8 w-8 flex-shrink-0 object-contain"
+            />
             {!collapsed && (
               <div>
                 <span className="text-xl font-bold text-accent">REISTOQ</span>
