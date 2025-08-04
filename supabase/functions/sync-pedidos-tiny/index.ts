@@ -252,8 +252,8 @@ serve(async (req) => {
     const params = new URLSearchParams({
       token: tinyToken,
       formato: 'JSON',
-      pagina: '1',
-      com_itens: 'S' // ✅ CRUCIAL: busca com itens já incluídos
+      pagina: '1'
+      // ✅ REMOVIDO com_itens=S temporariamente para debug
     });
 
     // Aplicar filtros se fornecidos - usando formato correto DD/MM/YYYY para API do Tiny
@@ -311,6 +311,13 @@ serve(async (req) => {
         const pedido = item.pedido;
         
         try {
+          // ✅ DEBUG: Log detalhado do pedido para entender estrutura
+          console.log(`🔍 DEBUG Pedido ${pedido.numero}:`, {
+            temItens: !!pedido.itens,
+            qtdItens: pedido.itens?.length || 0,
+            itensRaw: pedido.itens ? JSON.stringify(pedido.itens).substring(0, 200) : 'SEM ITENS'
+          });
+          
           const pedidoProcessado: TinyPedido = {
             id: pedido.id || '',
             numero: pedido.numero || '',
