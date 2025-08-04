@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { useItensPedidos } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
-import { PedidosFiltros } from "@/components/pedidos/PedidosFiltros";
+import { PedidosFiltrosAvancados } from "@/components/pedidos/PedidosFiltrosAvancados";
 import { PedidosTabelaItens } from "@/components/pedidos/PedidosTabelaItens";
 import type { ItemPedido } from "@/hooks/useItensPedidos";
 
@@ -104,7 +104,7 @@ export function Pedidos() {
       <PedidosMetricas metricas={metricas} />
 
       {/* Filtros */}
-      <PedidosFiltros
+      <PedidosFiltrosAvancados
         filtros={filtros}
         onFiltroChange={atualizarFiltros}
         onLimparFiltros={limparFiltros}
