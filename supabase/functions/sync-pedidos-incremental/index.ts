@@ -8,7 +8,9 @@ const corsHeaders = {
 interface ProcessarParams {
   filtros?: {
     dataInicio?: string;
+    dataInicial?: string;  // Também aceitar formato correto
     dataFim?: string;
+    dataFinal?: string;    // Também aceitar formato correto
     situacao?: string;
   };
 }

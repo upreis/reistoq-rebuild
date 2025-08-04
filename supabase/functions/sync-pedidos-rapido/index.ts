@@ -333,60 +333,9 @@ Deno.serve(async (req) => {
 
     console.log(`📊 Processamento concluído: ${allPedidos.length} pedidos, ${allItens.length} itens`);
 
-    // Buscar detalhes para pedidos sem itens (em lotes pequenos)
-    const pedidosSemItens = allPedidos.filter(p => 
-      !allItens.some(item => item.numero_pedido === p.numero)
-    );
-
-    if (pedidosSemItens.length > 0) {
-      console.log(`🔍 Buscando detalhes para ${pedidosSemItens.length} pedidos sem itens...`);
-
-      for (let i = 0; i < pedidosSemItens.length; i += BATCH_SIZE) {
-        const lote = pedidosSemItens.slice(i, i + BATCH_SIZE);
-        
-        console.log(`📦 Processando lote ${Math.floor(i/BATCH_SIZE) + 1}: ${lote.length} pedidos`);
-
-        const promessasLote = lote.map(async (pedido) => {
-          try {
-            const detalhesParams = new URLSearchParams({
-              token: config.tiny_erp_token,
-              formato: 'json',
-              id: pedido.id
-            });
-
-            const detalhesData = await makeApiCallWithRetry(
-              `${config.tiny_api_url}/pedido.obter.php?${detalhesParams.toString()}`,
-              new URLSearchParams(),
-              config,
-              `Detalhes-${pedido.numero}`
-            );
-
-            const pedidoDetalhado = detalhesData.retorno?.pedido;
-            if (pedidoDetalhado?.itens) {
-              for (const itemWrapper of pedidoDetalhado.itens) {
-                const item = itemWrapper.item;
-                
-                allItens.push({
-                  numero_pedido: pedido.numero,
-                  sku: item.codigo,
-                  descricao: item.descricao,
-                  quantidade: parseInt(item.quantidade || '0'),
-                  valor_unitario: parseFloat(item.valor_unitario || '0'),
-                  valor_total: parseFloat(item.valor_total || '0'),
-                  ncm: item.ncm,
-                  observacoes: null
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`❌ Erro ao buscar detalhes do pedido ${pedido.numero}:`, error.message);
-          }
-        });
-
-        await Promise.all(promessasLote);
-        await sleep(DELAY_ENTRE_LOTES);
-      }
-    }
+    // ✅ OTIMIZAÇÃO: Removida busca individual de detalhes que causava timeout
+    // A API pedidos.pesquisa.php com com_itens='S' já retorna os itens
+    console.log('⚡ Sincronização otimizada - sem chamadas extras de detalhes');
 
     // Salvar dados no Supabase
     console.log('💾 Salvando dados no Supabase...');
