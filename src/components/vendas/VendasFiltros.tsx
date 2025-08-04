@@ -33,7 +33,7 @@ export function VendasFiltros({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Buscar por nº pedido, SKU, produto ou cliente..."
+              placeholder="Buscar Pedido, Sku, Produto..."
               value={filtros.termo_busca}
               onChange={(e) => onAtualizarFiltros({ termo_busca: e.target.value })}
               className="pl-10 bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
