@@ -7,13 +7,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Configurações robustas
-const CACHE_TTL_MINUTES = 15;
-const BATCH_SIZE = 2; // Máxima estabilidade
-const MAX_RETRIES = 3;
-const BASE_RETRY_DELAY = 2000; // 2 segundos
-const MAX_REQUESTS_PER_MINUTE = 10; // Conservador
-const REQUEST_TIMEOUT = 30000; // 30 segundos
+// Configurações ultra-conservadoras para evitar timeout
+const CACHE_TTL_MINUTES = 5; // Cache menor
+const BATCH_SIZE = 1; // Apenas 1 por vez
+const MAX_RETRIES = 1; // Apenas 1 tentativa
+const BASE_RETRY_DELAY = 500; // 500ms
+const MAX_REQUESTS_PER_MINUTE = 5; // Muito conservador
+const REQUEST_TIMEOUT = 15000; // 15 segundos
 
 // Rate limiting rigoroso
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -92,7 +92,7 @@ async function makeApiCallWithFullErrorHandling(url: string, params: URLSearchPa
 
       // Promise de timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error(`Timeout após 30s`)), REQUEST_TIMEOUT);
+        setTimeout(() => reject(new Error(`Timeout após 15s`)), REQUEST_TIMEOUT);
       });
 
       // Race entre fetch e timeout
@@ -220,17 +220,17 @@ serve(async (req) => {
 
     console.log('✅ Credenciais obtidas com sucesso');
 
-    // Buscar pedidos da API do Tiny de forma robusta
+    // Buscar pedidos da API do Tiny - APENAS 1 PÁGINA
     const pedidosColetados: TinyPedido[] = [];
-    const pagina = 1; // Começar com apenas 1 página para máxima estabilidade
+    const pagina = 1; // APENAS 1 página para evitar timeout
     
-    console.log(`📄 Processando página ${pagina} com máxima robustez...`);
+    console.log(`📄 Processando APENAS página ${pagina} para evitar timeout...`);
 
     const params = new URLSearchParams({
       token: tinyToken,
       formato: 'JSON',
       pagina: pagina.toString(),
-      com_itens: 'S' // Tentar buscar com itens primeiro
+      com_itens: 'N' // SEM itens para ser mais rápido
     });
 
     // Aplicar filtros se fornecidos
@@ -261,7 +261,7 @@ serve(async (req) => {
         pedidosColetados.push(...pedidosPagina);
         console.log(`✅ Página ${pagina}: ${pedidosPagina.length} pedidos coletados`);
       } else {
-        console.warn(`⚠️ Resposta inesperada da API na página ${pagina}:`, apiResponse);
+        console.warn(`⚠️ Resposta inesperada da API na página ${pagina}. Status:`, apiResponse?.retorno?.status);
       }
 
     } catch (error) {
