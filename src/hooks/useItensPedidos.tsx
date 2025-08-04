@@ -69,17 +69,11 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
-    // ✅ Inicialização automática das datas (últimos 30 dias, não incluindo hoje)
-    const ontem = new Date();
-    ontem.setDate(ontem.getDate() - 1); // Ontem (não hoje)
-    
-    const trintaDiasAtras = new Date();
-    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30); // 30 dias atrás
-    
+    // ✅ Configuração para mostrar os dados existentes (março-abril 2025)
     return {
       busca: '',
-      dataInicio: trintaDiasAtras.toISOString().split('T')[0], // YYYY-MM-DD
-      dataFim: ontem.toISOString().split('T')[0],              // YYYY-MM-DD (ontem)
+      dataInicio: '2025-03-01',  // Início de março
+      dataFim: '2025-04-30',     // Final de abril
       situacoes: []
     };
   });
@@ -90,16 +84,10 @@ export function useItensPedidos() {
     if (filtrosSalvos) {
       try {
         const filtrosCarregados = JSON.parse(filtrosSalvos);
-        // Se não tem datas salvas, mantém as datas inicializadas automaticamente
+        // Se não tem datas salvas, usa as datas padrão (março-abril)
         if (!filtrosCarregados.dataInicio || !filtrosCarregados.dataFim) {
-          const ontem = new Date();
-          ontem.setDate(ontem.getDate() - 1); // Ontem (não hoje)
-          
-          const trintaDiasAtras = new Date();
-          trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30); // 30 dias atrás
-          
-          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || trintaDiasAtras.toISOString().split('T')[0];
-          filtrosCarregados.dataFim = filtrosCarregados.dataFim || ontem.toISOString().split('T')[0];
+          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || '2025-03-01';
+          filtrosCarregados.dataFim = filtrosCarregados.dataFim || '2025-04-30';
         }
         setFiltros(filtrosCarregados);
       } catch (error) {
