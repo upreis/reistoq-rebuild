@@ -66,7 +66,7 @@ export function useItensPedidos() {
     pedidosEntregues: 0,
     valorTotal: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // ✅ Inicia como false - loading só quando busca for solicitada
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
     // ✅ DEFININDO FILTROS PARA BUSCAR OS DADOS SINCRONIZADOS
@@ -357,43 +357,46 @@ export function useItensPedidos() {
     }
   };
 
-  // Carregamento inicial apenas - busca automática controlada separadamente
+  // ✅ Busca inicial apenas se não há dados carregados
   useEffect(() => {
-    buscarItens();
-  }, []); // Sem dependência dos filtros - busca apenas no carregamento inicial
+    if (itens.length === 0 && !loading) {
+      buscarItens();
+    }
+  }, []); // Executa apenas na primeira montagem
 
-  // Real-time subscription para itens_pedidos
-  useEffect(() => {
-    const channel = supabase
-      .channel('itens-pedidos-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'itens_pedidos'
-        },
-        () => {
-          buscarItens();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'pedidos'
-        },
-        () => {
-          buscarItens();
-        }
-      )
-      .subscribe();
+  // ❌ REMOVIDO: Real-time subscription automática
+  // A subscription será controlada pelo usuário através das configurações de sincronização
+  // useEffect(() => {
+  //   const channel = supabase
+  //     .channel('itens-pedidos-changes')
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: '*',
+  //         schema: 'public',
+  //         table: 'itens_pedidos'
+  //       },
+  //       () => {
+  //         buscarItens();
+  //       }
+  //     )
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: '*',
+  //         schema: 'public',
+  //         table: 'pedidos'
+  //       },
+  //       () => {
+  //         buscarItens();
+  //       }
+  //     )
+  //     .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, []);
 
   return {
     itens,
