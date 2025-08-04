@@ -49,12 +49,9 @@ interface MetricasPedidos {
 }
 
 interface FiltrosPedidos {
-  busca: string;
-  cliente: string;
   dataInicio: string;
   dataFim: string;
   situacoes: string[];
-  sku: string;
 }
 
 export function useItensPedidos() {
@@ -71,12 +68,9 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>({
-    busca: '',
-    cliente: '',
     dataInicio: '',
     dataFim: '',
-    situacoes: [],
-    sku: ''
+    situacoes: []
   });
 
   // Carregar filtros salvos do localStorage
@@ -147,18 +141,6 @@ export function useItensPedidos() {
         `);
 
       // Aplicar filtros
-      if (filtros.busca) {
-        query = query.or(`numero_pedido.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
-      }
-
-      if (filtros.cliente) {
-        query = query.filter('pedidos.nome_cliente', 'ilike', `%${filtros.cliente}%`);
-      }
-
-      if (filtros.sku) {
-        query = query.ilike('sku', `%${filtros.sku}%`);
-      }
-
       if (filtros.dataInicio) {
         query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
       }
@@ -324,12 +306,9 @@ export function useItensPedidos() {
 
   const limparFiltros = () => {
     setFiltros({
-      busca: '',
-      cliente: '',
       dataInicio: '',
       dataFim: '',
-      situacoes: [],
-      sku: ''
+      situacoes: []
     });
   };
 
