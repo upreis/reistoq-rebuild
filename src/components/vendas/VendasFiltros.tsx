@@ -59,7 +59,7 @@ export function VendasFiltros({
   };
 
   return (
-    <Card className="bg-slate-900 border-slate-700">
+    <Card className="border-slate-700">
       <CardHeader className="pb-4">
         <CardTitle className="text-white flex items-center gap-2">
           <Search className="h-5 w-5" />
