@@ -224,7 +224,7 @@ export function PedidosTabelaItens({
                           ? 'text-red-600 font-semibold' 
                           : item.estoque_atual === 0 
                             ? 'text-orange-600' 
-                            : 'text-green-600'
+                            : 'text-yellow-600'
                       }`}>
                         {item.estoque_atual}
                         {item.estoque_atual < item.quantidade && (
