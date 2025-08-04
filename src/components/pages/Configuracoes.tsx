@@ -1,9 +1,10 @@
-import { Settings, Key, Bell, Database, Zap, ExternalLink, HelpCircle, MessageSquare } from "lucide-react";
+import { Settings, Key, Bell, Database, Zap, ExternalLink, HelpCircle, MessageSquare, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,6 +16,8 @@ export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
   const [telegramToken, setTelegramToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
+  const [alertasAutomaticos, setAlertasAutomaticos] = useState(false);
+  const [intervaloAlertas, setIntervaloAlertas] = useState("60");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -25,7 +28,7 @@ export function Configuracoes() {
         const { data, error } = await supabase
           .from('configuracoes')
           .select('chave, valor')
-          .in('chave', ['tiny_token', 'telegram_token', 'telegram_chat_id']);
+          .in('chave', ['tiny_token', 'telegram_token', 'telegram_chat_id', 'alertas_automaticos', 'intervalo_alertas']);
 
         if (error) throw error;
 
@@ -39,6 +42,12 @@ export function Configuracoes() {
               break;
             case 'telegram_chat_id':
               setTelegramChatId(config.valor);
+              break;
+            case 'alertas_automaticos':
+              setAlertasAutomaticos(config.valor === 'true');
+              break;
+            case 'intervalo_alertas':
+              setIntervaloAlertas(config.valor);
               break;
           }
         });
@@ -89,12 +98,49 @@ export function Configuracoes() {
         );
       }
 
+      // Salvar configurações de alertas automáticos
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'alertas_automaticos', valor: alertasAutomaticos.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'intervalo_alertas', valor: intervaloAlertas, tipo: 'number' },
+            { onConflict: 'chave' }
+          )
+      );
+
       const results = await Promise.all(updates);
       
       // Verificar se todas as operações foram bem-sucedidas
       const hasError = results.some(result => result.error);
       if (hasError) {
         throw new Error('Erro ao salvar algumas configurações');
+      }
+      
+      // Gerenciar cron job após salvar as configurações
+      if (alertasAutomaticos && parseInt(intervaloAlertas) > 0) {
+        try {
+          const { error: cronError } = await supabase.functions.invoke('gerenciar-cron-alertas', {
+            body: {
+              ativar: alertasAutomaticos,
+              intervalo_minutos: parseInt(intervaloAlertas)
+            }
+          });
+
+          if (cronError) {
+            console.error('Erro ao configurar cron job:', cronError);
+          }
+        } catch (cronError) {
+          console.error('Erro ao chamar função de cron:', cronError);
+        }
       }
       
       toast({
@@ -271,27 +317,93 @@ export function Configuracoes() {
         </CardContent>
       </Card>
 
-      {/* Notifications */}
+      {/* Alertas Automáticos */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notificações
+            <Clock className="h-5 w-5" />
+            Alertas Automáticos de Estoque
           </CardTitle>
           <CardDescription>
-            Configure quando e como receber alertas
+            Configure alertas automáticos baseados no estoque
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="notif-estoque">Estoque Baixo</Label>
-                <p className="text-sm text-muted-foreground">Alerta quando produtos atingem estoque mínimo</p>
+                <Label htmlFor="alertas-automaticos">Ativar Alertas Automáticos</Label>
+                <p className="text-sm text-muted-foreground">Enviar alertas automaticamente quando há produtos em estoque baixo</p>
               </div>
-              <Switch id="notif-estoque" defaultChecked />
+              <Switch 
+                id="alertas-automaticos" 
+                checked={alertasAutomaticos}
+                onCheckedChange={setAlertasAutomaticos}
+              />
             </div>
             
+            {alertasAutomaticos && (
+              <div className="space-y-2">
+                <Label htmlFor="intervalo-alertas">Intervalo dos Alertas</Label>
+                <Select value={intervaloAlertas} onValueChange={setIntervaloAlertas}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Selecione o intervalo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Tempo Real (recomendado)</SelectItem>
+                    <SelectItem value="30">A cada 30 minutos</SelectItem>
+                    <SelectItem value="60">A cada 1 hora</SelectItem>
+                    <SelectItem value="120">A cada 2 horas</SelectItem>
+                    <SelectItem value="240">A cada 4 horas</SelectItem>
+                    <SelectItem value="480">A cada 8 horas</SelectItem>
+                    <SelectItem value="720">A cada 12 horas</SelectItem>
+                    <SelectItem value="1440">Diariamente</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {intervaloAlertas === "0" 
+                    ? "Alertas serão enviados imediatamente quando um produto atingir estoque baixo"
+                    : `Alertas serão verificados automaticamente a cada ${intervaloAlertas === "60" ? "1 hora" : 
+                        intervaloAlertas === "30" ? "30 minutos" :
+                        intervaloAlertas === "120" ? "2 horas" :
+                        intervaloAlertas === "240" ? "4 horas" :
+                        intervaloAlertas === "480" ? "8 horas" :
+                        intervaloAlertas === "720" ? "12 horas" :
+                        intervaloAlertas === "1440" ? "24 horas" : `${intervaloAlertas} minutos`}`
+                  }
+                </p>
+              </div>
+            )}
+
+            <Alert>
+              <Bell className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Como funcionam os alertas automáticos:</strong>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li><strong>Tempo Real:</strong> Usa triggers do banco de dados para detectar mudanças instantaneamente</li>
+                  <li><strong>Intervalos:</strong> Verifica periodicamente e envia alertas se houver produtos em alerta</li>
+                  <li>Alertas são enviados apenas quando há produtos com estoque baixo ou zerado</li>
+                  <li>Requer configuração do Telegram Bot para funcionar</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Outras Notificações
+          </CardTitle>
+          <CardDescription>
+            Configure outros tipos de alertas
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notif-pedidos">Novos Pedidos</Label>
