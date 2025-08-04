@@ -50,19 +50,61 @@ export function useEstoque() {
     status: ''
   });
   const { toast } = useToast();
+  
+  // Refs para controle de execução
   const isLoadingRef = useRef(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const mountedRef = useRef(true);
 
-  const buscarProdutos = useCallback(async () => {
+  const calcularStatusProduto = useCallback((produto: Produto): string => {
+    if (!produto.ativo) {
+      return 'inativo';
+    } else if (produto.quantidade_atual === 0) {
+      return 'critico';
+    } else if (produto.quantidade_atual <= produto.estoque_minimo) {
+      return 'baixo';
+    } else if (produto.quantidade_atual > produto.estoque_maximo) {
+      return 'alto';
+    } else {
+      return 'ativo';
+    }
+  }, []);
+
+  const calcularMetricas = useCallback((produtosList: Produto[]) => {
+    if (!mountedRef.current) return;
+    
+    const totalProdutos = produtosList.length;
+    
+    const produtosAlerta = produtosList.filter(
+      produto => produto.quantidade_atual <= produto.estoque_minimo
+    ).length;
+
+    const valorTotalEstoque = produtosList.reduce((total, produto) => {
+      const preco = produto.preco_custo || 0;
+      return total + (preco * produto.quantidade_atual);
+    }, 0);
+
+    setMetricas({
+      totalProdutos,
+      produtosAlerta,
+      valorTotalEstoque
+    });
+  }, []);
+
+  const buscarProdutos = useCallback(async (forceReload = false) => {
     // Evitar múltiplas chamadas simultâneas
-    if (isLoadingRef.current) {
+    if (isLoadingRef.current && !forceReload) {
       return;
     }
 
     try {
       isLoadingRef.current = true;
-      setLoading(true);
       setError(null);
+      
+      // Só mostrar loading se for a primeira vez ou forceReload
+      if (produtos.length === 0 || forceReload) {
+        setLoading(true);
+      }
 
       let query = supabase
         .from('produtos')
@@ -79,16 +121,8 @@ export function useEstoque() {
         query = query.eq('categoria', filtros.categoria);
       }
 
-      if (filtros.status) {
-        // Aplicar filtro baseado no status calculado, não no campo status da tabela
-        if (filtros.status === 'inativo') {
-          query = query.eq('ativo', false);
-        } else {
-          query = query.eq('ativo', true);
-          
-          // Para os outros status, vamos filtrar no frontend já que dependem de cálculo
-          // O filtro será aplicado após buscar os dados
-        }
+      if (filtros.status && filtros.status === 'inativo') {
+        query = query.eq('ativo', false);
       }
 
       const { data, error } = await query;
@@ -106,10 +140,14 @@ export function useEstoque() {
         });
       }
 
+      if (!mountedRef.current) return;
+
       setProdutos(produtosFiltrados);
       calcularMetricas(produtosFiltrados);
     } catch (err: any) {
       console.error('Erro ao buscar produtos:', err);
+      if (!mountedRef.current) return;
+      
       setError(err.message);
       toast({
         title: "Erro ao carregar produtos",
@@ -117,83 +155,69 @@ export function useEstoque() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
       isLoadingRef.current = false;
     }
-  }, [filtros, toast]);
+  }, [filtros, toast, calcularStatusProduto, calcularMetricas, produtos.length]);
 
-  const calcularStatusProduto = (produto: Produto): string => {
-    if (!produto.ativo) {
-      return 'inativo';
-    } else if (produto.quantidade_atual === 0) {
-      return 'critico';
-    } else if (produto.quantidade_atual <= produto.estoque_minimo) {
-      return 'baixo';
-    } else if (produto.quantidade_atual > produto.estoque_maximo) {
-      return 'alto';
-    } else {
-      return 'ativo';
-    }
-  };
-
-  const calcularMetricas = (produtosList: Produto[]) => {
-    const totalProdutos = produtosList.length;
-    
-    const produtosAlerta = produtosList.filter(
-      produto => produto.quantidade_atual <= produto.estoque_minimo
-    ).length;
-
-    const valorTotalEstoque = produtosList.reduce((total, produto) => {
-      const preco = produto.preco_custo || 0;
-      return total + (preco * produto.quantidade_atual);
-    }, 0);
-
-    setMetricas({
-      totalProdutos,
-      produtosAlerta,
-      valorTotalEstoque
-    });
-  };
-
-  const atualizarFiltros = (novosFiltros: Partial<FiltrosEstoque>) => {
+  const atualizarFiltros = useCallback((novosFiltros: Partial<FiltrosEstoque>) => {
     setFiltros(prev => ({ ...prev, ...novosFiltros }));
-  };
+  }, []);
 
-  const limparFiltros = () => {
+  const limparFiltros = useCallback(() => {
     setFiltros({
       busca: '',
       categoria: '',
       status: ''
     });
-  };
+  }, []);
 
-  const recarregarDados = () => {
-    buscarProdutos();
-  };
+  const recarregarDados = useCallback(() => {
+    buscarProdutos(true);
+  }, [buscarProdutos]);
 
-  // Implementar debounce para filtros de busca
+  // Carregamento inicial - apenas uma vez
   useEffect(() => {
+    mountedRef.current = true;
+    buscarProdutos(true);
+
+    return () => {
+      mountedRef.current = false;
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []); // Dependência vazia - só executa na montagem
+
+  // Debounce para filtros - executa quando filtros mudam
+  useEffect(() => {
+    if (!mountedRef.current) return;
+
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
-      buscarProdutos();
-    }, 300); // 300ms de debounce
+      if (mountedRef.current) {
+        buscarProdutos();
+      }
+    }, 300);
 
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [buscarProdutos]);
+  }, [filtros.busca, filtros.categoria, filtros.status]); // Dependências específicas
 
-  // Setup realtime updates (com throttle para evitar updates muito frequentes)
+  // Setup realtime updates - apenas uma vez
   useEffect(() => {
     let throttleTimeout: NodeJS.Timeout;
     
     const channel = supabase
-      .channel('produtos-changes')
+      .channel('produtos-realtime-estoque')
       .on(
         'postgres_changes',
         {
@@ -202,18 +226,18 @@ export function useEstoque() {
           table: 'produtos'
         },
         () => {
-          console.log('Produto atualizado, recarregando dados...');
+          console.log('Produto atualizado via realtime...');
           
-          // Throttle updates para evitar múltiplas chamadas muito próximas
+          // Throttle para evitar updates muito frequentes
           if (throttleTimeout) {
             clearTimeout(throttleTimeout);
           }
           
           throttleTimeout = setTimeout(() => {
-            if (!isLoadingRef.current) {
+            if (mountedRef.current && !isLoadingRef.current) {
               buscarProdutos();
             }
-          }, 1000); // 1 segundo de throttle para updates em tempo real
+          }, 1500); // 1.5 segundos de throttle
         }
       )
       .subscribe();
@@ -224,7 +248,7 @@ export function useEstoque() {
       }
       supabase.removeChannel(channel);
     };
-  }, [buscarProdutos]);
+  }, []); // Dependência vazia - configurar apenas uma vez
 
   return {
     produtos,

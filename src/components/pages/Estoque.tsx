@@ -217,40 +217,27 @@ export function Estoque() {
       <EstoqueMetricas metricas={metricas} loading={loading} />
 
       {/* Stock Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Produtos em Estoque</CardTitle>
-          <CardDescription>
-            Controle de quantidades e alertas de estoque baixo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EstoqueTabela 
-            produtos={produtosPaginados}
-            loading={loading}
-            produtosSelecionados={produtosSelecionados}
-            todosSeleccionados={todosSeleccionados}
-            paginaAtual={paginaAtual}
-            totalPaginas={totalPaginas}
-            itemInicial={itemInicial}
-            itemFinal={itemFinal}
-            totalItens={totalItens}
-            onSelecionarProduto={toggleSelecionarProduto}
-            onSelecionarTodos={toggleSelecionarTodos}
-            onAbrirDetalhes={abrirDetalhes}
-            onAbrirEdicao={abrirEdicao}
-            onMovimentar={abrirMovimentacao}
-            onImageUploaded={handleImageUploaded}
-            onPaginar={irParaPagina}
-            onPaginaAnterior={paginaAnterior}
-            onProximaPagina={proximaPagina}
-            onAbrirPrevisao={abrirPrevisao}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Histórico de Movimentações */}
-      <EstoqueHistoricoMovimentacoes />
+      <EstoqueTabela 
+        produtos={produtosPaginados}
+        loading={loading}
+        produtosSelecionados={produtosSelecionados}
+        todosSeleccionados={todosSeleccionados}
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        itemInicial={itemInicial}
+        itemFinal={itemFinal}
+        totalItens={totalItens}
+        onSelecionarProduto={toggleSelecionarProduto}
+        onSelecionarTodos={toggleSelecionarTodos}
+        onAbrirDetalhes={abrirDetalhes}
+        onAbrirEdicao={abrirEdicao}
+        onMovimentar={abrirMovimentacao}
+        onImageUploaded={handleImageUploaded}
+        onPaginar={irParaPagina}
+        onPaginaAnterior={paginaAnterior}
+        onProximaPagina={proximaPagina}
+        onAbrirPrevisao={abrirPrevisao}
+      />
 
       {/* Modais */}
       <ProdutoDetalhesModal
