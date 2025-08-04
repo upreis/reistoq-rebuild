@@ -1,5 +1,3 @@
-import { Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useItensPedidos } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
@@ -43,13 +41,6 @@ export function Pedidos() {
     });
   };
 
-  const handleExportar = () => {
-    // TODO: Implementar exportação de pedidos
-    toast({
-      title: "Exportação em desenvolvimento",
-      description: "A funcionalidade de exportação será implementada em breve.",
-    });
-  };
 
   const handleVerDetalhes = async (item: ItemPedido) => {
     try {
@@ -83,16 +74,17 @@ export function Pedidos() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-foreground">Pedidos</h1>
-          <p className="text-muted-foreground">Gestão completa de pedidos - Integração Tiny ERP</p>
+          <p className="text-muted-foreground">Gestão completa de pedidos</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={handleExportar}>
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
+        <div className="lg:max-w-md">
+          <PedidosControleSincronizacao
+            onSincronizar={recarregarDados}
+            loading={loading}
+            ultimaSincronizacao={new Date().toISOString()}
+          />
         </div>
       </div>
 
@@ -108,14 +100,6 @@ export function Pedidos() {
         loading={loading}
       />
 
-      {/* Controle de Sincronização */}
-      <PedidosControleSincronizacao
-        onSincronizar={recarregarDados}
-        loading={loading}
-        ultimaSincronizacao={new Date().toISOString()}
-      />
-
-      {/* Tabela de Itens de Pedidos */}
       <PedidosTabelaItens
         itens={pedidosPaginados}
         loading={loading}

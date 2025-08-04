@@ -357,12 +357,8 @@ export function useItensPedidos() {
     }
   };
 
-  // ✅ Busca inicial apenas se não há dados carregados
-  useEffect(() => {
-    if (itens.length === 0 && !loading) {
-      buscarItens();
-    }
-  }, []); // Executa apenas na primeira montagem
+  // ✅ Removido: Busca inicial automática
+  // A busca será controlada manualmente pelo usuário através dos botões/filtros
 
   // ❌ REMOVIDO: Real-time subscription automática
   // A subscription será controlada pelo usuário através das configurações de sincronização
