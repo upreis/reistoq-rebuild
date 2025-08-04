@@ -71,14 +71,18 @@ const buscarProdutosEmAlerta = async () => {
   const { data: produtos, error } = await supabase
     .from('produtos')
     .select('id, sku_interno, nome, categoria, quantidade_atual, estoque_minimo, estoque_maximo')
-    .eq('ativo', true)
-    .or('quantidade_atual.eq.0,quantidade_atual.lt.estoque_minimo');
+    .eq('ativo', true);
 
   if (error) {
     throw new Error(`Erro ao buscar produtos: ${error.message}`);
   }
 
-  return produtos || [];
+  // Filtrar produtos em alerta no JavaScript para evitar problemas de query
+  const produtosEmAlerta = (produtos || []).filter(produto => 
+    produto.quantidade_atual === 0 || produto.quantidade_atual <= produto.estoque_minimo
+  );
+
+  return produtosEmAlerta;
 };
 
 const gerarMensagemTelegram = (produtos: any[]) => {
