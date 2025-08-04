@@ -137,7 +137,17 @@ function convertDateFormat(dateStr: string): string {
     return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
   }
   
-  return dateStr;
+  // Tentar outros formatos comuns
+  try {
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    console.error('Erro ao converter data:', dateStr, e);
+  }
+  
+  return '';
 }
 
 // Função para fazer requisição com timeout e retry
@@ -191,7 +201,7 @@ serve(async (req) => {
 
   // Timeout geral da função
   const functionTimeout = setTimeout(() => {
-    console.error('Função atingiu timeout de 4 minutos');
+    console.error('Função atingiu timeout de 2 minutos');
   }, FUNCTION_TIMEOUT);
 
   try {
@@ -257,7 +267,7 @@ serve(async (req) => {
     });
 
     // Limite máximo de páginas para evitar timeout
-    const MAX_PAGINAS = 3;
+    const MAX_PAGINAS = 1; // Início com 1 página para evitar timeouts
 
     // Aplicar filtros se fornecidos - usando formato correto DD/MM/YYYY para API do Tiny
     if (filtros.dataInicio) {
@@ -386,13 +396,22 @@ serve(async (req) => {
 
     for (const pedido of allPedidos) {
       try {
+        // Validar e limpar dados antes de salvar
+        const dataValidaPedido = convertDateFormat(pedido.data_pedido);
+        const dataValidaPrevista = pedido.data_prevista ? convertDateFormat(pedido.data_prevista) : null;
+        
+        if (!dataValidaPedido) {
+          console.warn(`Pedido ${pedido.numero} com data inválida: ${pedido.data_pedido}`);
+          continue;
+        }
+
         const pedidoParaSalvar = {
           numero: pedido.numero,
           numero_ecommerce: pedido.numero_ecommerce,
           nome_cliente: pedido.nome_cliente,
           cpf_cnpj: pedido.cpf_cnpj,
-          data_pedido: pedido.data_pedido,
-          data_prevista: pedido.data_prevista,
+          data_pedido: dataValidaPedido,
+          data_prevista: dataValidaPrevista,
           valor_total: pedido.valor_total,
           valor_frete: pedido.valor_frete,
           valor_desconto: pedido.valor_desconto,
