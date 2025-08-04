@@ -74,12 +74,16 @@ export function EstoqueTabela({
   };
 
   const getStatusBadge = (produto: Produto) => {
-    if (produto.quantidade_atual === 0) {
+    if (!produto.ativo) {
+      return { variant: 'secondary' as const, texto: 'Inativo' };
+    } else if (produto.quantidade_atual === 0) {
       return { variant: 'destructive' as const, texto: 'Crítico' };
     } else if (produto.quantidade_atual <= produto.estoque_minimo) {
       return { variant: 'destructive' as const, texto: 'Baixo' };
+    } else if (produto.quantidade_atual > produto.estoque_maximo) {
+      return { variant: 'outline' as const, texto: 'Alto' };
     } else {
-      return { variant: 'default' as const, texto: 'Normal' };
+      return { variant: 'default' as const, texto: 'Ativo' };
     }
   };
 

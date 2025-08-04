@@ -72,7 +72,15 @@ export function useEstoque() {
       }
 
       if (filtros.status) {
-        query = query.eq('status', filtros.status);
+        // Aplicar filtro baseado no status calculado, não no campo status da tabela
+        if (filtros.status === 'inativo') {
+          query = query.eq('ativo', false);
+        } else {
+          query = query.eq('ativo', true);
+          
+          // Para os outros status, vamos filtrar no frontend já que dependem de cálculo
+          // O filtro será aplicado após buscar os dados
+        }
       }
 
       const { data, error } = await query;
@@ -81,8 +89,17 @@ export function useEstoque() {
         throw error;
       }
 
-      setProdutos(data || []);
-      calcularMetricas(data || []);
+      // Aplicar filtro de status calculado
+      let produtosFiltrados = data || [];
+      if (filtros.status && filtros.status !== 'inativo') {
+        produtosFiltrados = produtosFiltrados.filter(produto => {
+          const statusCalculado = calcularStatusProduto(produto);
+          return statusCalculado === filtros.status;
+        });
+      }
+
+      setProdutos(produtosFiltrados);
+      calcularMetricas(produtosFiltrados);
     } catch (err: any) {
       console.error('Erro ao buscar produtos:', err);
       setError(err.message);
@@ -93,6 +110,20 @@ export function useEstoque() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const calcularStatusProduto = (produto: Produto): string => {
+    if (!produto.ativo) {
+      return 'inativo';
+    } else if (produto.quantidade_atual === 0) {
+      return 'critico';
+    } else if (produto.quantidade_atual <= produto.estoque_minimo) {
+      return 'baixo';
+    } else if (produto.quantidade_atual > produto.estoque_maximo) {
+      return 'alto';
+    } else {
+      return 'ativo';
     }
   };
 

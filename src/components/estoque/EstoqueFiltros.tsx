@@ -94,6 +94,7 @@ export function EstoqueFiltros({
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="baixo">Estoque Baixo</SelectItem>
+                <SelectItem value="alto">Estoque Alto</SelectItem>
                 <SelectItem value="critico">Estoque Crítico</SelectItem>
                 <SelectItem value="inativo">Inativo</SelectItem>
               </SelectContent>
