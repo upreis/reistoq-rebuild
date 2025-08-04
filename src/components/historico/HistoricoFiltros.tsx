@@ -49,14 +49,14 @@ export function HistoricoFiltros({
           </div>
 
           <Select
-            value={filtros.tipo_movimentacao}
-            onValueChange={(value) => onAtualizarFiltros({ tipo_movimentacao: value })}
+            value={filtros.tipo_movimentacao || 'all'}
+            onValueChange={(value) => onAtualizarFiltros({ tipo_movimentacao: value === 'all' ? '' : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Tipo de movimentação" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os tipos</SelectItem>
+              <SelectItem value="all">Todos os tipos</SelectItem>
               <SelectItem value="entrada">Entrada</SelectItem>
               <SelectItem value="saida">Saída</SelectItem>
             </SelectContent>
