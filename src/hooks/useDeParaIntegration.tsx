@@ -1,0 +1,144 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+export interface MapeamentoItem {
+  id: string;
+  sku_pedido: string;
+  sku_correspondente?: string;
+  sku_simples?: string;
+  quantidade: number;
+  observacoes?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ItemPedidoEnriquecido {
+  id: string;
+  pedido_id: string;
+  numero_pedido: string;
+  sku: string;
+  sku_estoque?: string; // SKU traduzido pelo DE/PARA
+  descricao: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  ncm?: string;
+  codigo_barras?: string;
+  observacoes?: string;
+  linha_destacada?: boolean; // Quando não tem mapeamento
+  mapeamento_aplicado?: MapeamentoItem;
+  // Campos do pedido principal
+  nome_cliente?: string;
+  numero_ecommerce?: string;
+  data_pedido?: string;
+  situacao?: string;
+  cpf_cnpj?: string;
+  codigo_rastreamento?: string;
+  url_rastreamento?: string;
+  valor_frete?: number;
+  valor_desconto?: number;
+  obs?: string;
+  obs_interna?: string;
+}
+
+export function useDeParaIntegration() {
+  const [mapeamentos, setMapeamentos] = useState<MapeamentoItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Carregar mapeamentos
+  const carregarMapeamentos = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('mapeamentos_depara')
+        .select('*')
+        .eq('ativo', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMapeamentos(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar mapeamentos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar mapeamentos DE/PARA",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Obter mapeamento para um SKU específico
+  const obterMapeamento = (skuPedido: string): MapeamentoItem | undefined => {
+    return mapeamentos.find(item => 
+      item.sku_pedido === skuPedido && item.ativo
+    );
+  };
+
+  // Enriquecer itens de pedidos com dados do DE/PARA
+  const enriquecerItensPedidos = (itens: any[]): ItemPedidoEnriquecido[] => {
+    return itens.map(item => {
+      const mapeamento = obterMapeamento(item.sku);
+      
+      return {
+        ...item,
+        sku_estoque: mapeamento?.sku_correspondente || item.sku,
+        linha_destacada: !mapeamento,
+        mapeamento_aplicado: mapeamento,
+      };
+    });
+  };
+
+  // Verificar se um item tem mapeamento
+  const temMapeamento = (skuPedido: string): boolean => {
+    return !!obterMapeamento(skuPedido);
+  };
+
+  // Obter estatísticas de mapeamento para uma lista de itens
+  const obterEstatisticasMapeamento = (itens: any[]) => {
+    const totalItens = itens.length;
+    const itensMapeados = itens.filter(item => temMapeamento(item.sku)).length;
+    const itensNaoMapeados = totalItens - itensMapeados;
+    const percentualMapeado = totalItens > 0 ? (itensMapeados / totalItens) * 100 : 0;
+
+    return {
+      totalItens,
+      itensMapeados,
+      itensNaoMapeados,
+      percentualMapeado: Math.round(percentualMapeado)
+    };
+  };
+
+  useEffect(() => {
+    carregarMapeamentos();
+
+    // Subscription para atualizações em tempo real
+    const subscription = supabase
+      .channel('mapeamentos_depara_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'mapeamentos_depara'
+      }, () => {
+        carregarMapeamentos();
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return {
+    mapeamentos,
+    loading,
+    obterMapeamento,
+    enriquecerItensPedidos,
+    temMapeamento,
+    obterEstatisticasMapeamento,
+    recarregarMapeamentos: carregarMapeamentos
+  };
+}

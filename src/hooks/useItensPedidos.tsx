@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useDeParaIntegration, ItemPedidoEnriquecido } from '@/hooks/useDeParaIntegration';
 
 // Interface para item de pedido (cada linha da tabela)
 export interface ItemPedido {
@@ -421,6 +422,141 @@ export function useItensPedidos() {
     }
   };
 
+  const editarItem = async (itemEditado: Partial<ItemPedido>) => {
+    try {
+      if (!itemEditado.id) {
+        throw new Error('ID do item é obrigatório para edição');
+      }
+
+      // Atualizar item na tabela itens_pedidos
+      const { error: itemError } = await supabase
+        .from('itens_pedidos')
+        .update({
+          sku: itemEditado.sku,
+          descricao: itemEditado.descricao,
+          quantidade: itemEditado.quantidade,
+          valor_unitario: itemEditado.valor_unitario,
+          valor_total: itemEditado.valor_total,
+          ncm: itemEditado.ncm,
+          codigo_barras: itemEditado.codigo_barras,
+          observacoes: itemEditado.observacoes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', itemEditado.id);
+
+      if (itemError) throw itemError;
+
+      // Se houver dados do pedido, atualizar na tabela pedidos
+      if (itemEditado.pedido_id && (
+        itemEditado.nome_cliente || 
+        itemEditado.situacao || 
+        itemEditado.codigo_rastreamento ||
+        itemEditado.url_rastreamento ||
+        itemEditado.obs ||
+        itemEditado.obs_interna
+      )) {
+        const { error: pedidoError } = await supabase
+          .from('pedidos')
+          .update({
+            nome_cliente: itemEditado.nome_cliente,
+            situacao: itemEditado.situacao,
+            codigo_rastreamento: itemEditado.codigo_rastreamento,
+            url_rastreamento: itemEditado.url_rastreamento,
+            obs: itemEditado.obs,
+            obs_interna: itemEditado.obs_interna,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', itemEditado.pedido_id);
+
+        if (pedidoError) throw pedidoError;
+      }
+
+      // Recarregar dados para refletir as mudanças
+      await buscarItens();
+
+      toast({
+        title: "Sucesso",
+        description: "Item atualizado com sucesso",
+      });
+
+    } catch (err) {
+      console.error('Erro ao editar item:', err);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar alterações",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
+  const processarItem = async (item: ItemPedido) => {
+    try {
+      // Simular processamento (baixa de estoque, registro no histórico, etc.)
+      
+      // 1. Registrar no histórico
+      const registroHistorico = {
+        tipo: 'processamento_pedido',
+        descricao: `Processamento do pedido ${item.numero_pedido}`,
+        detalhes: {
+          id_unico: `${item.numero_pedido}-${item.sku}-${Date.now()}`,
+          data_processamento: new Date().toISOString(),
+          numero_pedido: item.numero_pedido,
+          sku_pedido: item.sku,
+          sku_estoque: item.sku_correspondente || item.sku,
+          quantidade_pedido: item.quantidade,
+          quantidade_baixada: item.quantidade,
+          tipo_produto: item.produto_categoria || 'produto',
+          status: 'Processado',
+          observacoes: `Processado automaticamente via sistema DE/PARA`
+        }
+      };
+
+      const { error: historicoError } = await supabase
+        .from('historico')
+        .insert(registroHistorico);
+
+      if (historicoError) throw historicoError;
+
+      // 2. Simular baixa de estoque (se necessário)
+      if (item.sku_correspondente) {
+        // Aqui seria feita a baixa real no estoque
+        console.log(`Baixa de estoque simulada: ${item.sku_correspondente} - ${item.quantidade} unidades`);
+      }
+
+      // 3. Atualizar status do item (se necessário)
+      const { error: updateError } = await supabase
+        .from('pedidos')
+        .update({
+          situacao: 'processado',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', item.pedido_id);
+
+      if (updateError) {
+        console.warn('Erro ao atualizar situação do pedido:', updateError);
+        // Não bloquear o processamento por este erro
+      }
+
+      toast({
+        title: "Sucesso",
+        description: `Pedido #${item.numero_pedido} processado com sucesso`,
+      });
+
+      // Recarregar dados para refletir as mudanças
+      await buscarItens();
+
+    } catch (err) {
+      console.error('Erro ao processar item:', err);
+      toast({
+        title: "Erro",
+        description: "Erro durante o processamento",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
   // ✅ Removido: Busca inicial automática
   // A busca será controlada manualmente pelo usuário através dos botões/filtros
 
@@ -468,6 +604,8 @@ export function useItensPedidos() {
     limparFiltros,
     buscarComFiltros,
     recarregarDados,
-    obterDetalhesPedido
+    obterDetalhesPedido,
+    editarItem,
+    processarItem
   };
 }

@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { useItensPedidos } from "@/hooks/useItensPedidos";
+import { useItensPedidos, type ItemPedido } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
+import { useDeParaIntegration } from "@/hooks/useDeParaIntegration";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
 import { PedidosFiltrosCompactos } from "@/components/pedidos/PedidosFiltrosCompactos";
 import { PedidosTabelaItens } from "@/components/pedidos/PedidosTabelaItens";
 import { PedidosControleSincronizacao } from "@/components/pedidos/PedidosControleSincronizacao";
-import type { ItemPedido } from "@/hooks/useItensPedidos";
+import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
+import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
+import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
 
 export function Pedidos() {
   const {
@@ -18,8 +22,21 @@ export function Pedidos() {
     limparFiltros,
     buscarComFiltros,
     recarregarDados,
-    obterDetalhesPedido
+    obterDetalhesPedido,
+    editarItem,
+    processarItem
   } = useItensPedidos();
+
+  const { enriquecerItensPedidos } = useDeParaIntegration();
+  
+  // Estados dos modais
+  const [modalDetalhes, setModalDetalhes] = useState(false);
+  const [modalEdicao, setModalEdicao] = useState(false);
+  const [modalProcessamento, setModalProcessamento] = useState(false);
+  const [itemSelecionado, setItemSelecionado] = useState<ItemPedido | null>(null);
+
+  // Enriquecer itens com dados do DE/PARA
+  const itensEnriquecidos = enriquecerItensPedidos(itens);
 
   const {
     pedidosPaginados,
