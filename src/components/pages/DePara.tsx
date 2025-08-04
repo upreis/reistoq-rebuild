@@ -112,22 +112,26 @@ export default function DePara() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
+      {/* Header */}
       <DeParaHeader
         mapeamentosSelecionados={mapeamentosSelecionados}
         onNovoMapeamento={() => setShowNovoModal(true)}
         onExcluirSelecionados={abrirExclusaoMultipla}
       />
 
+      {/* Filters and File Management */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <DeParaFiltros
+          filtros={filtros}
+          onAtualizarFiltros={atualizarFiltros}
+          onLimparFiltros={limparFiltros}
+        />
+        <DeParaFileManager onUploadSuccess={handleUploadSuccess} />
+      </div>
+
+      {/* Summary Cards */}
       <DeParaMetricas metricas={metricas} loading={loading} />
-
-      <DeParaFiltros
-        filtros={filtros}
-        onAtualizarFiltros={atualizarFiltros}
-        onLimparFiltros={limparFiltros}
-      />
-
-      <DeParaFileManager onUploadSuccess={handleUploadSuccess} />
 
       <DeParaTabela
         mapeamentos={mapeamentosPaginados}

@@ -259,7 +259,9 @@ export function DeParaFileManager({ onUploadSuccess }: DeParaFileManagerProps) {
           Importar/Exportar Mapeamentos
         </CardTitle>
         <CardDescription>
-          Importe mapeamentos via planilha XLSX ou exporte os dados atuais
+          Gerencie seus dados de mapeamento via planilhas XLSX/CSV
+          <br />
+          <span className="text-amber-600 font-medium">⚠️ SKU do pedido deve ser único - duplicatas não são permitidas</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
