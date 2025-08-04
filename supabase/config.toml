@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.sync-pedidos-rapido]
 verify_jwt = false
 
+[functions.sync-pedidos-incremental]
+verify_jwt = false
+
 [functions.sync-pedidos-tiny]
 verify_jwt = false
 

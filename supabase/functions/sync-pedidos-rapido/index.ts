@@ -5,13 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Configurações baseadas na documentação Tiny ERP
-const REQUEST_TIMEOUT = 30000; // 30 segundos
-const BASE_RETRY_DELAY = 2000; // 2 segundos
-const MAX_RETRIES = 3;
-const DELAY_ENTRE_PAGINAS = 1500; // 1.5 segundos
-const DELAY_ENTRE_LOTES = 2000; // 2 segundos
-const BATCH_SIZE = 2; // Lotes pequenos para evitar rate limit
+// Configurações otimizadas para PRODUÇÃO (evita timeouts)
+const REQUEST_TIMEOUT = 15000; // 15 segundos
+const BASE_RETRY_DELAY = 1000; // 1 segundo
+const MAX_RETRIES = 2; // Reduzido para evitar timeouts
+const DELAY_ENTRE_PAGINAS = 500; // 500ms entre páginas
+const DELAY_ENTRE_LOTES = 1000; // 1 segundo entre lotes
+const BATCH_SIZE = 1; // 1 pedido por vez para evitar sobrecarga
+const MAX_PAGINAS_POR_EXECUCAO = 3; // CRÍTICO: máximo 3 páginas por execução
+const DELAY_RATE_LIMIT = 10000; // 10 segundos em vez de 5 minutos
 
 interface TinyPedido {
   id: string;
@@ -110,10 +112,10 @@ async function makeApiCallWithRetry(
 
       const jsonData = await response.json();
       
-      // Verificar se há erro de rate limit
+      // Verificar se há erro de rate limit - CRÍTICO: reduzir tempo
       if (jsonData.retorno?.status === 'Erro' && jsonData.retorno?.codigo_erro === 6) {
-        console.log(`[${context}] Rate limit detectado. Aguardando 5 minutos...`);
-        await sleep(300000); // 5 minutos
+        console.log(`[${context}] Rate limit detectado. Aguardando ${DELAY_RATE_LIMIT/1000} segundos...`);
+        await sleep(DELAY_RATE_LIMIT); // 10 segundos em vez de 5 minutos
         continue;
       }
       
@@ -226,9 +228,15 @@ Deno.serve(async (req) => {
     let totalPaginas = 1;
     let tentativasConsecutivasFalha = 0;
 
-    // Sincronização paginada robusta
+    // Sincronização paginada robusta - LIMITADA para evitar timeout
     do {
       try {
+        // CRÍTICO: Parar se exceder o limite de páginas por execução
+        if (paginaAtual > MAX_PAGINAS_POR_EXECUCAO) {
+          console.log(`⏰ Limite de ${MAX_PAGINAS_POR_EXECUCAO} páginas atingido. Parando para evitar timeout.`);
+          break;
+        }
+
         params.set('pagina', paginaAtual.toString());
         
         const jsonData = await makeApiCallWithRetry(

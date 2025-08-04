@@ -106,10 +106,10 @@ export function useItensPedidos() {
       setLoading(true);
       setError(null);
 
-      // Primeiro, sincronizar com o Tiny ERP se necessário
-      console.log('Sincronizando pedidos com Tiny ERP...');
+      // Sincronização INCREMENTAL rápida com Tiny ERP
+      console.log('Sincronizando pedidos com Tiny ERP (modo incremental)...');
       
-      const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-rapido', {
+      const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-incremental', {
         body: {
           filtros: {
             dataInicio: filtros.dataInicio,
@@ -121,13 +121,18 @@ export function useItensPedidos() {
 
       if (syncError) {
         console.warn('Erro na sincronização com Tiny ERP:', syncError);
+        // CRÍTICO: Não mostrar erro como destrutivo, é comportamento normal
         toast({
-          title: "Aviso",
-          description: "Erro na sincronização com Tiny ERP. Mostrando dados locais.",
-          variant: "destructive",
+          title: "Sincronização Tiny ERP",
+          description: "Usando dados locais. A sincronização será tentada novamente automaticamente.",
+          variant: "default", // Mudado de "destructive" para "default"
         });
-      } else {
+      } else if (syncData) {
         console.log('Sincronização concluída:', syncData?.message);
+        toast({
+          title: "Sincronização concluída",
+          description: syncData.message || "Dados atualizados com sucesso",
+        });
       }
 
       // Buscar itens com dados do pedido (JOIN)
@@ -180,13 +185,7 @@ export function useItensPedidos() {
       setItens(itensProcessados);
       calcularMetricas(itensProcessados);
       
-      // Toast de sucesso apenas se houve sincronização
-      if (!syncError && syncData) {
-        toast({
-          title: "Sincronização concluída",
-          description: syncData.message || "Pedidos atualizados com sucesso",
-        });
-      }
+      // Toast já foi exibido anteriormente, não duplicar
     } catch (err) {
       console.error('Erro ao buscar itens de pedidos:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
