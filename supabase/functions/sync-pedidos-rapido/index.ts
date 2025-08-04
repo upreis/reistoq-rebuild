@@ -485,7 +485,7 @@ Deno.serve(async (req) => {
       
       // Processar em lotes pequenos para evitar timeout
       const loteSize = 5;
-      for (let i = 0; i < Math.min(allPedidos.length, 20); i += loteSize) { // Limitar a 20 pedidos para não dar timeout
+      for (let i = 0; i < allPedidos.length; i += loteSize) { // ✅ CORRIGIDO: Remover limite artificial de 20 pedidos
         const lote = allPedidos.slice(i, i + loteSize);
         
         for (const pedido of lote) {
