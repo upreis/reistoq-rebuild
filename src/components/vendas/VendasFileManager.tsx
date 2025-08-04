@@ -177,6 +177,45 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
           return;
         }
         
+        // Função para converter data do Excel para formato válido
+        const converterDataExcel = (valorData: any): string => {
+          if (!valorData) return new Date().toISOString().split('T')[0];
+          
+          // Se já é uma string no formato correto
+          if (typeof valorData === 'string') {
+            // Tentar diferentes formatos de data
+            const formatosData = [
+              /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+              /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
+              /^\d{2}-\d{2}-\d{4}$/, // DD-MM-YYYY
+            ];
+            
+            for (const formato of formatosData) {
+              if (formato.test(valorData)) {
+                if (valorData.includes('/')) {
+                  const [dia, mes, ano] = valorData.split('/');
+                  return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                } else if (valorData.includes('-') && valorData.indexOf('-') === 2) {
+                  const [dia, mes, ano] = valorData.split('-');
+                  return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                }
+                return valorData; // YYYY-MM-DD já está correto
+              }
+            }
+          }
+          
+          // Se é um número (serial do Excel)
+          if (typeof valorData === 'number' || !isNaN(Number(valorData))) {
+            const numeroSerial = Number(valorData);
+            // Excel conta dias desde 1 de janeiro de 1900 (com ajuste para bug do ano 1900)
+            const dataExcel = new Date((numeroSerial - 25569) * 86400 * 1000);
+            return dataExcel.toISOString().split('T')[0];
+          }
+          
+          // Fallback para data atual
+          return new Date().toISOString().split('T')[0];
+        };
+        
         // Converter tipos
         const vendaProcessada: VendaImportacao = {
           id_unico: linha.id_unico.trim(),
@@ -190,7 +229,7 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
           cliente_documento: linha.cliente_documento?.trim() || null,
           status: linha.status || 'concluida',
           observacoes: linha.observacoes?.trim() || null,
-          data_venda: linha.data_venda
+          data_venda: converterDataExcel(linha.data_venda)
         };
         
         vendasProcessadas.push(vendaProcessada);
