@@ -119,12 +119,12 @@ function mapearSituacoes(situacao: string | string[]): string {
   };
   
   if (typeof situacao === 'string') {
-    return mapeamento[situacao.toLowerCase()] || situacao;
+    return mapeamento[situacao] || mapeamento[situacao.toLowerCase()] || situacao;
   }
   
   if (Array.isArray(situacao)) {
     return situacao
-      .map(s => mapeamento[s.toLowerCase()] || s)
+      .map(s => mapeamento[s] || mapeamento[s.toLowerCase()] || s)
       .join(',');
   }
   
