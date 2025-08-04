@@ -83,22 +83,43 @@ async function makeQuickApiCall(url: string, params: URLSearchParams): Promise<a
 }
 
 async function buscarConfiguracoes(supabase: any) {
+  console.log('🔍 Buscando configurações do Tiny ERP...');
+
   const { data: configs, error } = await supabase
     .from('configuracoes')
     .select('chave, valor')
     .in('chave', ['tiny_erp_token', 'tiny_api_url']);
 
-  if (error) throw new Error(`Erro config: ${error.message}`);
+  if (error) {
+    console.error('❌ Erro ao buscar configurações:', error);
+    throw new Error(`Erro config: ${error.message}`);
+  }
+
+  console.log('📋 Configurações encontradas:', configs);
 
   const configMap = configs.reduce((acc, config) => {
     acc[config.chave] = config.valor;
     return acc;
   }, {});
 
-  return {
+  console.log('🗺️ ConfigMap criado:', Object.keys(configMap));
+
+  const result = {
     token: configMap.tiny_erp_token,
-    url: configMap.tiny_api_url
+    url: configMap.tiny_api_url || 'https://api.tiny.com.br/api2'
   };
+
+  console.log('✅ Configurações finais:', { 
+    tokenExists: !!result.token,
+    tokenLength: result.token?.length,
+    url: result.url 
+  });
+
+  if (!result.token) {
+    throw new Error('Token do Tiny ERP não encontrado nas configurações');
+  }
+
+  return result;
 }
 
 Deno.serve(async (req) => {
