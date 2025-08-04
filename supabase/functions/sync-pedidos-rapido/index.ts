@@ -327,8 +327,9 @@ Deno.serve(async (req) => {
 
           allPedidos.push(pedidoProcessado);
 
-          // Processar itens se existirem
+          // ✅ DIAGNÓSTICO: Processar itens se existirem
           if (pedido.itens && Array.isArray(pedido.itens)) {
+            console.log(`📦 Pedido ${pedido.numero}: ${pedido.itens.length} itens encontrados`);
             for (const itemWrapper of pedido.itens) {
               const item = itemWrapper.item;
               
@@ -345,6 +346,14 @@ Deno.serve(async (req) => {
 
               allItens.push(itemProcessado);
             }
+          } else {
+            // ✅ DIAGNÓSTICO CRÍTICO: Por que pedidos sem itens?
+            console.warn(`⚠️ Pedido ${pedido.numero} SEM ITENS! Estrutura:`, {
+              tem_itens: !!pedido.itens,
+              tipo_itens: typeof pedido.itens,
+              é_array: Array.isArray(pedido.itens),
+              keys_pedido: Object.keys(pedido)
+            });
           }
         }
 

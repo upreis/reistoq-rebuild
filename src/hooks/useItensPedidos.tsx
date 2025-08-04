@@ -69,12 +69,12 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
-    // ✅ Filtros para julho-agosto 2025 (onde deve haver dados reais)
+    // ✅ CORRIGIDO: Filtros para buscar TODOS os dados reais
     return {
       busca: '',
-      dataInicio: '2025-07-05',  // 5 de julho
-      dataFim: '2025-08-03',     // 3 de agosto  
-      situacoes: []
+      dataInicio: '2020-01-01',  // Data ampla para pegar todo histórico
+      dataFim: '2030-12-31',     // Data futura para não limitar  
+      situacoes: []              // Sem filtro de situação = busca todas
     };
   });
 
@@ -84,10 +84,10 @@ export function useItensPedidos() {
     if (filtrosSalvos) {
       try {
         const filtrosCarregados = JSON.parse(filtrosSalvos);
-        // Se não tem datas salvas, usa as datas padrão (julho-agosto)
+        // ✅ CORRIGIDO: Se não tem datas salvas, usa as datas amplas para buscar todos os dados
         if (!filtrosCarregados.dataInicio || !filtrosCarregados.dataFim) {
-          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || '2025-07-05';
-          filtrosCarregados.dataFim = filtrosCarregados.dataFim || '2025-08-03';
+          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || '2020-01-01';
+          filtrosCarregados.dataFim = filtrosCarregados.dataFim || '2030-12-31';
         }
         setFiltros(filtrosCarregados);
       } catch (error) {
@@ -320,12 +320,14 @@ export function useItensPedidos() {
   };
 
   const limparFiltros = () => {
-    setFiltros({
+    const filtrosLimpos = {
       busca: '',
-      dataInicio: '',
-      dataFim: '',
+      dataInicio: '2020-01-01',    // ✅ Data ampla para buscar tudo
+      dataFim: '2030-12-31',       // ✅ Data futura
       situacoes: []
-    });
+    };
+    setFiltros(filtrosLimpos);
+    localStorage.setItem('filtros-pedidos', JSON.stringify(filtrosLimpos));
   };
 
   const recarregarDados = () => {
