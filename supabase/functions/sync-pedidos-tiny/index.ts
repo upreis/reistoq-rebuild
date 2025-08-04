@@ -6,17 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Rate limiting
+// Rate limiting otimizado
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const MAX_REQUESTS_PER_MINUTE = 10; // Reduzido para 10 req/min
+const MAX_REQUESTS_PER_MINUTE = 15; // Ajustado conforme sistema original
 const RATE_LIMIT_WINDOW = 60 * 1000;
 
 // Cache em memória
 const cacheMap = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_MINUTES = 15; // Aumentado para 15 minutos
+const CACHE_TTL_MINUTES = 10; // Cache de 10 minutos
 
-// Timeout personalizado para evitar travamentos
-const FUNCTION_TIMEOUT = 2 * 60 * 1000; // 2 minutos máximo
+// Configurações otimizadas para processamento
+const BATCH_SIZE = 3; // Lotes menores para evitar timeout
+const MAX_RETRIES = 2; // Menos tentativas
+const RETRY_DELAY = 800; // Delay menor (800ms)
+const FUNCTION_TIMEOUT = 4 * 60 * 1000; // 4 minutos máximo
 
 interface TinyPedido {
   id: string;
@@ -267,7 +270,7 @@ serve(async (req) => {
     });
 
     // Limite máximo de páginas para evitar timeout
-    const MAX_PAGINAS = 1; // Início com 1 página para evitar timeouts
+    const MAX_PAGINAS = 5; // Aumentado para 5 páginas com a nova estratégia
 
     // Aplicar filtros se fornecidos - usando formato correto DD/MM/YYYY para API do Tiny
     if (filtros.dataInicio) {
@@ -389,6 +392,63 @@ serve(async (req) => {
     } while (paginaAtual <= totalPaginas && paginaAtual <= MAX_PAGINAS);
 
     console.log(`🎉 Paginação concluída! Total de ${allPedidos.length} pedidos coletados de ${totalPaginas} páginas`);
+
+    // ✅ SEGUNDA ETAPA: Buscar itens para pedidos que vieram sem itens (ESTRATÉGIA DO SISTEMA ORIGINAL)
+    const pedidosSemItens = allPedidos.filter(p => !p.itens || p.itens.length === 0);
+    console.log(`🔍 Encontrados ${pedidosSemItens.length} pedidos sem itens - iniciando busca individual`);
+
+    if (pedidosSemItens.length > 0) {
+      // Processar em lotes de 3 pedidos (conforme sistema original)
+      for (let i = 0; i < pedidosSemItens.length; i += BATCH_SIZE) {
+        const lote = pedidosSemItens.slice(i, i + BATCH_SIZE);
+        console.log(`📦 Processando lote ${Math.floor(i/BATCH_SIZE) + 1} - Pedidos: ${lote.map(p => p.numero).join(', ')}`);
+
+        // Processar lote em paralelo
+        const promessasLote = lote.map(async (pedido) => {
+          for (let tentativa = 1; tentativa <= MAX_RETRIES; tentativa++) {
+            try {
+              const paramsIndividual = new URLSearchParams({
+                token: tinyToken,
+                formato: 'JSON',
+                id: pedido.id,
+                com_itens: 'S'
+              });
+
+              console.log(`🔍 Buscando itens do pedido ${pedido.numero} (tentativa ${tentativa})`);
+              
+              const pedidoDetalhado = await makeApiCallWithTimeout(
+                `${tinyApiUrl}/pedido.obter.php`,
+                paramsIndividual,
+                15000
+              );
+
+              if (pedidoDetalhado.retorno?.status === 'OK' && pedidoDetalhado.retorno?.pedido?.itens) {
+                pedido.itens = pedidoDetalhado.retorno.pedido.itens;
+                console.log(`✅ Pedido ${pedido.numero} agora tem ${pedido.itens.length} itens`);
+                return pedido;
+              } else {
+                console.warn(`⚠️ Pedido ${pedido.numero} ainda sem itens na tentativa ${tentativa}`);
+              }
+              break;
+            } catch (error) {
+              console.error(`❌ Erro ao buscar pedido ${pedido.numero} (tentativa ${tentativa}):`, error.message);
+              if (tentativa < MAX_RETRIES) {
+                await sleep(RETRY_DELAY * tentativa);
+              }
+            }
+          }
+          return pedido;
+        });
+
+        await Promise.all(promessasLote);
+
+        // Delay entre lotes (conforme sistema original)
+        if (i + BATCH_SIZE < pedidosSemItens.length) {
+          console.log('⏱️ Aguardando 1 segundo entre lotes...');
+          await sleep(1000);
+        }
+      }
+    }
 
     // ✅ SALVAR TODOS OS PEDIDOS NO BANCO
     let pedidosSalvos = 0;
