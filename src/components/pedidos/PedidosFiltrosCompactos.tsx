@@ -92,46 +92,54 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
           />
         </div>
 
-        {/* Seletor de Período */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "min-w-[200px] justify-start text-left font-normal bg-background",
-                (!dataInicio && !dataFim) && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {formatPeriodo()}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <div className="p-4 space-y-4">
-              <div className="text-sm font-medium">Selecione o período</div>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Data Inicial</Label>
-                  <Calendar
-                    mode="single"
-                    selected={dataInicio}
-                    onSelect={handleDataInicioChange}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Data Final</Label>
-                  <Calendar
-                    mode="single"
-                    selected={dataFim}
-                    onSelect={handleDataFimChange}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+        {/* Seletores de Período - Separados */}
+        <div className="flex gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "min-w-[140px] justify-start text-left font-normal bg-background",
+                  !dataInicio && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dataInicio ? format(dataInicio, 'dd/MM/yyyy') : 'Data Inicial'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dataInicio}
+                onSelect={handleDataInicioChange}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "min-w-[140px] justify-start text-left font-normal bg-background",
+                  !dataFim && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dataFim ? format(dataFim, 'dd/MM/yyyy') : 'Data Final'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dataFim}
+                onSelect={handleDataFimChange}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
         {/* Botão Filtros */}
         <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
