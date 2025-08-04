@@ -69,7 +69,7 @@ const buscarConfiguracoes = async () => {
   const { data: configs, error } = await supabase
     .from('configuracoes')
     .select('chave, valor')
-    .in('chave', ['telegram_bot_token', 'telegram_chat_id', 'email_alertas', 'email_from']);
+    .in('chave', ['telegram_token', 'telegram_chat_id', 'email_alertas', 'email_from']);
 
   if (error) {
     throw new Error(`Erro ao buscar configurações: ${error.message}`);
@@ -82,7 +82,7 @@ const buscarConfiguracoes = async () => {
 
   return {
     telegram: {
-      bot_token: configMap.telegram_bot_token,
+      bot_token: configMap.telegram_token,
       chat_id: configMap.telegram_chat_id
     },
     email: {
