@@ -8,12 +8,15 @@ const corsHeaders = {
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const MAX_REQUESTS_PER_MINUTE = 15;
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
+const MAX_REQUESTS_PER_MINUTE = 10; // Reduzido para 10 req/min
+const RATE_LIMIT_WINDOW = 60 * 1000;
 
-// Cache em memória para resultados recentes
+// Cache em memória
 const cacheMap = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_MINUTES = 10;
+const CACHE_TTL_MINUTES = 15; // Aumentado para 15 minutos
+
+// Timeout personalizado para evitar travamentos
+const FUNCTION_TIMEOUT = 4 * 60 * 1000; // 4 minutos máximo
 
 interface TinyPedido {
   id: string;
@@ -119,44 +122,65 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Função para fazer requisição com retry e backoff
-async function makeApiCall(url: string, params: URLSearchParams, maxRetries = 3): Promise<any> {
-  for (let tentativa = 1; tentativa <= maxRetries; tentativa++) {
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params
-      });
+// Converter data DD/MM/YYYY para YYYY-MM-DD
+function convertDateFormat(dateStr: string): string {
+  if (!dateStr) return '';
+  
+  // Se já está no formato YYYY-MM-DD, retorna como está
+  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return dateStr;
+  }
+  
+  // Se está no formato DD/MM/YYYY, converte
+  if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+    const [dia, mes, ano] = dateStr.split('/');
+    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  }
+  
+  return dateStr;
+}
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+// Função para fazer requisição com timeout e retry
+async function makeApiCallWithTimeout(url: string, params: URLSearchParams, timeoutMs = 30000): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      const data = await response.json();
-      
-      // Detecta API bloqueada
-      if (data.retorno?.codigo_erro === 6) {
-        throw new Error('API_BLOCKED');
-      }
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params,
+      signal: controller.signal
+    });
 
-      return data;
-    } catch (error) {
-      console.log(`Tentativa ${tentativa}/${maxRetries} falhou:`, error.message);
-      
-      if (error.message === 'API_BLOCKED') {
-        throw new Error('API do Tiny ERP temporariamente bloqueada. Aguarde 2-3 minutos.');
-      }
-      
-      if (tentativa === maxRetries) {
-        throw error;
-      }
-      
-      // Backoff exponencial
-      await sleep(1000 * tentativa);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
+
+    const data = await response.json();
+    
+    // Detecta API bloqueada
+    if (data.retorno?.codigo_erro === 6) {
+      throw new Error('API_BLOCKED');
+    }
+
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('TIMEOUT');
+    }
+    
+    if (error.message === 'API_BLOCKED') {
+      throw new Error('API do Tiny ERP temporariamente bloqueada. Aguarde 2-3 minutos.');
+    }
+    
+    throw error;
   }
 }
 
@@ -165,13 +189,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Timeout geral da função
+  const functionTimeout = setTimeout(() => {
+    console.error('Função atingiu timeout de 4 minutos');
+  }, FUNCTION_TIMEOUT);
+
   try {
-    // Rate limiting básico baseado no IP
+    // Rate limiting básico
     const clientIP = req.headers.get('x-forwarded-for') || 'unknown';
     
     if (!checkRateLimit(clientIP)) {
       return new Response(JSON.stringify({ 
-        error: 'Rate limit excedido. Aguarde um minuto.',
+        error: 'Rate limit excedido. Máximo 10 requisições por minuto.',
         codigo: 'RATE_LIMIT'
       }), {
         status: 429,
@@ -200,252 +229,229 @@ serve(async (req) => {
     const { filtros = {} } = await req.json().catch(() => ({}));
     
     // Criar chave de cache baseada nos filtros
-    const cacheKey = `pedidos-${filtros.dataInicio || 'hoje'}-${filtros.dataFim || 'hoje'}-${JSON.stringify(filtros.situacoes || [])}-completo`;
+    const cacheKey = `pedidos-${filtros.dataInicio || 'sem-data'}-${filtros.dataFim || 'sem-data'}-${JSON.stringify(filtros.situacoes || [])}-v2`;
     
     // Verificar cache primeiro
     const cachedResult = getFromCache(cacheKey);
     if (cachedResult) {
       console.log('Retornando dados do cache');
+      clearTimeout(functionTimeout);
       return new Response(JSON.stringify({
         ...cachedResult,
         fromCache: true,
-        message: 'Dados retornados do cache (atualizados há menos de 10 minutos)'
+        message: 'Dados retornados do cache (atualizados há menos de 15 minutos)'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Iniciando sincronização otimizada de pedidos');
-    console.log('Filtros:', filtros);
+    console.log('Iniciando sincronização com timeout de 4 minutos');
+    console.log('Filtros recebidos:', filtros);
 
-    // ✅ ESTRATÉGIA 1: Busca inicial com com_itens=S (busca já com itens incluídos)
-    const allPedidos: TinyPedido[] = [];
-    let paginaAtual = 1;
-    let totalPaginas = 1;
-    let totalRegistros = 0;
+    // ✅ ESTRATÉGIA SIMPLIFICADA: Buscar apenas primeira página com com_itens=S
+    const params = new URLSearchParams({
+      token: tinyToken,
+      formato: 'JSON',
+      pagina: '1',
+      com_itens: 'S' // ✅ CRUCIAL: busca com itens já incluídos
+    });
 
-    do {
-      console.log(`Buscando página ${paginaAtual}/${totalPaginas}`);
-      
-      const params = new URLSearchParams({
-        token: tinyToken,
-        formato: 'JSON',
-        pagina: paginaAtual.toString(),
-        com_itens: 'S' // ✅ CRUCIAL: busca com itens já incluídos
-      });
-
-      // Aplicar filtros
-      if (filtros.dataInicio) {
-        params.append('dataInicio', filtros.dataInicio);
+    // Aplicar filtros se fornecidos - usando formato correto DD/MM/YYYY para API do Tiny
+    if (filtros.dataInicio) {
+      // Converter YYYY-MM-DD para DD/MM/YYYY (formato esperado pela API do Tiny)
+      let dataFormatada = filtros.dataInicio;
+      if (dataFormatada.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [ano, mes, dia] = dataFormatada.split('-');
+        dataFormatada = `${dia}/${mes}/${ano}`;
       }
-      if (filtros.dataFim) {
-        params.append('dataFim', filtros.dataFim);
+      params.append('dataInicio', dataFormatada);
+      console.log('Data inicial formatada:', dataFormatada);
+    }
+    
+    if (filtros.dataFim) {
+      // Converter YYYY-MM-DD para DD/MM/YYYY (formato esperado pela API do Tiny)
+      let dataFormatada = filtros.dataFim;
+      if (dataFormatada.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [ano, mes, dia] = dataFormatada.split('-');
+        dataFormatada = `${dia}/${mes}/${ano}`;
       }
-      if (filtros.situacao && filtros.situacao !== 'todas') {
-        params.append('situacao', filtros.situacao);
-      }
-
-      const tinyData: TinyApiResponse = await makeApiCall(`${tinyApiUrl}/pedidos.pesquisa.php`, params);
-
-      if (tinyData.retorno.status === 'Erro') {
-        const erros = tinyData.retorno.erros?.map(e => e.erro).join(', ') || 'Erro desconhecido';
-        throw new Error(`Erro da API Tiny: ${erros}`);
-      }
-
-      // Extrair informações de paginação
-      totalPaginas = parseInt(String(tinyData.retorno.numero_paginas || '1'));
-      totalRegistros = parseInt(String(tinyData.retorno.total_registros || '0'));
-
-      if (tinyData.retorno.pedidos && tinyData.retorno.pedidos.length > 0) {
-        // Processar pedidos da página atual
-        for (const item of tinyData.retorno.pedidos) {
-          const pedido = item.pedido;
-          
-          try {
-            const pedidoProcessado: TinyPedido = {
-              id: pedido.id || '',
-              numero: pedido.numero || '',
-              numero_ecommerce: pedido.numero_ecommerce || null,
-              nome_cliente: pedido.cliente?.nome || pedido.nome_cliente || 'Cliente não informado',
-              cpf_cnpj: pedido.cliente?.cpf_cnpj || pedido.cpf_cnpj || null,
-              data_pedido: pedido.data_pedido || new Date().toISOString().split('T')[0],
-              data_prevista: pedido.data_prevista || null,
-              valor_total: parseFloat(String(pedido.total_pedido || pedido.valor_total || '0').replace(',', '.')) || 0,
-              valor_frete: parseFloat(String(pedido.valor_frete || '0').replace(',', '.')) || 0,
-              valor_desconto: parseFloat(String(pedido.valor_desconto || '0').replace(',', '.')) || 0,
-              situacao: (pedido.situacao || 'pendente').toLowerCase(),
-              obs: pedido.obs || null,
-              obs_interna: pedido.obs_interna || null,
-              codigo_rastreamento: pedido.codigo_rastreamento || null,
-              url_rastreamento: pedido.url_rastreamento || null,
-              itens: pedido.itens || [] // ✅ Itens já vêm incluídos
-            };
-            
-            allPedidos.push(pedidoProcessado);
-          } catch (itemError) {
-            console.error('Erro ao processar pedido:', pedido.numero, itemError);
-          }
-        }
-      }
-
-      paginaAtual++;
-
-      // ✅ DELAY entre páginas para não travar API
-      if (paginaAtual <= totalPaginas) {
-        await sleep(1000); // 1 segundo entre páginas
-      }
-
-    } while (paginaAtual <= totalPaginas);
-
-    console.log(`Total de pedidos coletados: ${allPedidos.length}`);
-
-    // ✅ ESTRATÉGIA 2: Busca detalhada OTIMIZADA - só para pedidos SEM itens
-    const pedidosSemItens = allPedidos.filter(p => !p.itens || p.itens.length === 0);
-    console.log(`Pedidos sem itens que precisam de busca detalhada: ${pedidosSemItens.length}`);
-
-    if (pedidosSemItens.length > 0) {
-      const BATCH_SIZE = 3; // Máximo 3 pedidos por vez
-
-      for (let i = 0; i < pedidosSemItens.length; i += BATCH_SIZE) {
-        const lote = pedidosSemItens.slice(i, i + BATCH_SIZE);
-        console.log(`Processando lote ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(pedidosSemItens.length/BATCH_SIZE)}`);
-
-        // Processa lote em PARALELO
-        const promessasLote = lote.map(async (pedido) => {
-          try {
-            const params = new URLSearchParams({
-              token: tinyToken,
-              formato: 'JSON',
-              id: pedido.numero,
-              com_itens: 'S'
-            });
-
-            const detalheData = await makeApiCall(`${tinyApiUrl}/pedido.obter.php`, params);
-            
-            if (detalheData.retorno.status !== 'Erro') {
-              const pedidoCompleto = detalheData.retorno.pedido;
-              pedido.itens = pedidoCompleto.itens || [];
-            } else {
-              console.error(`Erro ao buscar detalhes do pedido ${pedido.numero}:`, detalheData.retorno.erros);
-            }
-          } catch (error) {
-            console.error(`Erro ao buscar detalhes do pedido ${pedido.numero}:`, error);
-          }
-        });
-
-        await Promise.all(promessasLote);
-
-        // DELAY entre lotes
-        if (i + BATCH_SIZE < pedidosSemItens.length) {
-          await sleep(1000);
-        }
-      }
+      params.append('dataFim', dataFormatada);
+      console.log('Data final formatada:', dataFormatada);
+    }
+    
+    if (filtros.situacao && filtros.situacao !== 'todas') {
+      params.append('situacao', filtros.situacao);
     }
 
-    // Salvar todos os pedidos no banco de forma otimizada
-    let pedidosSalvos = 0;
-    let itensSalvos = 0;
+    console.log('Fazendo requisição para API do Tiny...');
+    console.log('Parâmetros:', params.toString());
 
-    for (const pedido of allPedidos) {
-      try {
-        // Converter data para formato correto do PostgreSQL
-        let dataFormatada = pedido.data_pedido;
-        if (dataFormatada && dataFormatada.includes('/')) {
-          const [dia, mes, ano] = dataFormatada.split('/');
-          dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    // Fazer requisição com timeout de 30 segundos
+    const tinyData: TinyApiResponse = await makeApiCallWithTimeout(
+      `${tinyApiUrl}/pedidos.pesquisa.php`, 
+      params, 
+      30000
+    );
+
+    console.log('Resposta da API Tiny:', tinyData.retorno.status);
+
+    if (tinyData.retorno.status === 'Erro') {
+      const erros = tinyData.retorno.erros?.map(e => e.erro).join(', ') || 'Erro desconhecido';
+      console.error('Erro da API Tiny:', erros);
+      throw new Error(`Erro da API Tiny: ${erros}`);
+    }
+
+    let allPedidos: TinyPedido[] = [];
+
+    if (tinyData.retorno.pedidos && tinyData.retorno.pedidos.length > 0) {
+      console.log(`Processando ${tinyData.retorno.pedidos.length} pedidos da primeira página`);
+      
+      // Processar pedidos da primeira página
+      for (const item of tinyData.retorno.pedidos) {
+        const pedido = item.pedido;
+        
+        try {
+          const pedidoProcessado: TinyPedido = {
+            id: pedido.id || '',
+            numero: pedido.numero || '',
+            numero_ecommerce: pedido.numero_ecommerce || null,
+            nome_cliente: pedido.cliente?.nome || pedido.nome_cliente || 'Cliente não informado',
+            cpf_cnpj: pedido.cliente?.cpf_cnpj || pedido.cpf_cnpj || null,
+            data_pedido: convertDateFormat(pedido.data_pedido || ''), // ✅ Conversão correta
+            data_prevista: convertDateFormat(pedido.data_prevista || ''), // ✅ Conversão correta
+            valor_total: parseFloat(String(pedido.total_pedido || pedido.valor_total || '0').replace(',', '.')) || 0,
+            valor_frete: parseFloat(String(pedido.valor_frete || '0').replace(',', '.')) || 0,
+            valor_desconto: parseFloat(String(pedido.valor_desconto || '0').replace(',', '.')) || 0,
+            situacao: (pedido.situacao || 'pendente').toLowerCase(),
+            obs: pedido.obs || null,
+            obs_interna: pedido.obs_interna || null,
+            codigo_rastreamento: pedido.codigo_rastreamento || null,
+            url_rastreamento: pedido.url_rastreamento || null,
+            itens: pedido.itens || []
+          };
+          
+          allPedidos.push(pedidoProcessado);
+        } catch (itemError) {
+          console.error('Erro ao processar pedido:', pedido.numero, itemError);
         }
-
-        const pedidoParaSalvar = {
-          numero: pedido.numero,
-          numero_ecommerce: pedido.numero_ecommerce,
-          nome_cliente: pedido.nome_cliente,
-          cpf_cnpj: pedido.cpf_cnpj,
-          data_pedido: dataFormatada,
-          data_prevista: pedido.data_prevista,
-          valor_total: pedido.valor_total,
-          valor_frete: pedido.valor_frete,
-          valor_desconto: pedido.valor_desconto,
-          situacao: pedido.situacao,
-          obs: pedido.obs,
-          obs_interna: pedido.obs_interna,
-          codigo_rastreamento: pedido.codigo_rastreamento,
-          url_rastreamento: pedido.url_rastreamento
-        };
-
-        const { data: pedidoSalvo, error: errorPedido } = await supabaseClient
-          .from('pedidos')
-          .upsert(pedidoParaSalvar, { 
-            onConflict: 'numero',
-            ignoreDuplicates: false 
-          })
-          .select()
-          .single();
-
-        if (errorPedido) {
-          console.error('Erro ao salvar pedido:', pedido.numero, errorPedido);
-          continue;
-        }
-
-        pedidosSalvos++;
-
-        // Salvar itens se existirem
-        if (pedido.itens && pedido.itens.length > 0) {
-          const itensParaInserir = pedido.itens.map(item => ({
-            pedido_id: pedidoSalvo.id,
-            numero_pedido: pedido.numero,
-            sku: item.codigo || '',
-            descricao: item.descricao || '',
-            quantidade: item.quantidade || 0,
-            valor_unitario: item.valor_unitario || 0,
-            valor_total: item.valor_total || 0,
-            ncm: item.ncm,
-            codigo_barras: item.codigo_barras,
-            observacoes: item.observacoes
-          }));
-
-          const { error: errorItens } = await supabaseClient
-            .from('itens_pedidos')
-            .upsert(itensParaInserir, { 
-              onConflict: 'numero_pedido,sku',
-              ignoreDuplicates: false 
-            });
-
-          if (!errorItens) {
-            itensSalvos += itensParaInserir.length;
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao salvar pedido completo:', pedido.numero, error);
       }
+
+      // Salvar pedidos no banco (apenas os que conseguimos processar)
+      let pedidosSalvos = 0;
+      let itensSalvos = 0;
+
+      for (const pedido of allPedidos) {
+        try {
+          const pedidoParaSalvar = {
+            numero: pedido.numero,
+            numero_ecommerce: pedido.numero_ecommerce,
+            nome_cliente: pedido.nome_cliente,
+            cpf_cnpj: pedido.cpf_cnpj,
+            data_pedido: pedido.data_pedido,
+            data_prevista: pedido.data_prevista,
+            valor_total: pedido.valor_total,
+            valor_frete: pedido.valor_frete,
+            valor_desconto: pedido.valor_desconto,
+            situacao: pedido.situacao,
+            obs: pedido.obs,
+            obs_interna: pedido.obs_interna,
+            codigo_rastreamento: pedido.codigo_rastreamento,
+            url_rastreamento: pedido.url_rastreamento
+          };
+
+          const { data: pedidoSalvo, error: errorPedido } = await supabaseClient
+            .from('pedidos')
+            .upsert(pedidoParaSalvar, { 
+              onConflict: 'numero',
+              ignoreDuplicates: false 
+            })
+            .select()
+            .single();
+
+          if (errorPedido) {
+            console.error('Erro ao salvar pedido:', pedido.numero, errorPedido);
+            continue;
+          }
+
+          pedidosSalvos++;
+
+          // Salvar itens se existirem
+          if (pedido.itens && pedido.itens.length > 0) {
+            const itensParaInserir = pedido.itens.map((item: any) => ({
+              pedido_id: pedidoSalvo.id,
+              numero_pedido: pedido.numero,
+              sku: item.item?.codigo || item.codigo || '',
+              descricao: item.item?.descricao || item.descricao || '',
+              quantidade: parseFloat(String(item.item?.quantidade || item.quantidade || '0').replace(',', '.')) || 0,
+              valor_unitario: parseFloat(String(item.item?.valor_unitario || item.valor_unitario || '0').replace(',', '.')) || 0,
+              valor_total: parseFloat(String(item.item?.valor_total || item.valor_total || '0').replace(',', '.')) || 0,
+              ncm: item.item?.ncm || item.ncm,
+              codigo_barras: item.item?.codigo_barras || item.codigo_barras,
+              observacoes: item.item?.observacoes || item.observacoes
+            }));
+
+            const { error: errorItens } = await supabaseClient
+              .from('itens_pedidos')
+              .upsert(itensParaInserir, { 
+                onConflict: 'numero_pedido,sku',
+                ignoreDuplicates: false 
+              });
+
+            if (!errorItens) {
+              itensSalvos += itensParaInserir.length;
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao salvar pedido completo:', pedido.numero, error);
+        }
+      }
+
+      console.log(`Salvos: ${pedidosSalvos} pedidos e ${itensSalvos} itens`);
     }
 
     const resultado = {
       pedidos: allPedidos,
       totalPedidos: allPedidos.length,
-      pedidosSalvos,
-      itensSalvos,
-      paginas: totalPaginas,
-      totalRegistros,
-      message: `${pedidosSalvos} pedidos e ${itensSalvos} itens sincronizados com sucesso`,
-      tempoProcessamento: Date.now()
+      pedidosSalvos: allPedidos.length,
+      itensSalvos: allPedidos.reduce((acc, p) => acc + (p.itens?.length || 0), 0),
+      paginas: parseInt(String(tinyData.retorno.numero_paginas || '1')),
+      totalRegistros: parseInt(String(tinyData.retorno.total_registros || allPedidos.length)),
+      message: allPedidos.length > 0 
+        ? `${allPedidos.length} pedidos sincronizados com sucesso` 
+        : 'Nenhum pedido encontrado para os filtros aplicados',
+      tempoProcessamento: Date.now(),
+      estrategia: 'primeira_pagina_otimizada'
     };
 
     // ✅ Salvar resultado no cache
     setCache(cacheKey, resultado);
 
-    console.log('Sincronização otimizada concluída com sucesso');
+    console.log('Sincronização concluída com sucesso');
+    clearTimeout(functionTimeout);
 
     return new Response(JSON.stringify(resultado), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
+    clearTimeout(functionTimeout);
     console.error('Erro na sincronização:', error);
     
+    let errorMessage = error.message;
+    let errorCode = 'SYNC_ERROR';
+    
+    if (error.message === 'TIMEOUT') {
+      errorMessage = 'Timeout: A busca demorou mais que 30 segundos. Tente filtros mais específicos.';
+      errorCode = 'TIMEOUT';
+    } else if (error.message.includes('API_BLOCKED')) {
+      errorCode = 'API_BLOCKED';
+    }
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: errorMessage,
       message: 'Erro ao sincronizar pedidos com Tiny ERP',
-      codigo: error.message.includes('API_BLOCKED') ? 'API_BLOCKED' : 'SYNC_ERROR'
+      codigo: errorCode,
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
