@@ -46,9 +46,6 @@ export function DeParaFiltros({
     <Card className="h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Filtros Avançados</CardTitle>
-        <CardDescription className="text-sm">
-          Busque e filtre produtos por múltiplos critérios
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Campo de busca */}
