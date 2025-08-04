@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Clock, Zap, Settings } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Clock, Zap, Settings, ChevronDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PedidosControleSincronizacaoProps {
@@ -23,6 +23,7 @@ export function PedidosControleSincronizacao({
   const [intervaloSincronizacao, setIntervaloSincronizacao] = useState('5'); // minutos
   const [proximaSincronizacao, setProximaSincronizacao] = useState<Date | null>(null);
   const [tempoRestante, setTempoRestante] = useState<string>('');
+  const [configAberta, setConfigAberta] = useState(false);
 
   // Carregar configurações salvas
   useEffect(() => {
@@ -115,13 +116,6 @@ export function PedidosControleSincronizacao({
     };
   }, [sincronizacaoAutomatica, proximaSincronizacao]);
 
-  const handleSincronizacaoManual = () => {
-    onSincronizar();
-    toast({
-      title: "Sincronização Manual",
-      description: "Buscando dados atualizados...",
-    });
-  };
 
   const intervalos = [
     { value: '1', label: '1 minuto' },
@@ -152,99 +146,92 @@ export function PedidosControleSincronizacao({
   };
 
   return (
-    <Card className="border-2">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Controle de Sincronização</CardTitle>
-          </div>
-          <Badge variant={sincronizacaoAutomatica ? "default" : "secondary"}>
-            {sincronizacaoAutomatica ? "Automático" : "Manual"}
-          </Badge>
-        </div>
-        <CardDescription>
-          Configure como os dados dos pedidos são atualizados
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* Botão Sincronização Manual */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <Label className="text-sm font-medium">Sincronização Manual</Label>
-            <p className="text-xs text-muted-foreground">
-              Última sincronização: {formatarUltimaSincronizacao()}
-            </p>
-          </div>
-          <Button 
-            onClick={handleSincronizacaoManual}
-            disabled={loading}
-            variant="outline"
-            className="min-w-[120px]"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Sincronizando...' : 'Sincronizar'}
-          </Button>
-        </div>
-
-        {/* Sincronização Automática */}
-        <div className="space-y-3 pt-2 border-t">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label htmlFor="sync-auto" className="text-sm font-medium">
-                Sincronização Automática
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Atualizar dados automaticamente em intervalos regulares
-              </p>
+    <Collapsible open={configAberta} onOpenChange={setConfigAberta}>
+      <Card className="border-2">
+        <CollapsibleTrigger className="w-full">
+          <CardHeader className="pb-3 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Sincronização</CardTitle>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${configAberta ? 'rotate-180' : ''}`} />
+              </div>
+              <div className="flex items-center gap-2">
+                {!sincronizacaoAutomatica && (
+                  <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
+                    Manual
+                  </Badge>
+                )}
+                {sincronizacaoAutomatica && (
+                  <Badge variant="default">
+                    Automático
+                  </Badge>
+                )}
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Zap className="h-3 w-3 text-green-500" />
+                  {loading ? 'Sincronizando...' : 'Pronto'}
+                </div>
+              </div>
             </div>
-            <Switch
-              id="sync-auto"
-              checked={sincronizacaoAutomatica}
-              onCheckedChange={setSincronizacaoAutomatica}
-            />
-          </div>
+            <CardDescription className="text-left">
+              Última sincronização: {formatarUltimaSincronizacao()}
+            </CardDescription>
+          </CardHeader>
+        </CollapsibleTrigger>
 
-          {sincronizacaoAutomatica && (
-            <div className="space-y-3 pl-4 border-l-2 border-muted">
-              <div className="flex items-center gap-3">
-                <Label className="text-sm min-w-[60px]">Intervalo:</Label>
-                <Select value={intervaloSincronizacao} onValueChange={setIntervaloSincronizacao}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {intervalos.map((intervalo) => (
-                      <SelectItem key={intervalo.value} value={intervalo.value}>
-                        {intervalo.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <CollapsibleContent>
+          <CardContent className="space-y-4 pt-0">
+            {/* Sincronização Automática */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="sync-auto" className="text-sm font-medium">
+                    Sincronização Automática
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Atualizar dados automaticamente em intervalos regulares
+                  </p>
+                </div>
+                <Switch
+                  id="sync-auto"
+                  checked={sincronizacaoAutomatica}
+                  onCheckedChange={setSincronizacaoAutomatica}
+                />
               </div>
 
-              {tempoRestante && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  Próxima sincronização em: 
-                  <Badge variant="outline" className="font-mono">
-                    {tempoRestante}
-                  </Badge>
+              {sincronizacaoAutomatica && (
+                <div className="space-y-3 pl-4 border-l-2 border-muted">
+                  <div className="flex items-center gap-3">
+                    <Label className="text-sm min-w-[60px]">Intervalo:</Label>
+                    <Select value={intervaloSincronizacao} onValueChange={setIntervaloSincronizacao}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {intervalos.map((intervalo) => (
+                          <SelectItem key={intervalo.value} value={intervalo.value}>
+                            {intervalo.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {tempoRestante && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      Próxima sincronização em: 
+                      <Badge variant="outline" className="font-mono">
+                        {tempoRestante}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
-
-        {/* Status */}
-        <div className="flex items-center gap-2 pt-2 border-t text-sm">
-          <Zap className="h-4 w-4 text-green-500" />
-          <span className="text-muted-foreground">
-            Status: {loading ? 'Sincronizando...' : 'Pronto'}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
