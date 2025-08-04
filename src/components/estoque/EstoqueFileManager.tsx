@@ -135,8 +135,24 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
           const statusValidos = ['ativo', 'baixo', 'critico', 'inativo'];
           const status = statusValidos.includes(statusRaw) ? statusRaw : 'ativo';
 
+          // Tratar código de barras - se estiver vazio ou duplicado, deixa null
+          let codigoBarras = row['Código de Barras']?.toString()?.trim() || null;
+          
+          // Se o código de barras já existe no banco, deixa null para evitar erro de duplicata
+          if (codigoBarras) {
+            const { data: existingProduct } = await supabase
+              .from('produtos')
+              .select('id')
+              .eq('codigo_barras', codigoBarras)
+              .single();
+            
+            if (existingProduct) {
+              codigoBarras = null; // Remove código duplicado
+            }
+          }
+
           const produto = {
-            codigo_barras: row['Código de Barras']?.toString() || null,
+            codigo_barras: codigoBarras,
             sku_interno: row['SKU Interno']?.toString() || `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             nome: row['Nome do Produto']?.toString() || '',
             categoria: row['Categoria']?.toString() || null,
