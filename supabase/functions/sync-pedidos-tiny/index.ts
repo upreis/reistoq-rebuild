@@ -16,7 +16,7 @@ const cacheMap = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL_MINUTES = 15; // Aumentado para 15 minutos
 
 // Timeout personalizado para evitar travamentos
-const FUNCTION_TIMEOUT = 4 * 60 * 1000; // 4 minutos máximo
+const FUNCTION_TIMEOUT = 2 * 60 * 1000; // 2 minutos máximo
 
 interface TinyPedido {
   id: string;
@@ -248,13 +248,16 @@ serve(async (req) => {
     console.log('Iniciando sincronização com timeout de 3 minutos');
     console.log('Filtros recebidos:', filtros);
 
-    // ✅ ESTRATÉGIA SIMPLIFICADA: Buscar apenas primeira página com com_itens=S
+// ✅ ESTRATÉGIA OTIMIZADA: Limitar páginas para evitar timeout
     const params = new URLSearchParams({
       token: tinyToken,
       formato: 'JSON',
       pagina: '1',
-      com_itens: 'S' // ✅ REABILITADO: busca com itens já incluídos
+      com_itens: 'S' // Busca com itens já incluídos
     });
+
+    // Limite máximo de páginas para evitar timeout
+    const MAX_PAGINAS = 3;
 
     // Aplicar filtros se fornecidos - usando formato correto DD/MM/YYYY para API do Tiny
     if (filtros.dataInicio) {
@@ -373,7 +376,7 @@ serve(async (req) => {
         await sleep(1000);
       }
 
-    } while (paginaAtual <= totalPaginas);
+    } while (paginaAtual <= totalPaginas && paginaAtual <= MAX_PAGINAS);
 
     console.log(`🎉 Paginação concluída! Total de ${allPedidos.length} pedidos coletados de ${totalPaginas} páginas`);
 
