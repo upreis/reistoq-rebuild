@@ -334,6 +334,7 @@ Deno.serve(async (req) => {
               const item = itemWrapper.item;
               
               const itemProcessado = {
+                pedido_id: pedido.id,          // ✅ CORRIGIDO: usar ID do pedido
                 numero_pedido: pedido.numero,
                 sku: item.codigo,
                 descricao: item.descricao,
