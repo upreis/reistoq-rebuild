@@ -345,9 +345,10 @@ export function useItensPedidos() {
     }
   };
 
+  // Carregamento inicial apenas - sem recarregar automaticamente nos filtros
   useEffect(() => {
     buscarItens();
-  }, [filtros]);
+  }, []); // Remove a dependência dos filtros
 
   // Real-time subscription para itens_pedidos
   useEffect(() => {

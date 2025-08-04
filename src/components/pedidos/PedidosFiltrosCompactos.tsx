@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, RotateCcw, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { Search, Filter, RotateCcw, Calendar as CalendarIcon, ChevronDown, Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,11 @@ interface PedidosFiltrosCompactosProps {
   filtros: FiltrosPedidosCompactos;
   onFiltroChange: (filtros: Partial<FiltrosPedidosCompactos>) => void;
   onLimparFiltros: () => void;
+  onBuscarPedidos: () => void;
+  loading?: boolean;
 }
 
-export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltros }: PedidosFiltrosCompactosProps) {
+export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltros, onBuscarPedidos, loading }: PedidosFiltrosCompactosProps) {
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [dataInicio, setDataInicio] = useState<Date | undefined>(
     filtros.dataInicio ? new Date(filtros.dataInicio) : undefined
@@ -151,6 +153,16 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
             </Button>
           </CollapsibleTrigger>
         </Collapsible>
+
+        {/* Botão Buscar Pedidos - Destaque */}
+        <Button 
+          onClick={onBuscarPedidos} 
+          disabled={loading}
+          className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold min-w-[140px] shadow-lg"
+        >
+          <Play className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? 'Buscando...' : 'Buscar Pedidos'}
+        </Button>
 
         {/* Botão Limpar */}
         <Button variant="ghost" onClick={onLimparFiltros} className="text-muted-foreground">

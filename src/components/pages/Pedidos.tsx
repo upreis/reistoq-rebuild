@@ -1,4 +1,4 @@
-import { Download, RefreshCw } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,11 +35,11 @@ export function Pedidos() {
     itemFinal
   } = usePedidosPaginado({ pedidos: itens });
 
-  const handleSincronizar = () => {
+  const handleBuscarPedidos = () => {
     recarregarDados();
     toast({
-      title: "Sincronização iniciada",
-      description: "Os dados dos pedidos estão sendo atualizados.",
+      title: "Buscando pedidos",
+      description: "Os pedidos estão sendo carregados com os filtros aplicados.",
     });
   };
 
@@ -89,10 +89,6 @@ export function Pedidos() {
           <p className="text-muted-foreground">Gestão completa de pedidos - Integração Tiny ERP</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSincronizar} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Sincronizar
-          </Button>
           <Button variant="secondary" onClick={handleExportar}>
             <Download className="mr-2 h-4 w-4" />
             Exportar
@@ -108,6 +104,8 @@ export function Pedidos() {
         filtros={filtros}
         onFiltroChange={atualizarFiltros}
         onLimparFiltros={limparFiltros}
+        onBuscarPedidos={handleBuscarPedidos}
+        loading={loading}
       />
 
       {/* Tabela de Itens de Pedidos */}
