@@ -186,34 +186,16 @@ export function PedidosTabelaItens({
                     </div>
                   </TableCell>
                    <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
-                     <div className="space-y-1">
-                       <div className="font-mono text-sm">{item.sku}</div>
-                       {item.sku_estoque && item.sku_estoque !== item.sku && (
-                         <div className="flex items-center gap-1 text-xs text-green-600">
-                           <ExternalLink className="h-3 w-3" />
-                           {item.sku_estoque}
-                         </div>
-                       )}
-                       {item.mapeamento_aplicado?.sku_simples && (
-                         <div className="text-xs text-blue-600">
-                           Simples: {item.mapeamento_aplicado.sku_simples}
-                         </div>
-                       )}
-                       {item.linha_destacada && (
-                         <div className="text-xs text-orange-600 font-medium">
-                           ⚠️ Sem mapeamento
-                         </div>
-                       )}
-                     </div>
+                     <div className="font-mono text-sm">{item.sku}</div>
+                     {item.linha_destacada && (
+                       <div className="text-xs text-orange-600 font-medium">
+                         ⚠️ Sem mapeamento
+                       </div>
+                     )}
                    </TableCell>
                    <TableCell>
                      <div className="max-w-60 truncate">
                        {item.descricao}
-                       {item.produto_nome && item.produto_nome !== item.descricao && (
-                         <div className="text-xs text-muted-foreground mt-1">
-                           Estoque: {item.produto_nome}
-                         </div>
-                       )}
                      </div>
                    </TableCell>
                   <TableCell className="text-center">
