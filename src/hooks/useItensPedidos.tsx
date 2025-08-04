@@ -114,7 +114,8 @@ export function useItensPedidos() {
           filtros: {
             dataInicio: filtros.dataInicio,
             dataFim: filtros.dataFim,
-            situacao: filtros.situacoes.length === 1 ? filtros.situacoes[0] : ''
+            // ✅ CORRIGIDO: Enviar todas as situações selecionadas
+            situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
           }
         }
       });

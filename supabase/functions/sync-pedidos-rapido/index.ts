@@ -6,14 +6,14 @@ const corsHeaders = {
 }
 
 // Configurações otimizadas para PRODUÇÃO (evita timeouts)
-const REQUEST_TIMEOUT = 15000; // 15 segundos
+const REQUEST_TIMEOUT = 30000; // 30 segundos (aumentado)
 const BASE_RETRY_DELAY = 1000; // 1 segundo
-const MAX_RETRIES = 2; // Reduzido para evitar timeouts
+const MAX_RETRIES = 3; // 3 tentativas
 const DELAY_ENTRE_PAGINAS = 500; // 500ms entre páginas
 const DELAY_ENTRE_LOTES = 1000; // 1 segundo entre lotes
-const BATCH_SIZE = 1; // 1 pedido por vez para evitar sobrecarga
-const MAX_PAGINAS_POR_EXECUCAO = 3; // CRÍTICO: máximo 3 páginas por execução
-const DELAY_RATE_LIMIT = 10000; // 10 segundos em vez de 5 minutos
+const BATCH_SIZE = 5; // 5 pedidos por lote (otimizado)
+const MAX_PAGINAS_POR_EXECUCAO = 10; // Aumentado para 10 páginas
+const DELAY_RATE_LIMIT = 5000; // 5 segundos para rate limit
 
 interface TinyPedido {
   id: string;
@@ -90,6 +90,32 @@ function determinarNomeEcommerce(pedido: any): string {
   if (numeroEcommerce.startsWith('SHOPEE-')) return 'Shopee';
   
   return numeroEcommerce ? 'Loja Virtual' : 'Balcão';
+}
+
+// ✅ NOVO: Função para mapear situações corretamente
+function mapearSituacoes(situacao: string | string[]): string {
+  // Mapeamento de situações do frontend para API Tiny
+  const mapeamento: { [key: string]: string } = {
+    'em aberto': 'em_aberto',
+    'aprovado': 'aprovado',
+    'preparando envio': 'preparando_envio',
+    'faturado': 'faturado',
+    'enviado': 'enviado',
+    'entregue': 'entregue',
+    'cancelado': 'cancelado'
+  };
+  
+  if (typeof situacao === 'string') {
+    return mapeamento[situacao.toLowerCase()] || situacao;
+  }
+  
+  if (Array.isArray(situacao)) {
+    return situacao
+      .map(s => mapeamento[s.toLowerCase()] || s)
+      .join(',');
+  }
+  
+  return '';
 }
 
 async function makeApiCallWithRetry(
@@ -227,11 +253,23 @@ Deno.serve(async (req) => {
       pagina: '1'
     });
 
-    if (filtros.dataInicio) {
-      params.append('dataInicial', formatDateForTinyAPI(filtros.dataInicio));
+    // Aplicar filtros de data
+    if (filtros.filtros?.dataInicial || filtros.filtros?.dataInicio) {
+      const dataInicial = filtros.filtros.dataInicial || filtros.filtros.dataInicio;
+      params.append('dataInicial', formatDateForTinyAPI(dataInicial));
     }
-    if (filtros.dataFim) {
-      params.append('dataFinal', formatDateForTinyAPI(filtros.dataFim));
+    if (filtros.filtros?.dataFinal || filtros.filtros?.dataFim) {
+      const dataFinal = filtros.filtros.dataFinal || filtros.filtros.dataFim;
+      params.append('dataFinal', formatDateForTinyAPI(dataFinal));
+    }
+    
+    // ✅ CORRIGIDO: Processar múltiplas situações com mapeamento
+    if (filtros.filtros?.situacao) {
+      const situacaoMapeada = mapearSituacoes(filtros.filtros.situacao);
+      if (situacaoMapeada) {
+        params.append('situacao', situacaoMapeada);
+        console.log('🎯 Situações aplicadas:', situacaoMapeada);
+      }
     }
 
     console.log('📡 Buscando pedidos na API Tiny ERP...');

@@ -11,7 +11,7 @@ interface ProcessarParams {
     dataInicial?: string;  // Também aceitar formato correto
     dataFim?: string;
     dataFinal?: string;    // Também aceitar formato correto
-    situacao?: string;
+    situacao?: string | string[];  // ✅ Aceitar string ou array
   };
 }
 
@@ -123,18 +123,28 @@ Deno.serve(async (req) => {
     console.log('📡 [DEBUG] Chamando sync-pedidos-rapido...');
     console.log('📡 [DEBUG] Params originais:', JSON.stringify(params));
     
-    // Corrigir mapeamento de parâmetros: dataInicio/dataFim → dataInicial/dataFinal
+    // ✅ CORRIGIDO: Mapeamento de parâmetros dataInicio/dataFim → dataInicial/dataFinal
     const paramsCorrigidos = {
       ...params,
       filtros: params.filtros ? {
-        ...params.filtros,
-        dataInicial: params.filtros.dataInicio,
-        dataFinal: params.filtros.dataFim,
-        // Remove os parâmetros incorretos
+        // Manter ambos os formatos para compatibilidade
+        dataInicial: params.filtros.dataInicial || params.filtros.dataInicio,
+        dataFinal: params.filtros.dataFinal || params.filtros.dataFim,
+        situacao: params.filtros.situacao,
+        // Remove parâmetros duplicados
         dataInicio: undefined,
         dataFim: undefined
       } : undefined
     };
+    
+    // Remove campos undefined
+    if (paramsCorrigidos.filtros) {
+      Object.keys(paramsCorrigidos.filtros).forEach(key => {
+        if (paramsCorrigidos.filtros[key] === undefined) {
+          delete paramsCorrigidos.filtros[key];
+        }
+      });
+    }
     
     console.log('📡 [DEBUG] Params corrigidos:', JSON.stringify(paramsCorrigidos));
     
