@@ -245,7 +245,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Iniciando sincronização com timeout de 4 minutos');
+    console.log('Iniciando sincronização com timeout de 3 minutos');
     console.log('Filtros recebidos:', filtros);
 
     // ✅ ESTRATÉGIA SIMPLIFICADA: Buscar apenas primeira página com com_itens=S
@@ -287,10 +287,13 @@ serve(async (req) => {
     console.log('Parâmetros:', params.toString());
 
     // Fazer requisição com timeout de 30 segundos
+    console.log('Fazendo chamada para API Tiny ERP:', `${tinyApiUrl}/pedidos.pesquisa.php`);
+    console.log('Parâmetros:', params.toString());
+    
     const tinyData: TinyApiResponse = await makeApiCallWithTimeout(
       `${tinyApiUrl}/pedidos.pesquisa.php`, 
       params, 
-      30000
+      25000 // Reduzindo timeout para 25 segundos
     );
 
     console.log('Resposta da API Tiny:', tinyData.retorno.status);
