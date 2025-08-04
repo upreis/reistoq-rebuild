@@ -290,157 +290,187 @@ serve(async (req) => {
     console.log('Fazendo chamada para API Tiny ERP:', `${tinyApiUrl}/pedidos.pesquisa.php`);
     console.log('Parâmetros:', params.toString());
     
-    const tinyData: TinyApiResponse = await makeApiCallWithTimeout(
-      `${tinyApiUrl}/pedidos.pesquisa.php`, 
-      params, 
-      25000 // Reduzindo timeout para 25 segundos
-    );
-
-    console.log('Resposta da API Tiny:', tinyData.retorno.status);
-
-    if (tinyData.retorno.status === 'Erro') {
-      const erros = tinyData.retorno.erros?.map(e => e.erro).join(', ') || 'Erro desconhecido';
-      console.error('Erro da API Tiny:', erros);
-      throw new Error(`Erro da API Tiny: ${erros}`);
-    }
-
+    // ✅ PAGINAÇÃO AUTOMÁTICA COMPLETA
     let allPedidos: TinyPedido[] = [];
+    let paginaAtual = 1;
+    let totalPaginas = 1;
+    let totalRegistros = 0;
 
-    if (tinyData.retorno.pedidos && tinyData.retorno.pedidos.length > 0) {
-      console.log(`Processando ${tinyData.retorno.pedidos.length} pedidos da primeira página`);
+    do {
+      console.log(`📄 Buscando página ${paginaAtual} de ${totalPaginas}`);
       
-      // Processar pedidos da primeira página
-      for (const item of tinyData.retorno.pedidos) {
-        const pedido = item.pedido;
+      // Atualizar parâmetro da página
+      params.set('pagina', paginaAtual.toString());
+      
+      const tinyData: TinyApiResponse = await makeApiCallWithTimeout(
+        `${tinyApiUrl}/pedidos.pesquisa.php`, 
+        params, 
+        25000
+      );
+
+      console.log('Resposta da API Tiny para página', paginaAtual, ':', tinyData.retorno.status);
+
+      if (tinyData.retorno.status === 'Erro') {
+        const erros = tinyData.retorno.erros?.map(e => e.erro).join(', ') || 'Erro desconhecido';
+        console.error('Erro da API Tiny:', erros);
+        throw new Error(`Erro da API Tiny: ${erros}`);
+      }
+
+      // ✅ Extrair informações de paginação
+      totalPaginas = parseInt(tinyData.retorno.numero_paginas || '1');
+      totalRegistros = parseInt(tinyData.retorno.total_registros || '0');
+      
+      console.log(`📊 Página ${paginaAtual}/${totalPaginas} - Total de registros: ${totalRegistros}`);
+
+      if (tinyData.retorno.pedidos && tinyData.retorno.pedidos.length > 0) {
+        console.log(`✅ Processando ${tinyData.retorno.pedidos.length} pedidos da página ${paginaAtual}`);
         
-        try {
-          // ✅ DEBUG: Log detalhado do pedido para entender estrutura
-          console.log(`🔍 DEBUG Pedido ${pedido.numero}:`, {
-            temItens: !!pedido.itens,
-            qtdItens: pedido.itens?.length || 0,
-            itensRaw: pedido.itens ? JSON.stringify(pedido.itens).substring(0, 200) : 'SEM ITENS'
-          });
+        // Processar pedidos da página atual
+        for (const item of tinyData.retorno.pedidos) {
+          const pedido = item.pedido;
           
-          const pedidoProcessado: TinyPedido = {
-            id: pedido.id || '',
-            numero: pedido.numero || '',
-            numero_ecommerce: pedido.numero_ecommerce || null,
-            nome_cliente: pedido.cliente?.nome || pedido.nome_cliente || 'Cliente não informado',
-            cpf_cnpj: pedido.cliente?.cpf_cnpj || pedido.cpf_cnpj || null,
-            data_pedido: convertDateFormat(pedido.data_pedido || ''), // ✅ Conversão correta
-            data_prevista: convertDateFormat(pedido.data_prevista || ''), // ✅ Conversão correta
-            valor_total: parseFloat(String(pedido.total_pedido || pedido.valor_total || '0').replace(',', '.')) || 0,
-            valor_frete: parseFloat(String(pedido.valor_frete || '0').replace(',', '.')) || 0,
-            valor_desconto: parseFloat(String(pedido.valor_desconto || '0').replace(',', '.')) || 0,
-            situacao: (pedido.situacao || 'pendente').toLowerCase(),
-            obs: pedido.obs || null,
-            obs_interna: pedido.obs_interna || null,
-            codigo_rastreamento: pedido.codigo_rastreamento || null,
-            url_rastreamento: pedido.url_rastreamento || null,
-            itens: pedido.itens || []
-          };
-          
-          allPedidos.push(pedidoProcessado);
-        } catch (itemError) {
-          console.error('Erro ao processar pedido:', pedido.numero, itemError);
-        }
-      }
-
-      // Salvar pedidos no banco (apenas os que conseguimos processar)
-      let pedidosSalvos = 0;
-      let itensSalvos = 0;
-
-      for (const pedido of allPedidos) {
-        try {
-          const pedidoParaSalvar = {
-            numero: pedido.numero,
-            numero_ecommerce: pedido.numero_ecommerce,
-            nome_cliente: pedido.nome_cliente,
-            cpf_cnpj: pedido.cpf_cnpj,
-            data_pedido: pedido.data_pedido,
-            data_prevista: pedido.data_prevista,
-            valor_total: pedido.valor_total,
-            valor_frete: pedido.valor_frete,
-            valor_desconto: pedido.valor_desconto,
-            situacao: pedido.situacao,
-            obs: pedido.obs,
-            obs_interna: pedido.obs_interna,
-            codigo_rastreamento: pedido.codigo_rastreamento,
-            url_rastreamento: pedido.url_rastreamento
-          };
-
-          const { data: pedidoSalvo, error: errorPedido } = await supabaseClient
-            .from('pedidos')
-            .upsert(pedidoParaSalvar, { 
-              onConflict: 'numero',
-              ignoreDuplicates: false 
-            })
-            .select()
-            .single();
-
-          if (errorPedido) {
-            console.error('Erro ao salvar pedido:', pedido.numero, errorPedido);
-            continue;
-          }
-
-          pedidosSalvos++;
-
-          // Salvar itens se existirem
-          if (pedido.itens && pedido.itens.length > 0) {
-            console.log(`💾 Salvando ${pedido.itens.length} itens do pedido ${pedido.numero}`);
-            console.log('🔍 DEBUG itens raw:', JSON.stringify(pedido.itens[0]).substring(0, 300));
+          try {
+            // ✅ DEBUG: Log detalhado do pedido para entender estrutura
+            console.log(`🔍 DEBUG Pedido ${pedido.numero}:`, {
+              temItens: !!pedido.itens,
+              qtdItens: pedido.itens?.length || 0,
+              itensRaw: pedido.itens ? JSON.stringify(pedido.itens).substring(0, 200) : 'SEM ITENS'
+            });
             
-            const itensParaInserir = pedido.itens.map((item: any) => ({
-              pedido_id: pedidoSalvo.id,
-              numero_pedido: pedido.numero,
-              sku: item.item?.codigo || item.codigo || '',
-              descricao: item.item?.descricao || item.descricao || '',
-              quantidade: parseFloat(String(item.item?.quantidade || item.quantidade || '0').replace(',', '.')) || 0,
-              valor_unitario: parseFloat(String(item.item?.valor_unitario || item.valor_unitario || '0').replace(',', '.')) || 0,
-              valor_total: parseFloat(String(item.item?.valor_total || item.valor_total || '0').replace(',', '.')) || 0,
-              ncm: item.item?.ncm || item.ncm,
-              codigo_barras: item.item?.codigo_barras || item.codigo_barras,
-              observacoes: item.item?.observacoes || item.observacoes
-            }));
-
-            console.log('💾 Primeiro item processado:', JSON.stringify(itensParaInserir[0]));
-
-            const { error: errorItens } = await supabaseClient
-              .from('itens_pedidos')
-              .upsert(itensParaInserir, { 
-                onConflict: 'numero_pedido,sku',
-                ignoreDuplicates: false 
-              });
-
-            if (errorItens) {
-              console.error('❌ Erro ao salvar itens do pedido:', pedido.numero, errorItens);
-            } else {
-              itensSalvos += itensParaInserir.length;
-              console.log(`✅ Salvos ${itensParaInserir.length} itens do pedido ${pedido.numero}`);
-            }
-          } else {
-            console.log(`⚠️ Pedido ${pedido.numero} não tem itens`);
+            const pedidoProcessado: TinyPedido = {
+              id: pedido.id || '',
+              numero: pedido.numero || '',
+              numero_ecommerce: pedido.numero_ecommerce || null,
+              nome_cliente: pedido.cliente?.nome || pedido.nome_cliente || 'Cliente não informado',
+              cpf_cnpj: pedido.cliente?.cpf_cnpj || pedido.cpf_cnpj || null,
+              data_pedido: convertDateFormat(pedido.data_pedido || ''),
+              data_prevista: convertDateFormat(pedido.data_prevista || ''),
+              valor_total: parseFloat(String(pedido.total_pedido || pedido.valor_total || '0').replace(',', '.')) || 0,
+              valor_frete: parseFloat(String(pedido.valor_frete || '0').replace(',', '.')) || 0,
+              valor_desconto: parseFloat(String(pedido.valor_desconto || '0').replace(',', '.')) || 0,
+              situacao: (pedido.situacao || 'pendente').toLowerCase(),
+              obs: pedido.obs || null,
+              obs_interna: pedido.obs_interna || null,
+              codigo_rastreamento: pedido.codigo_rastreamento || null,
+              url_rastreamento: pedido.url_rastreamento || null,
+              itens: pedido.itens || []
+            };
+            
+            allPedidos.push(pedidoProcessado);
+          } catch (itemError) {
+            console.error('Erro ao processar pedido:', pedido.numero, itemError);
           }
-        } catch (error) {
-          console.error('Erro ao salvar pedido completo:', pedido.numero, error);
         }
+      } else {
+        console.log(`⚠️ Página ${paginaAtual} não retornou pedidos`);
       }
 
-      console.log(`Salvos: ${pedidosSalvos} pedidos e ${itensSalvos} itens`);
+      paginaAtual++;
+
+      // ✅ DELAY entre páginas para não sobrecarregar API
+      if (paginaAtual <= totalPaginas) {
+        console.log('⏱️ Aguardando 1 segundo antes da próxima página...');
+        await sleep(1000);
+      }
+
+    } while (paginaAtual <= totalPaginas);
+
+    console.log(`🎉 Paginação concluída! Total de ${allPedidos.length} pedidos coletados de ${totalPaginas} páginas`);
+
+    // ✅ SALVAR TODOS OS PEDIDOS NO BANCO
+    let pedidosSalvos = 0;
+    let itensSalvos = 0;
+
+    for (const pedido of allPedidos) {
+      try {
+        const pedidoParaSalvar = {
+          numero: pedido.numero,
+          numero_ecommerce: pedido.numero_ecommerce,
+          nome_cliente: pedido.nome_cliente,
+          cpf_cnpj: pedido.cpf_cnpj,
+          data_pedido: pedido.data_pedido,
+          data_prevista: pedido.data_prevista,
+          valor_total: pedido.valor_total,
+          valor_frete: pedido.valor_frete,
+          valor_desconto: pedido.valor_desconto,
+          situacao: pedido.situacao,
+          obs: pedido.obs,
+          obs_interna: pedido.obs_interna,
+          codigo_rastreamento: pedido.codigo_rastreamento,
+          url_rastreamento: pedido.url_rastreamento
+        };
+
+        const { data: pedidoSalvo, error: errorPedido } = await supabaseClient
+          .from('pedidos')
+          .upsert(pedidoParaSalvar, { 
+            onConflict: 'numero',
+            ignoreDuplicates: false 
+          })
+          .select()
+          .single();
+
+        if (errorPedido) {
+          console.error('Erro ao salvar pedido:', pedido.numero, errorPedido);
+          continue;
+        }
+
+        pedidosSalvos++;
+
+        // Salvar itens se existirem
+        if (pedido.itens && pedido.itens.length > 0) {
+          console.log(`💾 Salvando ${pedido.itens.length} itens do pedido ${pedido.numero}`);
+          console.log('🔍 DEBUG itens raw:', JSON.stringify(pedido.itens[0]).substring(0, 300));
+          
+          const itensParaInserir = pedido.itens.map((item: any) => ({
+            pedido_id: pedidoSalvo.id,
+            numero_pedido: pedido.numero,
+            sku: item.item?.codigo || item.codigo || '',
+            descricao: item.item?.descricao || item.descricao || '',
+            quantidade: parseFloat(String(item.item?.quantidade || item.quantidade || '0').replace(',', '.')) || 0,
+            valor_unitario: parseFloat(String(item.item?.valor_unitario || item.valor_unitario || '0').replace(',', '.')) || 0,
+            valor_total: parseFloat(String(item.item?.valor_total || item.valor_total || '0').replace(',', '.')) || 0,
+            ncm: item.item?.ncm || item.ncm,
+            codigo_barras: item.item?.codigo_barras || item.codigo_barras,
+            observacoes: item.item?.observacoes || item.observacoes
+          }));
+
+          console.log('💾 Primeiro item processado:', JSON.stringify(itensParaInserir[0]));
+
+          const { error: errorItens } = await supabaseClient
+            .from('itens_pedidos')
+            .upsert(itensParaInserir, { 
+              onConflict: 'numero_pedido,sku',
+              ignoreDuplicates: false 
+            });
+
+          if (errorItens) {
+            console.error('❌ Erro ao salvar itens do pedido:', pedido.numero, errorItens);
+          } else {
+            itensSalvos += itensParaInserir.length;
+            console.log(`✅ Salvos ${itensParaInserir.length} itens do pedido ${pedido.numero}`);
+          }
+        } else {
+          console.log(`⚠️ Pedido ${pedido.numero} não tem itens`);
+        }
+      } catch (error) {
+        console.error('Erro ao salvar pedido completo:', pedido.numero, error);
+      }
     }
+
+    console.log(`Salvos: ${pedidosSalvos} pedidos e ${itensSalvos} itens`);
 
     const resultado = {
       pedidos: allPedidos,
       totalPedidos: allPedidos.length,
-      pedidosSalvos: allPedidos.length,
-      itensSalvos: allPedidos.reduce((acc, p) => acc + (p.itens?.length || 0), 0),
-      paginas: parseInt(String(tinyData.retorno.numero_paginas || '1')),
-      totalRegistros: parseInt(String(tinyData.retorno.total_registros || allPedidos.length)),
+      pedidosSalvos: pedidosSalvos,
+      itensSalvos: itensSalvos,
+      paginas: totalPaginas,
+      totalRegistros: totalRegistros,
       message: allPedidos.length > 0 
-        ? `${allPedidos.length} pedidos sincronizados com sucesso` 
+        ? `${allPedidos.length} pedidos sincronizados com sucesso em ${totalPaginas} páginas` 
         : 'Nenhum pedido encontrado para os filtros aplicados',
       tempoProcessamento: Date.now(),
-      estrategia: 'primeira_pagina_otimizada'
+      estrategia: 'paginacao_automatica_completa'
     };
 
     // ✅ Salvar resultado no cache
