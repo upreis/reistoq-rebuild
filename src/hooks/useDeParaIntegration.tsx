@@ -33,6 +33,7 @@ export interface ItemPedidoEnriquecido {
   nome_cliente?: string;
   numero_ecommerce?: string;
   data_pedido?: string;
+  data_prevista?: string;
   situacao?: string;
   cpf_cnpj?: string;
   codigo_rastreamento?: string;

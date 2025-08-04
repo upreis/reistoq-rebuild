@@ -149,14 +149,20 @@ export function PedidosTabelaItens({
                 <TableHead>Pedido</TableHead>
                 <TableHead>E-commerce</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Qtd</TableHead>
                 <TableHead>Valor Unit.</TableHead>
                 <TableHead>Total Item</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>Data Pedido</TableHead>
+                <TableHead>Data Prevista</TableHead>
                 <TableHead>Estoque</TableHead>
+                <TableHead>Frete</TableHead>
+                <TableHead>Desconto</TableHead>
+                <TableHead>Rastreamento</TableHead>
+                <TableHead>Observações</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -177,27 +183,30 @@ export function PedidosTabelaItens({
                       {item.nome_cliente}
                     </div>
                   </TableCell>
-                   <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
-                     <div className="space-y-1">
-                       <div className="font-mono text-sm">{item.sku}</div>
-                       {item.sku_estoque && item.sku_estoque !== item.sku && (
-                         <div className="flex items-center gap-1 text-xs text-green-600">
-                           <ExternalLink className="h-3 w-3" />
-                           {item.sku_estoque}
-                         </div>
-                       )}
-                       {item.mapeamento_aplicado?.sku_simples && (
-                         <div className="text-xs text-blue-600">
-                           Simples: {item.mapeamento_aplicado.sku_simples}
-                         </div>
-                       )}
-                       {item.linha_destacada && (
-                         <div className="text-xs text-orange-600 font-medium">
-                           ⚠️ Sem mapeamento
-                         </div>
-                       )}
-                     </div>
-                   </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {item.cpf_cnpj || '-'}
+                  </TableCell>
+                  <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
+                    <div className="space-y-1">
+                      <div className="font-mono text-sm">{item.sku}</div>
+                      {item.sku_estoque && item.sku_estoque !== item.sku && (
+                        <div className="flex items-center gap-1 text-xs text-green-600">
+                          <ExternalLink className="h-3 w-3" />
+                          {item.sku_estoque}
+                        </div>
+                      )}
+                      {item.mapeamento_aplicado?.sku_simples && (
+                        <div className="text-xs text-blue-600">
+                          Simples: {item.mapeamento_aplicado.sku_simples}
+                        </div>
+                      )}
+                      {item.linha_destacada && (
+                        <div className="text-xs text-orange-600 font-medium">
+                          ⚠️ Sem mapeamento
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="max-w-60 truncate">
                       {item.descricao}
@@ -224,13 +233,16 @@ export function PedidosTabelaItens({
                     {formatarData(item.data_pedido)}
                   </TableCell>
                   <TableCell>
+                    {item.data_prevista ? formatarData(item.data_prevista) : '-'}
+                  </TableCell>
+                  <TableCell>
                     {item.estoque_atual !== undefined ? (
                       <div className={`text-center ${
                         item.estoque_atual < item.quantidade 
                           ? 'text-red-600 font-semibold' 
                           : item.estoque_atual === 0 
                             ? 'text-orange-600' 
-                            : 'text-yellow-600'
+                            : 'text-green-600'
                       }`}>
                         {item.estoque_atual}
                         {item.estoque_atual < item.quantidade && (
@@ -240,6 +252,51 @@ export function PedidosTabelaItens({
                     ) : (
                       <span className="text-muted-foreground text-sm">N/A</span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    {item.valor_frete ? formatarMoeda(item.valor_frete) : '-'}
+                  </TableCell>
+                  <TableCell>
+                    {item.valor_desconto ? formatarMoeda(item.valor_desconto) : '-'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      {item.codigo_rastreamento && (
+                        <div className="font-mono text-xs">{item.codigo_rastreamento}</div>
+                      )}
+                      {item.url_rastreamento && (
+                        <a 
+                          href={item.url_rastreamento} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-xs flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Rastrear
+                        </a>
+                      )}
+                      {!item.codigo_rastreamento && !item.url_rastreamento && '-'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1 max-w-32">
+                      {item.obs && (
+                        <div className="text-xs text-muted-foreground truncate" title={item.obs}>
+                          📝 {item.obs}
+                        </div>
+                      )}
+                      {item.obs_interna && (
+                        <div className="text-xs text-orange-600 truncate" title={item.obs_interna}>
+                          🔒 {item.obs_interna}
+                        </div>
+                      )}
+                      {item.observacoes && (
+                        <div className="text-xs text-blue-600 truncate" title={item.observacoes}>
+                          💬 {item.observacoes}
+                        </div>
+                      )}
+                      {!item.obs && !item.obs_interna && !item.observacoes && '-'}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
