@@ -331,13 +331,6 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
         <CardTitle className="text-white flex items-center gap-2">
           📋 Importar/Exportar Vendas
         </CardTitle>
-        <p className="text-sm text-slate-400">
-          Gerencie seus dados de vendas via planilhas XLSX/CSV
-        </p>
-        {/* Aviso importante */}
-        <div className="flex items-center gap-2 text-sm text-yellow-400">
-          ⚠️ <span>ID único da venda deve ser único - duplicatas não são permitidas</span>
-        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Três botões principais */}

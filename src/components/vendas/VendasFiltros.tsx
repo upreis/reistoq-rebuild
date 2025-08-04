@@ -28,21 +28,20 @@ export function VendasFiltros({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Campo de busca */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Buscar por nº pedido, SKU, produto ou cliente..."
-            value={filtros.termo_busca}
-            onChange={(e) => onAtualizarFiltros({ termo_busca: e.target.value })}
-            className="pl-10 bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
-          />
-        </div>
-
-        {/* Filtros de data */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Filtros em linha: busca > data início > data fim */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nº pedido, SKU, produto ou cliente..."
+              value={filtros.termo_busca}
+              onChange={(e) => onAtualizarFiltros({ termo_busca: e.target.value })}
+              className="pl-10 bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
+            />
+          </div>
+          
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Data Início</label>
+            <label className="text-xs text-slate-400">Data Início</label>
             <Input
               type="date"
               value={filtros.data_inicio}
@@ -52,7 +51,7 @@ export function VendasFiltros({
           </div>
           
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Data Fim</label>
+            <label className="text-xs text-slate-400">Data Fim</label>
             <Input
               type="date"
               value={filtros.data_fim}
