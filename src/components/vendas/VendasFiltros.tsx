@@ -44,8 +44,7 @@ export function VendasFiltros({
             />
           </div>
           
-          <div className="space-y-1">
-            <label className="text-xs text-slate-400">Data Início</label>
+          <div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -71,8 +70,7 @@ export function VendasFiltros({
             </Popover>
           </div>
           
-          <div className="space-y-1">
-            <label className="text-xs text-slate-400">Data Fim</label>
+          <div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
