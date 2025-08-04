@@ -62,14 +62,14 @@ export function VendasFiltros({
               Status
             </label>
             <Select 
-              value={filtros.status} 
-              onValueChange={(value) => onAtualizarFiltros({ status: value })}
+              value={filtros.status || "all"} 
+              onValueChange={(value) => onAtualizarFiltros({ status: value === "all" ? "" : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="concluida">Concluída</SelectItem>
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="cancelada">Cancelada</SelectItem>
