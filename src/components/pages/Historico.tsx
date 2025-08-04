@@ -1,200 +1,213 @@
-import { History, Filter, Download, Calendar } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useState } from 'react';
+import { useHistoricoMovimentacoes } from '@/hooks/useHistoricoMovimentacoes';
+import { useHistoricoPaginado } from '@/hooks/useHistoricoPaginado';
+import { HistoricoHeader } from '@/components/historico/HistoricoHeader';
+import { HistoricoFiltros } from '@/components/historico/HistoricoFiltros';
+import { HistoricoMetricas } from '@/components/historico/HistoricoMetricas';
+import { HistoricoFileManager } from '@/components/historico/HistoricoFileManager';
+import { HistoricoTabela } from '@/components/historico/HistoricoTabela';
+import { NovaMovimentacaoModal } from '@/components/historico/NovaMovimentacaoModal';
+import { MovimentacaoEditModal } from '@/components/historico/MovimentacaoEditModal';
+import { useRelatorios } from '@/hooks/useRelatorios';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-const historicoExample = [
-  {
-    id: 1,
-    timestamp: "2024-01-15 14:30:25",
-    usuario: "admin@reistoq.com",
-    acao: "Processamento Pedido",
-    detalhes: "Pedido #12847 processado com sucesso",
-    status: "sucesso"
-  },
-  {
-    id: 2,
-    timestamp: "2024-01-15 14:25:10",
-    usuario: "operador@reistoq.com", 
-    acao: "Upload CSV",
-    detalhes: "Arquivo mapeamentos_20240115.csv importado",
-    status: "sucesso"
-  },
-  {
-    id: 3,
-    timestamp: "2024-01-15 14:20:45",
-    usuario: "sistema",
-    acao: "Alerta Estoque",
-    detalhes: "Produto SKU-001234 com estoque baixo",
-    status: "aviso"
-  },
-  {
-    id: 4,
-    timestamp: "2024-01-15 14:15:30",
-    usuario: "admin@reistoq.com",
-    acao: "Configuração API",
-    detalhes: "Token Tiny ERP atualizado",
-    status: "sucesso"
-  }
-];
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function Historico() {
+  const [movimentacoesSelecionadas, setMovimentacoesSelecionadas] = useState<string[]>([]);
+  const [showNovaModal, setShowNovaModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteMultipleDialog, setShowDeleteMultipleDialog] = useState(false);
+  const [movimentacaoParaEditar, setMovimentacaoParaEditar] = useState<any>(null);
+  const [movimentacaoParaExcluir, setMovimentacaoParaExcluir] = useState<string | null>(null);
+
+  const {
+    movimentacoes,
+    metricas,
+    loading,
+    filtros,
+    atualizarFiltros,
+    limparFiltros,
+    recarregarDados,
+    excluirMovimentacao,
+    excluirMovimentacoesSelecionadas
+  } = useHistoricoMovimentacoes();
+
+  const {
+    movimentacoesPaginadas,
+    paginaAtual,
+    totalPaginas,
+    irParaPagina,
+    proximaPagina,
+    paginaAnterior,
+    totalItens,
+    itemInicial,
+    itemFinal
+  } = useHistoricoPaginado({ movimentacoes });
+
+  const { gerarRelatorio, downloadRelatorio } = useRelatorios();
+
+  const selecionarMovimentacao = (movimentacaoId: string) => {
+    setMovimentacoesSelecionadas(prev => 
+      prev.includes(movimentacaoId)
+        ? prev.filter(id => id !== movimentacaoId)
+        : [...prev, movimentacaoId]
+    );
+  };
+
+  const selecionarTodas = () => {
+    if (todasSelecionadas) {
+      setMovimentacoesSelecionadas([]);
+    } else {
+      setMovimentacoesSelecionadas(movimentacoesPaginadas.map(m => m.id));
+    }
+  };
+
+  const todasSelecionadas = movimentacoesPaginadas.length > 0 && 
+    movimentacoesPaginadas.every(m => movimentacoesSelecionadas.includes(m.id));
+
+  const abrirEdicao = (movimentacao: any) => {
+    setMovimentacaoParaEditar(movimentacao);
+    setShowEditModal(true);
+  };
+
+  const abrirExclusao = (id: string) => {
+    setMovimentacaoParaExcluir(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmarExclusao = async () => {
+    if (movimentacaoParaExcluir) {
+      await excluirMovimentacao(movimentacaoParaExcluir);
+      setMovimentacaoParaExcluir(null);
+      setShowDeleteDialog(false);
+      setMovimentacoesSelecionadas([]);
+    }
+  };
+
+  const abrirExclusaoMultipla = () => {
+    setShowDeleteMultipleDialog(true);
+  };
+
+  const confirmarExclusaoMultipla = async () => {
+    await excluirMovimentacoesSelecionadas(movimentacoesSelecionadas);
+    setMovimentacoesSelecionadas([]);
+    setShowDeleteMultipleDialog(false);
+  };
+
+  const handleGerarRelatorio = async (tipo: string) => {
+    try {
+      const relatorio = await gerarRelatorio({ tipo: tipo as any });
+      downloadRelatorio(relatorio, tipo);
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    }
+  };
+
+  const handleModalSuccess = () => {
+    recarregarDados();
+    setMovimentacoesSelecionadas([]);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Histórico de Operações</h1>
-          <p className="text-muted-foreground">Log completo de todas as atividades do sistema</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar Log
-          </Button>
-        </div>
+      <HistoricoHeader
+        movimentacoesSelecionadas={movimentacoesSelecionadas}
+        loading={loading}
+        onRefresh={recarregarDados}
+        onExcluirSelecionadas={abrirExclusaoMultipla}
+        onNovaMovimentacao={() => setShowNovaModal(true)}
+        onGerarRelatorio={handleGerarRelatorio}
+      />
+
+      {/* Filters and File Management */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <HistoricoFiltros
+          filtros={filtros}
+          onAtualizarFiltros={atualizarFiltros}
+          onLimparFiltros={limparFiltros}
+        />
+        <HistoricoFileManager onUploadSuccess={handleModalSuccess} />
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros de Busca</CardTitle>
-          <CardDescription>
-            Filtre o histórico por data, usuário, ação ou status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input type="date" className="pl-10" />
-            </div>
-            <Input placeholder="Usuário..." />
-            <Input placeholder="Ação..." />
-            <Input placeholder="Detalhes..." />
-            <Button variant="default" className="w-full">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Summary Cards */}
+      <HistoricoMetricas metricas={metricas} loading={loading} />
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Operações
-            </CardTitle>
-            <History className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">15,847</div>
-            <p className="text-xs text-muted-foreground">
-              Operações registradas
-            </p>
-          </CardContent>
-        </Card>
+      <HistoricoTabela
+        movimentacoes={movimentacoesPaginadas}
+        loading={loading}
+        movimentacoesSelecionadas={movimentacoesSelecionadas}
+        todasSelecionadas={todasSelecionadas}
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        itemInicial={itemInicial}
+        itemFinal={itemFinal}
+        totalItens={totalItens}
+        onSelecionarMovimentacao={selecionarMovimentacao}
+        onSelecionarTodas={selecionarTodas}
+        onEditarMovimentacao={abrirEdicao}
+        onExcluirMovimentacao={abrirExclusao}
+        onPaginar={irParaPagina}
+        onPaginaAnterior={paginaAnterior}
+        onProximaPagina={proximaPagina}
+      />
 
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Hoje
-            </CardTitle>
-            <Badge className="bg-secondary text-secondary-foreground">247</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">247</div>
-            <p className="text-xs text-muted-foreground">
-              Operações hoje
-            </p>
-          </CardContent>
-        </Card>
+      <NovaMovimentacaoModal
+        open={showNovaModal}
+        onOpenChange={setShowNovaModal}
+        onSuccess={handleModalSuccess}
+      />
 
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Sucessos
-            </CardTitle>
-            <Badge className="bg-secondary text-secondary-foreground">98%</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">98.2%</div>
-            <p className="text-xs text-muted-foreground">
-              Taxa de sucesso
-            </p>
-          </CardContent>
-        </Card>
+      <MovimentacaoEditModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        movimentacao={movimentacaoParaEditar}
+        onSuccess={handleModalSuccess}
+      />
 
-        <Card className="hover:shadow-elegant transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Erros
-            </CardTitle>
-            <Badge variant="destructive">15</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">15</div>
-            <p className="text-xs text-muted-foreground">
-              Erros registrados
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* History Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Log de Atividades</CardTitle>
-          <CardDescription>
-            Histórico detalhado de todas as operações
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Ação</TableHead>
-                <TableHead>Detalhes</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {historicoExample.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-mono text-sm">{item.timestamp}</TableCell>
-                  <TableCell>{item.usuario}</TableCell>
-                  <TableCell className="font-medium">{item.acao}</TableCell>
-                  <TableCell>{item.detalhes}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        item.status === 'sucesso' ? 'default' :
-                        item.status === 'aviso' ? 'destructive' :
-                        'secondary'
-                      }
-                    >
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <AlertDialog open={showDeleteMultipleDialog} onOpenChange={setShowDeleteMultipleDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão múltipla</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir {movimentacoesSelecionadas.length} movimentação(ões) selecionada(s)? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusaoMultipla}>
+              Excluir Selecionadas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
