@@ -4,6 +4,7 @@ import { useHistoricoVendasPaginado } from '@/hooks/useHistoricoVendasPaginado';
 import { VendasHeader } from '@/components/vendas/VendasHeader';
 import { VendasFiltros } from '@/components/vendas/VendasFiltros';
 import { VendasMetricas } from '@/components/vendas/VendasMetricas';
+import { VendasFileManager } from '@/components/vendas/VendasFileManager';
 import { VendasTabela } from '@/components/vendas/VendasTabela';
 import { NovaVendaModal } from '@/components/vendas/NovaVendaModal';
 import { VendaEditModal } from '@/components/vendas/VendaEditModal';
@@ -127,11 +128,14 @@ export function Historico() {
         onGerarRelatorio={handleGerarRelatorio}
       />
 
-      <VendasFiltros
-        filtros={filtros}
-        onAtualizarFiltros={atualizarFiltros}
-        onLimparFiltros={limparFiltros}
-      />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <VendasFiltros
+          filtros={filtros}
+          onAtualizarFiltros={atualizarFiltros}
+          onLimparFiltros={limparFiltros}
+        />
+        <VendasFileManager onUploadSuccess={handleModalSuccess} />
+      </div>
 
       <VendasMetricas metricas={metricas} loading={loading} />
 
