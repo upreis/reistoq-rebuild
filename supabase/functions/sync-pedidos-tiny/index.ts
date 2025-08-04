@@ -384,6 +384,9 @@ serve(async (req) => {
 
           // Salvar itens se existirem
           if (pedido.itens && pedido.itens.length > 0) {
+            console.log(`💾 Salvando ${pedido.itens.length} itens do pedido ${pedido.numero}`);
+            console.log('🔍 DEBUG itens raw:', JSON.stringify(pedido.itens[0]).substring(0, 300));
+            
             const itensParaInserir = pedido.itens.map((item: any) => ({
               pedido_id: pedidoSalvo.id,
               numero_pedido: pedido.numero,
@@ -397,6 +400,8 @@ serve(async (req) => {
               observacoes: item.item?.observacoes || item.observacoes
             }));
 
+            console.log('💾 Primeiro item processado:', JSON.stringify(itensParaInserir[0]));
+
             const { error: errorItens } = await supabaseClient
               .from('itens_pedidos')
               .upsert(itensParaInserir, { 
@@ -404,9 +409,14 @@ serve(async (req) => {
                 ignoreDuplicates: false 
               });
 
-            if (!errorItens) {
+            if (errorItens) {
+              console.error('❌ Erro ao salvar itens do pedido:', pedido.numero, errorItens);
+            } else {
               itensSalvos += itensParaInserir.length;
+              console.log(`✅ Salvos ${itensParaInserir.length} itens do pedido ${pedido.numero}`);
             }
+          } else {
+            console.log(`⚠️ Pedido ${pedido.numero} não tem itens`);
           }
         } catch (error) {
           console.error('Erro ao salvar pedido completo:', pedido.numero, error);
