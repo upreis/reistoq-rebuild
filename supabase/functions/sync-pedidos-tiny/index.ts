@@ -31,23 +31,27 @@ interface TinyApiResponse {
     erros?: Array<{ erro: string }>;
     pedidos?: Array<{
       pedido: {
-        id: string;
-        numero: string;
+        id?: string;
+        numero?: string;
         numero_ecommerce?: string;
-        data_pedido: string;
+        data_pedido?: string;
         data_prevista?: string;
-        situacao: string;
+        situacao?: string;
         codigo_rastreamento?: string;
         url_rastreamento?: string;
-        cliente: {
-          nome: string;
+        cliente?: {
+          nome?: string;
           cpf_cnpj?: string;
         };
-        valor_frete: string;
-        valor_desconto: string;
-        total_pedido: string;
+        nome_cliente?: string; // Fallback se cliente.nome não existir
+        cpf_cnpj?: string; // Fallback se cliente.cpf_cnpj não existir
+        valor_frete?: string | number;
+        valor_desconto?: string | number;
+        total_pedido?: string | number;
+        valor_total?: string | number;
         obs?: string;
         obs_interna?: string;
+        [key: string]: any; // Para propriedades adicionais
       }
     }>;
     numero_paginas?: number;
@@ -138,25 +142,38 @@ serve(async (req) => {
     }
 
     // Processar pedidos para o formato do banco
-    const pedidosProcessados: Partial<TinyPedido>[] = tinyData.retorno.pedidos.map(item => {
+    const pedidosProcessados: Partial<TinyPedido>[] = [];
+    
+    for (const item of tinyData.retorno.pedidos) {
       const pedido = item.pedido;
-      return {
-        numero: pedido.numero,
-        numero_ecommerce: pedido.numero_ecommerce || null,
-        nome_cliente: pedido.cliente.nome,
-        cpf_cnpj: pedido.cliente.cpf_cnpj || null,
-        data_pedido: pedido.data_pedido,
-        data_prevista: pedido.data_prevista || null,
-        valor_total: parseFloat(pedido.total_pedido.replace(',', '.')) || 0,
-        valor_frete: parseFloat(pedido.valor_frete?.replace(',', '.') || '0'),
-        valor_desconto: parseFloat(pedido.valor_desconto?.replace(',', '.') || '0'),
-        situacao: pedido.situacao.toLowerCase(),
-        obs: pedido.obs || null,
-        obs_interna: pedido.obs_interna || null,
-        codigo_rastreamento: pedido.codigo_rastreamento || null,
-        url_rastreamento: pedido.url_rastreamento || null
-      };
-    });
+      
+      // Log para debug da estrutura
+      console.log('Estrutura do pedido:', JSON.stringify(pedido, null, 2));
+      
+      try {
+        const pedidoProcessado = {
+          numero: pedido.numero || '',
+          numero_ecommerce: pedido.numero_ecommerce || null,
+          nome_cliente: pedido.cliente?.nome || pedido.nome_cliente || 'Cliente não informado',
+          cpf_cnpj: pedido.cliente?.cpf_cnpj || pedido.cpf_cnpj || null,
+          data_pedido: pedido.data_pedido || new Date().toISOString().split('T')[0],
+          data_prevista: pedido.data_prevista || null,
+          valor_total: parseFloat(String(pedido.total_pedido || pedido.valor_total || '0').replace(',', '.')) || 0,
+          valor_frete: parseFloat(String(pedido.valor_frete || '0').replace(',', '.')) || 0,
+          valor_desconto: parseFloat(String(pedido.valor_desconto || '0').replace(',', '.')) || 0,
+          situacao: (pedido.situacao || 'pendente').toLowerCase(),
+          obs: pedido.obs || null,
+          obs_interna: pedido.obs_interna || null,
+          codigo_rastreamento: pedido.codigo_rastreamento || null,
+          url_rastreamento: pedido.url_rastreamento || null
+        };
+        
+        pedidosProcessados.push(pedidoProcessado);
+      } catch (itemError) {
+        console.error('Erro ao processar pedido individual:', pedido.numero, itemError);
+        continue; // Pula este pedido e continua com os próximos
+      }
+    }
 
     console.log(`Processando ${pedidosProcessados.length} pedidos`);
 
