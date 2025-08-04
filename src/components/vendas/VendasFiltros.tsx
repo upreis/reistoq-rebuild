@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Search, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface FiltrosHistoricoVendas {
   termo_busca: string;
@@ -22,6 +23,40 @@ export function VendasFiltros({
   filtros,
   onAtualizarFiltros
 }: VendasFiltrosProps) {
+  
+  // Carregar datas salvas do localStorage ao inicializar
+  useEffect(() => {
+    const savedDataInicio = localStorage.getItem('vendas-data-inicio');
+    const savedDataFim = localStorage.getItem('vendas-data-fim');
+    
+    if (savedDataInicio && !filtros.data_inicio) {
+      onAtualizarFiltros({ data_inicio: savedDataInicio });
+    }
+    if (savedDataFim && !filtros.data_fim) {
+      onAtualizarFiltros({ data_fim: savedDataFim });
+    }
+  }, []);
+
+  // Salvar datas no localStorage quando mudarem
+  const handleDataInicioChange = (date: Date | undefined) => {
+    const dateString = date ? format(date, "yyyy-MM-dd") : "";
+    onAtualizarFiltros({ data_inicio: dateString });
+    if (dateString) {
+      localStorage.setItem('vendas-data-inicio', dateString);
+    } else {
+      localStorage.removeItem('vendas-data-inicio');
+    }
+  };
+
+  const handleDataFimChange = (date: Date | undefined) => {
+    const dateString = date ? format(date, "yyyy-MM-dd") : "";
+    onAtualizarFiltros({ data_fim: dateString });
+    if (dateString) {
+      localStorage.setItem('vendas-data-fim', dateString);
+    } else {
+      localStorage.removeItem('vendas-data-fim');
+    }
+  };
 
   return (
     <Card className="bg-slate-900 border-slate-700">
@@ -32,9 +67,10 @@ export function VendasFiltros({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Filtros em linha: busca > data início > data fim */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="relative">
+        {/* Layout reorganizado: busca esticada + 2 date pickers juntos no final */}
+        <div className="flex gap-3">
+          {/* Campo de busca esticado */}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Buscar Pedido, Sku, Produto..."
@@ -44,7 +80,8 @@ export function VendasFiltros({
             />
           </div>
           
-          <div>
+          {/* Date Pickers agrupados no final */}
+          <div className="flex gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -55,22 +92,20 @@ export function VendasFiltros({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {filtros.data_inicio ? format(new Date(filtros.data_inicio), "dd/MM/yyyy") : "Selecionar data"}
+                  {filtros.data_inicio ? format(new Date(filtros.data_inicio), "dd/MM/yyyy") : "Data Início"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={filtros.data_inicio ? new Date(filtros.data_inicio) : undefined}
-                  onSelect={(date) => onAtualizarFiltros({ data_inicio: date ? format(date, "yyyy-MM-dd") : "" })}
+                  onSelect={handleDataInicioChange}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
-          </div>
-          
-          <div>
+            
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -81,14 +116,14 @@ export function VendasFiltros({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {filtros.data_fim ? format(new Date(filtros.data_fim), "dd/MM/yyyy") : "Selecionar data"}
+                  {filtros.data_fim ? format(new Date(filtros.data_fim), "dd/MM/yyyy") : "Data Fim"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={filtros.data_fim ? new Date(filtros.data_fim) : undefined}
-                  onSelect={(date) => onAtualizarFiltros({ data_fim: date ? format(date, "yyyy-MM-dd") : "" })}
+                  onSelect={handleDataFimChange}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
