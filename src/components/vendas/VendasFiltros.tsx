@@ -1,7 +1,11 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface FiltrosHistoricoVendas {
   termo_busca: string;
@@ -42,22 +46,56 @@ export function VendasFiltros({
           
           <div className="space-y-1">
             <label className="text-xs text-slate-400">Data Início</label>
-            <Input
-              type="date"
-              value={filtros.data_inicio}
-              onChange={(e) => onAtualizarFiltros({ data_inicio: e.target.value })}
-              className="bg-slate-800 border-slate-600 text-white"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal bg-slate-800 border-slate-600 text-white hover:bg-slate-700",
+                    !filtros.data_inicio && "text-slate-400"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {filtros.data_inicio ? format(new Date(filtros.data_inicio), "dd/MM/yyyy") : "Selecionar data"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filtros.data_inicio ? new Date(filtros.data_inicio) : undefined}
+                  onSelect={(date) => onAtualizarFiltros({ data_inicio: date ? format(date, "yyyy-MM-dd") : "" })}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="space-y-1">
             <label className="text-xs text-slate-400">Data Fim</label>
-            <Input
-              type="date"
-              value={filtros.data_fim}
-              onChange={(e) => onAtualizarFiltros({ data_fim: e.target.value })}
-              className="bg-slate-800 border-slate-600 text-white"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal bg-slate-800 border-slate-600 text-white hover:bg-slate-700",
+                    !filtros.data_fim && "text-slate-400"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {filtros.data_fim ? format(new Date(filtros.data_fim), "dd/MM/yyyy") : "Selecionar data"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filtros.data_fim ? new Date(filtros.data_fim) : undefined}
+                  onSelect={(date) => onAtualizarFiltros({ data_fim: date ? format(date, "yyyy-MM-dd") : "" })}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </CardContent>
