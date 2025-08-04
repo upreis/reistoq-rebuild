@@ -1,305 +1,197 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-// Configurações SUPER OTIMIZADAS para evitar timeout
-const REQUEST_TIMEOUT = 10000; // 10 segundos
-const MAX_RETRIES = 1; // Apenas 1 tentativa para ser rápido
-const DELAY_RATE_LIMIT = 5000; // 5 segundos
-const MAX_EXECUCAO_TEMPO = 25000; // 25 segundos total máximo
-
-interface TinyPedido {
-  id: string;
-  numero: string;
-  numero_ecommerce?: string;
-  data_pedido: string;
-  data_prevista?: string;
-  nome_cliente: string;
-  cpf_cnpj?: string;
-  situacao: string;
-  codigo_rastreamento?: string;
-  url_rastreamento?: string;
-  valor_frete: number;
-  valor_desconto: number;
-  valor_total: number;
-  obs?: string;
-  obs_interna?: string;
-  itens?: any[];
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function convertDateFormat(dateStr: string): string {
-  if (!dateStr) return '';
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-  }
-  return dateStr;
-}
-
-async function makeQuickApiCall(url: string, params: URLSearchParams): Promise<any> {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Timeout rápido')), REQUEST_TIMEOUT)
-  );
-
-  try {
-    const response = await Promise.race([
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      }),
-      timeoutPromise
-    ]);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const jsonData = await response.json();
-    
-    // Rate limit? Aguardar pouco tempo
-    if (jsonData.retorno?.status === 'Erro' && jsonData.retorno?.codigo_erro === 6) {
-      console.log('Rate limit - aguardando 5s...');
-      await sleep(DELAY_RATE_LIMIT);
-      throw new Error('Rate limit - tente novamente');
-    }
-    
-    if (jsonData.retorno?.status === 'Erro') {
-      throw new Error(`API: ${jsonData.retorno.erro}`);
-    }
-
-    return jsonData;
-  } catch (error) {
-    console.error('Erro na API:', error.message);
-    throw error;
-  }
-}
-
-async function buscarConfiguracoes(supabase: any) {
-  console.log('🔍 Buscando configurações do Tiny ERP...');
-
-  const { data: configs, error } = await supabase
-    .from('configuracoes')
-    .select('chave, valor')
-    .in('chave', ['tiny_erp_token', 'tiny_api_url']);
-
-  if (error) {
-    console.error('❌ Erro ao buscar configurações:', error);
-    throw new Error(`Erro config: ${error.message}`);
-  }
-
-  console.log('📋 Configurações encontradas:', configs);
-
-  const configMap = configs.reduce((acc, config) => {
-    acc[config.chave] = config.valor;
-    return acc;
-  }, {});
-
-  console.log('🗺️ ConfigMap criado:', Object.keys(configMap));
-
-  const result = {
-    tiny_erp_token: configMap.tiny_erp_token,
-    tiny_api_url: configMap.tiny_api_url || 'https://api.tiny.com.br/api2'
+interface ProcessarParams {
+  filtros?: {
+    dataInicio?: string;
+    dataFim?: string;
+    situacao?: string;
   };
-
-  console.log('✅ Configurações finais:', { 
-    tokenExists: !!result.tiny_erp_token,
-    tokenLength: result.tiny_erp_token?.length,
-    url: result.tiny_api_url 
-  });
-
-  if (!result.tiny_erp_token) {
-    throw new Error('Token do Tiny ERP não encontrado nas configurações');
-  }
-
-  return result;
 }
 
 Deno.serve(async (req) => {
+  console.log('🚀 [INÍCIO] sync-pedidos-incremental executando...');
+  console.log('📊 [DEBUG] Method:', req.method);
+  console.log('📊 [DEBUG] URL:', req.url);
+  
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('✅ [CORS] Respondendo OPTIONS request');
     return new Response(null, { headers: corsHeaders });
   }
 
   const startTime = Date.now();
-  
+
   try {
-    console.log('🚀 === INICIO SYNC INCREMENTAL ===');
+    console.log('🔍 [DEBUG] Iniciando parsing do body...');
     
+    let params: ProcessarParams = {};
+    
+    if (req.body) {
+      try {
+        const bodyText = await req.text();
+        console.log('📝 [DEBUG] Body recebido:', bodyText);
+        params = JSON.parse(bodyText);
+        console.log('✅ [DEBUG] Params parseados:', JSON.stringify(params));
+      } catch (parseError) {
+        console.error('❌ [ERROR] Erro ao parsear JSON:', parseError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'JSON inválido: ' + parseError.message 
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
+
+    console.log('🏗️ [DEBUG] Inicializando Supabase client...');
+    
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    console.log('🔧 Variáveis ambiente:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseKey,
-      urlLength: supabaseUrl?.length,
-      keyLength: supabaseKey?.length
-    });
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Variáveis de ambiente Supabase não configuradas');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    console.log('✅ Cliente Supabase criado');
-
-    console.log('🔍 Chamando buscarConfiguracoes...');
-    const config = await buscarConfiguracoes(supabase);
-    console.log('🎯 Configurações retornadas:', { hasToken: !!config.tiny_erp_token, hasUrl: !!config.tiny_api_url });
+    console.log('🔑 [DEBUG] SUPABASE_URL exists:', !!supabaseUrl);
+    console.log('🔑 [DEBUG] SERVICE_KEY exists:', !!supabaseServiceKey);
     
-    if (!config.tiny_erp_token || !config.tiny_api_url) {
-      throw new Error('Configurações Tiny ERP não encontradas');
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ [ERROR] Variáveis de ambiente faltando');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Configuração Supabase incompleta' 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Parse filtros
-    let filtros: any = {};
-    try {
-      const body = await req.text();
-      if (body) filtros = JSON.parse(body);
-    } catch (e) {}
-
-    // Parâmetros otimizados - APENAS 1 PÁGINA
-    const params = new URLSearchParams({
-      token: config.tiny_erp_token,
-      formato: 'json',
-      com_itens: 'S',
-      pagina: '1' // SEMPRE página 1 para ser rápido
-    });
-
-    if (filtros.filtros?.dataInicio) {
-      params.append('dataInicial', filtros.filtros.dataInicio);
-    }
-    if (filtros.filtros?.dataFim) {
-      params.append('dataFinal', filtros.filtros.dataFim);
-    }
-
-    console.log('📡 Buscando pedidos (máximo 1 página)...');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Verificar se ainda temos tempo
-    if (Date.now() - startTime > MAX_EXECUCAO_TEMPO) {
-      throw new Error('Timeout preventivo');
+    console.log('📦 [DEBUG] Buscando configurações...');
+    
+    // Buscar token do Tiny ERP
+    const { data: config, error: configError } = await supabase
+      .from('configuracoes')
+      .select('valor')
+      .eq('chave', 'tiny_erp_token')
+      .single();
+
+    if (configError) {
+      console.error('❌ [ERROR] Erro ao buscar config:', configError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Erro ao buscar configurações: ' + configError.message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    const jsonData = await makeQuickApiCall(
-      `${config.tiny_api_url}/pedidos.pesquisa.php`,
-      params
+    if (!config?.valor) {
+      console.error('❌ [ERROR] Token não encontrado');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Token Tiny ERP não configurado' 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const tinyToken = config.valor;
+    console.log('✅ [DEBUG] Token encontrado, length:', tinyToken.length);
+
+    // Chamar função sync-pedidos-rapido
+    console.log('📡 [DEBUG] Chamando sync-pedidos-rapido...');
+    console.log('📡 [DEBUG] Params para enviar:', JSON.stringify(params));
+    
+    const { data: result, error: functionError } = await supabase.functions.invoke(
+      'sync-pedidos-rapido',
+      {
+        body: params
+      }
     );
 
-    const pedidos = jsonData.retorno?.pedidos || [];
-    const totalPaginas = parseInt(jsonData.retorno?.numero_paginas || '1');
-    
-    console.log(`📄 Encontrados ${pedidos.length} pedidos (página 1/${totalPaginas})`);
-
-    const allPedidos: TinyPedido[] = [];
-    const allItens: any[] = [];
-
-    // Processar pedidos rapidamente
-    for (const pedidoWrapper of pedidos) {
-      const pedido = pedidoWrapper.pedido;
-      
-      const pedidoProcessado: TinyPedido = {
-        id: pedido.id,
-        numero: pedido.numero,
-        numero_ecommerce: pedido.numero_ecommerce,
-        data_pedido: convertDateFormat(pedido.data_pedido),
-        data_prevista: pedido.data_prevista ? convertDateFormat(pedido.data_prevista) : null,
-        nome_cliente: pedido.nome || pedido.cliente?.nome || 'Cliente não informado',
-        cpf_cnpj: pedido.cpf_cnpj || pedido.cliente?.cpf_cnpj,
-        situacao: pedido.situacao,
-        codigo_rastreamento: pedido.codigo_rastreamento,
-        url_rastreamento: pedido.url_rastreamento,
-        valor_frete: parseFloat(pedido.valor_frete || '0'),
-        valor_desconto: parseFloat(pedido.valor_desconto || '0'),
-        valor_total: parseFloat(pedido.valor_total || '0'),
-        obs: pedido.obs,
-        obs_interna: pedido.obs_interna
-      };
-
-      allPedidos.push(pedidoProcessado);
-
-      // Processar itens se existirem
-      if (pedido.itens && Array.isArray(pedido.itens)) {
-        for (const itemWrapper of pedido.itens) {
-          const item = itemWrapper.item;
-          
-          allItens.push({
-            numero_pedido: pedido.numero,
-            sku: item.codigo,
-            descricao: item.descricao,
-            quantidade: parseInt(item.quantidade || '0'),
-            valor_unitario: parseFloat(item.valor_unitario || '0'),
-            valor_total: parseFloat(item.valor_total || '0'),
-            ncm: item.ncm,
-            observacoes: null
-          });
+    if (functionError) {
+      console.error('❌ [ERROR] Erro na função sync-pedidos-rapido:', functionError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Erro ao buscar pedidos: ' + functionError.message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      }
+      );
     }
 
-    // Salvar rapidamente no banco
-    console.log('💾 Salvando no banco...');
+    console.log('✅ [SUCCESS] Dados recebidos:', result ? 'SIM' : 'NÃO');
+    console.log('📊 [DEBUG] Tipo do resultado:', typeof result);
     
-    let pedidosSalvos = 0;
-    let itensSalvos = 0;
-
-    if (allPedidos.length > 0) {
-      const { error: pedidosError } = await supabase
-        .from('pedidos')
-        .upsert(allPedidos, { onConflict: 'numero' });
-
-      if (!pedidosError) {
-        pedidosSalvos = allPedidos.length;
-      }
+    if (result && typeof result === 'object') {
+      console.log('📊 [DEBUG] Keys do resultado:', Object.keys(result));
     }
 
-    if (allItens.length > 0) {
-      const { error: itensError } = await supabase
-        .from('itens_pedidos')
-        .upsert(allItens, { onConflict: 'numero_pedido,sku' });
-
-      if (!itensError) {
-        itensSalvos = allItens.length;
-      }
-    }
-
-    const tempoExecucao = Date.now() - startTime;
+    const endTime = Date.now();
+    const executionTime = endTime - startTime;
     
-    console.log(`✅ Sync incremental concluído em ${tempoExecucao}ms`);
+    console.log(`⏱️ [TIMING] Tempo total de execução: ${executionTime}ms`);
 
-    return new Response(JSON.stringify({
-      success: true,
-      dados: {
-        pedidos_encontrados: allPedidos.length,
-        itens_encontrados: allItens.length,
-        pedidos_salvos: pedidosSalvos,
-        itens_salvos: itensSalvos,
-        tempo_execucao_ms: tempoExecucao,
-        total_paginas_disponiveis: totalPaginas
-      },
-      message: `Sync incremental: ${pedidosSalvos} pedidos e ${itensSalvos} itens (página 1/${totalPaginas})`
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: result,
+        tempo_execucao_ms: executionTime,
+        debug: {
+          params_recebidos: params,
+          token_configurado: !!tinyToken,
+          resultado_tipo: typeof result
+        }
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
 
   } catch (error) {
-    const tempoExecucao = Date.now() - startTime;
-    console.error('💥 Erro no sync incremental:', error);
+    console.error('❌ [FATAL ERROR] Erro não tratado:', error);
+    console.error('❌ [STACK]', error.stack);
     
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message,
-      tempo_execucao_ms: tempoExecucao,
-      message: 'Sync incremental falhou - dados locais disponíveis'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // Status 200 para não quebrar o frontend
-    });
+    const endTime = Date.now();
+    const executionTime = endTime - startTime;
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Erro interno: ' + error.message,
+        tempo_execucao_ms: executionTime,
+        debug: {
+          error_type: error.constructor.name,
+          error_stack: error.stack
+        }
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });
