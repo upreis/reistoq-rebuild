@@ -111,12 +111,12 @@ export function useItensPedidos() {
         console.warn('Erro ao carregar filtros salvos:', error);
       }
     }
-    // ✅ Filtros padrão apenas se não houver filtros salvos
+    // ✅ Filtros padrão que permitem buscar mais dados
     return {
       busca: '',
-      dataInicio: '2025-07-08',  // Data específica dos dados sincronizados
-      dataFim: '2025-07-08',     // Mesmo dia para testar
-      situacoes: ['Entregue']    // Situação correta (maiúscula)
+      dataInicio: '2025-07-01',  // Período mais amplo para capturar mais pedidos
+      dataFim: '2025-07-31',     // Mês completo
+      situacoes: []              // Sem filtro de situação para buscar todas
     };
   });
 
@@ -368,9 +368,9 @@ export function useItensPedidos() {
   const limparFiltros = () => {
     const filtrosLimpos = {
       busca: '',
-      dataInicio: '2025-07-08',     // ✅ Manter data específica dos dados
-      dataFim: '2025-07-08',        // ✅ Manter data específica dos dados
-      situacoes: ['Entregue']       // ✅ Manter situação correta
+      dataInicio: '2025-07-01',     // ✅ Período mais amplo
+      dataFim: '2025-07-31',        // ✅ Mês completo
+      situacoes: []                 // ✅ Sem filtro para buscar todas
     };
     setFiltros(filtrosLimpos);
     localStorage.setItem('filtros-pedidos', JSON.stringify(filtrosLimpos));

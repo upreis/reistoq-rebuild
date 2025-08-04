@@ -65,17 +65,17 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
   }, [filtros.dataInicio, filtros.dataFim]);
 
   const situacoes = [
-    { value: 'em aberto', label: 'Em Aberto' },
-    { value: 'aprovado', label: 'Aprovado' },
-    { value: 'preparando envio', label: 'Preparando Envio' },
-    { value: 'faturado', label: 'Faturado' },
-    { value: 'pronto para envio', label: 'Pronto para Envio' },
-    { value: 'enviado', label: 'Enviado' },
-    { value: 'entregue', label: 'Entregue' },
-    { value: 'cancelado', label: 'Cancelado' },
-    { value: 'em separacao', label: 'Em Separação' },
-    { value: 'atendido', label: 'Atendido' },
-    { value: 'nao entregue', label: 'Não Entregue' }
+    { value: 'Em Aberto', label: 'Em Aberto' },
+    { value: 'Aprovado', label: 'Aprovado' },
+    { value: 'Preparando Envio', label: 'Preparando Envio' },
+    { value: 'Faturado', label: 'Faturado' },
+    { value: 'Pronto para Envio', label: 'Pronto para Envio' },
+    { value: 'Enviado', label: 'Enviado' },
+    { value: 'Entregue', label: 'Entregue' },
+    { value: 'Cancelado', label: 'Cancelado' },
+    { value: 'Em Separacao', label: 'Em Separação' },
+    { value: 'Atendido', label: 'Atendido' },
+    { value: 'Nao Entregue', label: 'Não Entregue' }
   ];
 
   const handleSituacaoChange = (situacao: string, checked: boolean) => {
