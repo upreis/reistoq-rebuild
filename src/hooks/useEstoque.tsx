@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -50,9 +50,17 @@ export function useEstoque() {
     status: ''
   });
   const { toast } = useToast();
+  const isLoadingRef = useRef(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const buscarProdutos = async () => {
+  const buscarProdutos = useCallback(async () => {
+    // Evitar múltiplas chamadas simultâneas
+    if (isLoadingRef.current) {
+      return;
+    }
+
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       setError(null);
 
@@ -110,8 +118,9 @@ export function useEstoque() {
       });
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
-  };
+  }, [filtros, toast]);
 
   const calcularStatusProduto = (produto: Produto): string => {
     if (!produto.ativo) {
@@ -162,13 +171,27 @@ export function useEstoque() {
     buscarProdutos();
   };
 
-  // Buscar produtos quando componente monta ou filtros mudam
+  // Implementar debounce para filtros de busca
   useEffect(() => {
-    buscarProdutos();
-  }, [filtros]);
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
 
-  // Setup realtime updates
+    debounceTimeoutRef.current = setTimeout(() => {
+      buscarProdutos();
+    }, 300); // 300ms de debounce
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [buscarProdutos]);
+
+  // Setup realtime updates (com throttle para evitar updates muito frequentes)
   useEffect(() => {
+    let throttleTimeout: NodeJS.Timeout;
+    
     const channel = supabase
       .channel('produtos-changes')
       .on(
@@ -180,15 +203,28 @@ export function useEstoque() {
         },
         () => {
           console.log('Produto atualizado, recarregando dados...');
-          buscarProdutos();
+          
+          // Throttle updates para evitar múltiplas chamadas muito próximas
+          if (throttleTimeout) {
+            clearTimeout(throttleTimeout);
+          }
+          
+          throttleTimeout = setTimeout(() => {
+            if (!isLoadingRef.current) {
+              buscarProdutos();
+            }
+          }, 1000); // 1 segundo de throttle para updates em tempo real
         }
       )
       .subscribe();
 
     return () => {
+      if (throttleTimeout) {
+        clearTimeout(throttleTimeout);
+      }
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [buscarProdutos]);
 
   return {
     produtos,
