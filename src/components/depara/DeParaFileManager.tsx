@@ -175,7 +175,8 @@ export function DeParaFileManager({ onUploadSuccess }: DeParaFileManagerProps) {
         return;
       }
 
-      let sucessos = 0;
+      // Preparar todos os mapeamentos válidos
+      const mapeamentosValidos = [];
       let erros = 0;
 
       for (const row of jsonData) {
@@ -195,22 +196,30 @@ export function DeParaFileManager({ onUploadSuccess }: DeParaFileManagerProps) {
             continue;
           }
 
-          const { error: insertError } = await supabase
-            .from('mapeamentos_depara')
-            .upsert(mapeamento, { 
-              onConflict: 'sku_pedido',
-              ignoreDuplicates: false 
-            });
-
-          if (insertError) {
-            console.error('Erro ao inserir mapeamento:', insertError);
-            erros++;
-          } else {
-            sucessos++;
-          }
+          mapeamentosValidos.push(mapeamento);
         } catch (err) {
           console.error('Erro ao processar linha:', err);
           erros++;
+        }
+      }
+
+      // Inserir todos os mapeamentos de uma vez para evitar múltiplos triggers
+      let sucessos = 0;
+      if (mapeamentosValidos.length > 0) {
+        const { data, error: insertError } = await supabase
+          .from('mapeamentos_depara')
+          .insert(mapeamentosValidos);
+
+        if (insertError) {
+          console.error('Erro ao inserir mapeamentos:', insertError);
+          toast({
+            title: "Erro na importação",
+            description: insertError.message,
+            variant: "destructive",
+          });
+          return;
+        } else {
+          sucessos = mapeamentosValidos.length;
         }
       }
 
