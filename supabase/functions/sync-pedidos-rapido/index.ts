@@ -173,7 +173,17 @@ async function makeApiCallWithRetry(
       }
       
       if (jsonData.retorno?.status === 'Erro') {
-        throw new Error(`API Tiny: ${jsonData.retorno.erro}`);
+        const erro = jsonData.retorno?.erro || 
+                     jsonData.retorno?.erros?.[0]?.erro || 
+                     'Erro desconhecido';
+
+        // Tratamento especial para "sem registros" - não é erro real
+        if (erro === 'A consulta não retornou registros') {
+          console.log(`[${context}] Sem registros encontrados - finalizando paginação`);
+          break;
+        }
+        
+        throw new Error(`API Tiny: ${erro}`);
       }
 
       console.log(`[${context}] Sucesso na tentativa ${tentativa}`);
