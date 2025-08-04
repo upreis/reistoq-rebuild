@@ -68,19 +68,36 @@ export function useItensPedidos() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filtros, setFiltros] = useState<FiltrosPedidos>({
-    busca: '',
-    dataInicio: '',
-    dataFim: '',
-    situacoes: []
+  const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
+    // ✅ Inicialização automática das datas (última semana) como no sistema anterior
+    const hoje = new Date();
+    const semanaPassada = new Date();
+    semanaPassada.setDate(hoje.getDate() - 7);
+    
+    return {
+      busca: '',
+      dataInicio: semanaPassada.toISOString().split('T')[0], // YYYY-MM-DD
+      dataFim: hoje.toISOString().split('T')[0],             // YYYY-MM-DD
+      situacoes: []
+    };
   });
 
-  // Carregar filtros salvos do localStorage
+  // Carregar filtros salvos do localStorage (se existirem)
   useEffect(() => {
     const filtrosSalvos = localStorage.getItem('filtros-pedidos');
     if (filtrosSalvos) {
       try {
-        setFiltros(JSON.parse(filtrosSalvos));
+        const filtrosCarregados = JSON.parse(filtrosSalvos);
+        // Se não tem datas salvas, mantém as datas inicializadas automaticamente
+        if (!filtrosCarregados.dataInicio || !filtrosCarregados.dataFim) {
+          const hoje = new Date();
+          const semanaPassada = new Date();
+          semanaPassada.setDate(hoje.getDate() - 7);
+          
+          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || semanaPassada.toISOString().split('T')[0];
+          filtrosCarregados.dataFim = filtrosCarregados.dataFim || hoje.toISOString().split('T')[0];
+        }
+        setFiltros(filtrosCarregados);
       } catch (error) {
         console.warn('Erro ao carregar filtros salvos:', error);
       }

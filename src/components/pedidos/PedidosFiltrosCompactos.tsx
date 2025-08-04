@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, RotateCcw, Calendar as CalendarIcon, ChevronDown, Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,6 +34,12 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
   const [dataFim, setDataFim] = useState<Date | undefined>(
     filtros.dataFim ? new Date(filtros.dataFim) : undefined
   );
+
+  // ✅ Sincronizar estado local com filtros vindos do hook
+  useEffect(() => {
+    setDataInicio(filtros.dataInicio ? new Date(filtros.dataInicio) : undefined);
+    setDataFim(filtros.dataFim ? new Date(filtros.dataFim) : undefined);
+  }, [filtros.dataInicio, filtros.dataFim]);
 
   const situacoes = [
     { value: 'em aberto', label: 'Em Aberto' },
