@@ -154,6 +154,8 @@ async function makeApiCallWithRetry(
   for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
     try {
       console.log(`[${context}] Tentativa ${tentativa}/${maxTentativas}`);
+      console.log(`[${context}] URL:`, url);
+      console.log(`[${context}] Parâmetros:`, Object.fromEntries(params.entries()));
       
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), timeout)
@@ -175,6 +177,7 @@ async function makeApiCallWithRetry(
       }
 
       const jsonData = await response.json();
+      console.log(`[${context}] Resposta da API:`, JSON.stringify(jsonData, null, 2));
       
       // Verificar se há erro de rate limit - CRÍTICO: reduzir tempo
       if (jsonData.retorno?.status === 'Erro' && jsonData.retorno?.codigo_erro === 6) {
