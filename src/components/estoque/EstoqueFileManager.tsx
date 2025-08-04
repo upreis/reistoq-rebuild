@@ -163,7 +163,8 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
             });
 
           if (error) {
-            console.error('Erro ao inserir produto:', error);
+            console.error('Erro ao inserir produto:', produto, error);
+            toast.error(`Erro no produto ${produto.nome}: ${error.message}`);
             erros++;
           } else {
             sucessos++;
