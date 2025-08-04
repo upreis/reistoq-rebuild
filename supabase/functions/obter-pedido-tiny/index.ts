@@ -88,7 +88,7 @@ serve(async (req) => {
     // Parâmetros para a API do Tiny
     const params = new URLSearchParams({
       token: tinyToken,
-      formato: 'JSON',
+      formato: 'json',
       id: numeroPedido
     });
 
@@ -98,7 +98,7 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: params
+      body: params.toString()
     });
 
     if (!tinyResponse.ok) {
