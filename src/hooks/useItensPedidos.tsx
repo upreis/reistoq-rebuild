@@ -111,11 +111,11 @@ export function useItensPedidos() {
         console.warn('Erro ao carregar filtros salvos:', error);
       }
     }
-    // ✅ Filtros padrão com período específico onde há dados
+    // ✅ Filtros padrão com período específico onde há dados (formato DD/MM/AAAA)
     return {
       busca: '',
-      dataInicio: '2025-07-08',  // Data específica onde há dados confirmados
-      dataFim: '2025-07-08',     // Mesmo dia para garantir resultados
+      dataInicio: '08/07/2025',  // Data específica onde há dados confirmados (formato correto)
+      dataFim: '08/07/2025',     // Mesmo dia para garantir resultados
       situacoes: []              // Sem filtro de situação para buscar todas
     };
   });
@@ -368,8 +368,8 @@ export function useItensPedidos() {
   const limparFiltros = () => {
     const filtrosLimpos = {
       busca: '',
-      dataInicio: '2025-07-08',     // ✅ Data específica onde há dados
-      dataFim: '2025-07-08',        // ✅ Mesmo dia para garantir resultados
+      dataInicio: '08/07/2025',     // ✅ Data específica onde há dados (formato DD/MM/AAAA)
+      dataFim: '08/07/2025',        // ✅ Mesmo dia para garantir resultados
       situacoes: []                 // ✅ Sem filtro para buscar todas
     };
     setFiltros(filtrosLimpos);
