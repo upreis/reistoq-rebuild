@@ -92,39 +92,50 @@ function determinarNomeEcommerce(pedido: any): string {
   return numeroEcommerce ? 'Loja Virtual' : 'Balcão';
 }
 
-// ✅ NOVO: Função para mapear situações corretamente
+// ✅ CORRIGIDO: Função para mapear situações com formato correto da API Tiny
 function mapearSituacoes(situacao: string | string[]): string {
-  // Mapeamento de situações do frontend para API Tiny
+  // Mapeamento correto - API Tiny aceita primeira maiúscula
   const mapeamento: { [key: string]: string } = {
-    // Lowercase (formato antigo)
-    'em aberto': 'em_aberto',
-    'aprovado': 'aprovado',
-    'preparando envio': 'preparando_envio',
-    'faturado': 'faturado',
-    'enviado': 'enviado',
-    'entregue': 'entregue',
-    'cancelado': 'cancelado',
-    // Capitalized (formato atual)
-    'Em Aberto': 'em_aberto',
-    'Aprovado': 'aprovado',
-    'Preparando Envio': 'preparando_envio',
-    'Faturado': 'faturado',
-    'Enviado': 'enviado',
-    'Entregue': 'entregue',
-    'Cancelado': 'cancelado',
-    'Em Separacao': 'em_separacao',
-    'Atendido': 'atendido',
-    'Nao Entregue': 'nao_entregue',
-    'Pronto para Envio': 'pronto_para_envio'
+    // Formatos do frontend para formato API Tiny (primeira maiúscula)
+    'em aberto': 'Em Aberto',
+    'Em aberto': 'Em Aberto',
+    'Em Aberto': 'Em Aberto',
+    'aprovado': 'Aprovado',
+    'Aprovado': 'Aprovado',
+    'preparando envio': 'Preparando envio',
+    'Preparando envio': 'Preparando envio',
+    'Preparando Envio': 'Preparando envio',
+    'faturado': 'Faturado',
+    'Faturado': 'Faturado',
+    'pronto para envio': 'Pronto para envio',
+    'Pronto para envio': 'Pronto para envio',
+    'Pronto para Envio': 'Pronto para envio',
+    'enviado': 'Enviado',
+    'Enviado': 'Enviado',
+    'entregue': 'Entregue',
+    'Entregue': 'Entregue',
+    'cancelado': 'Cancelado',
+    'Cancelado': 'Cancelado',
+    'em separacao': 'Em separação',
+    'Em separacao': 'Em separação',
+    'Em Separacao': 'Em separação',
+    'Em separação': 'Em separação',
+    'Em Separação': 'Em separação',
+    'atendido': 'Atendido',
+    'Atendido': 'Atendido',
+    'nao entregue': 'Não Entregue',
+    'Nao entregue': 'Não Entregue',
+    'Não entregue': 'Não Entregue',
+    'Não Entregue': 'Não Entregue'
   };
   
   if (typeof situacao === 'string') {
-    return mapeamento[situacao] || mapeamento[situacao.toLowerCase()] || situacao;
+    return mapeamento[situacao] || situacao;
   }
   
   if (Array.isArray(situacao)) {
     return situacao
-      .map(s => mapeamento[s] || mapeamento[s.toLowerCase()] || s)
+      .map(s => mapeamento[s] || s)
       .join(',');
   }
   
