@@ -147,9 +147,9 @@ export function PedidosTabelaItens({
               <TableRow>
                 <TableHead>ID Único</TableHead>
                 <TableHead>Pedido</TableHead>
-                <TableHead>E-commerce</TableHead>
+                <TableHead>Nome E-commerce</TableHead>
+                <TableHead>Canal de Venda</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Qtd</TableHead>
@@ -157,12 +157,7 @@ export function PedidosTabelaItens({
                 <TableHead>Total Item</TableHead>
                 <TableHead>Situação</TableHead>
                 <TableHead>Data Pedido</TableHead>
-                <TableHead>Data Prevista</TableHead>
                 <TableHead>Estoque</TableHead>
-                <TableHead>Frete</TableHead>
-                <TableHead>Desconto</TableHead>
-                <TableHead>Rastreamento</TableHead>
-                <TableHead>Observações</TableHead>
                 <TableHead>SKU Estoque</TableHead>
                 <TableHead>SKU KIT</TableHead>
                 <TableHead>Qtd KIT</TableHead>
@@ -179,16 +174,16 @@ export function PedidosTabelaItens({
                   <TableCell className="font-medium">
                     #{item.numero_pedido}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell>
                     {item.numero_ecommerce || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {'-'}
                   </TableCell>
                   <TableCell>
                     <div className="max-w-48 truncate">
                       {item.nome_cliente}
                     </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {item.cpf_cnpj || '-'}
                   </TableCell>
                    <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
                      <div className="space-y-1">
@@ -237,9 +232,6 @@ export function PedidosTabelaItens({
                     {formatarData(item.data_pedido)}
                   </TableCell>
                   <TableCell>
-                    {item.data_prevista ? formatarData(item.data_prevista) : '-'}
-                  </TableCell>
-                  <TableCell>
                     {item.estoque_atual !== undefined ? (
                       <div className={`text-center ${
                         item.estoque_atual < item.quantidade 
@@ -256,51 +248,6 @@ export function PedidosTabelaItens({
                     ) : (
                       <span className="text-muted-foreground text-sm">N/A</span>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {item.valor_frete ? formatarMoeda(item.valor_frete) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {item.valor_desconto ? formatarMoeda(item.valor_desconto) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {item.codigo_rastreamento && (
-                        <div className="font-mono text-xs">{item.codigo_rastreamento}</div>
-                      )}
-                      {item.url_rastreamento && (
-                        <a 
-                          href={item.url_rastreamento} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-xs flex items-center gap-1"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Rastrear
-                        </a>
-                      )}
-                      {!item.codigo_rastreamento && !item.url_rastreamento && '-'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1 max-w-32">
-                      {item.obs && (
-                        <div className="text-xs text-muted-foreground truncate" title={item.obs}>
-                          📝 {item.obs}
-                        </div>
-                      )}
-                      {item.obs_interna && (
-                        <div className="text-xs text-orange-600 truncate" title={item.obs_interna}>
-                          🔒 {item.obs_interna}
-                        </div>
-                      )}
-                      {item.observacoes && (
-                        <div className="text-xs text-blue-600 truncate" title={item.observacoes}>
-                          💬 {item.observacoes}
-                        </div>
-                      )}
-                      {!item.obs && !item.obs_interna && !item.observacoes && '-'}
-                    </div>
                    </TableCell>
                    <TableCell className="font-mono text-sm">
                      {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
