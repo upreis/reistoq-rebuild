@@ -199,47 +199,12 @@ async function makeApiCallWithRetry(
           console.log(`[${context}] Lista completa de erros:`, jsonData.retorno.erros);
         }
 
-        // Tratamento especial para "sem registros" - retorna indicador
-        if (erro === 'A consulta não retornou registros' || erro.includes('não retornou registros')) {
-          console.log(`[${context}] Sem registros encontrados na página`);
+        // Tratamento especial para "sem registros"
+        if (erro === 'A consulta não retornou registros' || 
+            erro.includes('não retornou registros') ||
+            codigoErro === '20' || codigoErro === 20) {
+          console.log(`[${context}] Sem registros encontrados na página (Código 20)`);
           return { sem_registros: true };
-        }
-        
-        // Erro código 20 - Parâmetros inválidos (caso comum da API Tiny)
-        if (codigoErro === '20' || codigoErro === 20) {
-          console.log(`[${context}] ERRO 20 - Parâmetros inválidos detectado!`);
-          console.log(`[${context}] Tentando busca sem filtros para teste...`);
-          
-          // Criar parâmetros básicos sem filtros para teste
-          const paramsBasicos = new URLSearchParams({
-            token: config.tiny_erp_token,
-            formato: 'json',
-            com_itens: 'S',
-            pagina: '1'
-          });
-          
-          // Tentar requisição sem filtros para ver se o token/API funciona
-          try {
-            console.log(`[${context}] Testando API sem filtros...`);
-            const responseTest = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: paramsBasicos.toString(),
-            });
-            
-            if (responseTest.ok) {
-              const testData = await responseTest.json();
-              console.log(`[${context}] Teste sem filtros:`, testData.retorno?.status);
-              
-              if (testData.retorno?.status === 'OK') {
-                console.log(`[${context}] API funciona sem filtros - problema nos parâmetros de filtro!`);
-              }
-            }
-          } catch (testError) {
-            console.log(`[${context}] Erro no teste sem filtros:`, testError.message);
-          }
-          
-          throw new Error(`API Tiny código 20: ${erro} - Parâmetros de filtro inválidos`);
         }
         
         throw new Error(`API Tiny: ${erro} (Código: ${codigoErro})`);
