@@ -131,7 +131,7 @@ export type Database = {
           id: string
           observacoes: string | null
           quantidade: number
-          sku_correspondente: string
+          sku_correspondente: string | null
           sku_pedido: string
           sku_simples: string | null
           updated_at: string
@@ -142,7 +142,7 @@ export type Database = {
           id?: string
           observacoes?: string | null
           quantidade?: number
-          sku_correspondente: string
+          sku_correspondente?: string | null
           sku_pedido: string
           sku_simples?: string | null
           updated_at?: string
@@ -153,7 +153,7 @@ export type Database = {
           id?: string
           observacoes?: string | null
           quantidade?: number
-          sku_correspondente?: string
+          sku_correspondente?: string | null
           sku_pedido?: string
           sku_simples?: string | null
           updated_at?: string
