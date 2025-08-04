@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from "lucide-react";
@@ -263,6 +261,53 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
     }
   };
 
+  const exportarDados = async () => {
+    try {
+      const { data: vendas, error } = await supabase
+        .from('historico_vendas')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!vendas || vendas.length === 0) {
+        toast({
+          title: "Nenhum dado encontrado",
+          description: "Não há vendas para exportar.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(vendas);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Histórico de Vendas');
+      
+      // Ajustar largura das colunas
+      const colWidths = templateColumns.map(() => ({ wch: 20 }));
+      worksheet['!cols'] = colWidths;
+      
+      const hoje = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `historico_vendas_${hoje}.xlsx`);
+      
+      toast({
+        title: "Dados exportados",
+        description: `${vendas.length} vendas exportadas com sucesso.`,
+      });
+    } catch (error: any) {
+      console.error('Erro ao exportar dados:', error);
+      toast({
+        title: "Erro na exportação",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -281,57 +326,72 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileSpreadsheet className="h-5 w-5" />
-          Importar/Exportar Vendas
+    <Card className="bg-slate-900 border-slate-700">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-white flex items-center gap-2">
+          📋 Importar/Exportar Vendas
         </CardTitle>
+        <p className="text-sm text-slate-400">
+          Gerencie seus dados de vendas via planilhas XLSX/CSV
+        </p>
+        {/* Aviso importante */}
+        <div className="flex items-center gap-2 text-sm text-yellow-400">
+          ⚠️ <span>ID único da venda deve ser único - duplicatas não são permitidas</span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Template */}
-        <div className="space-y-2">
-          <Label>Template</Label>
+        {/* Três botões principais */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Button 
             variant="outline" 
             onClick={downloadTemplate}
-            className="w-full"
+            className="h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white flex flex-col items-center gap-1"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Baixar Template Excel
+            <div className="flex items-center gap-2">
+              📋 <span>Baixar Template</span>
+            </div>
+            <span className="text-xs text-slate-400">Baixe um modelo com exemplos</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={exportarDados}
+            className="h-12 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white flex flex-col items-center gap-1"
+          >
+            <div className="flex items-center gap-2">
+              ⬇️ <span>Exportar Dados</span>
+            </div>
+            <span className="text-xs text-slate-400">Exporte todas as vendas</span>
+          </Button>
+          
+          <Button 
+            onClick={handleFileSelect}
+            disabled={uploading}
+            className="h-12 bg-yellow-500 text-black hover:bg-yellow-600 flex flex-col items-center gap-1"
+          >
+            <div className="flex items-center gap-2">
+              ⬆️ <span>{uploading ? 'Processando...' : 'Importar Planilha'}</span>
+            </div>
+            <span className="text-xs opacity-80">
+              {uploading ? `${progress}%` : 'Selecione arquivo XLSX para importar'}
+            </span>
           </Button>
         </div>
-        
-        {/* Upload */}
-        <div className="space-y-2">
-          <Label htmlFor="file-upload">Importar Arquivo</Label>
-          <div className="flex gap-2">
-            <Input
-              id="file-upload"
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileChange}
-              disabled={uploading}
-              ref={fileInputRef}
-              className="flex-1"
-            />
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              variant="default"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? 'Processando...' : 'Importar'}
-            </Button>
-          </div>
-        </div>
-        
-        {/* Progress */}
+
+        {/* Input de arquivo oculto */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Progress bar */}
         {uploading && (
           <div className="space-y-2">
-            <Label>Progresso do Upload</Label>
-            <Progress value={progress} />
-            <p className="text-sm text-muted-foreground">
+            <Progress value={progress} className="bg-slate-700" />
+            <p className="text-sm text-slate-400 text-center">
               Processando arquivo... {progress}%
             </p>
           </div>
@@ -340,52 +400,50 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
         {/* Resultados */}
         {resultados && (
           <div className="space-y-3">
-            <Label>Resultado do Upload</Label>
-            
             <div className="grid grid-cols-3 gap-2 text-sm">
-              <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                <CheckCircle className="h-4 w-4 text-green-600 mx-auto mb-1" />
-                <div className="font-medium text-green-700 dark:text-green-400">
+              <div className="text-center p-3 bg-green-900/30 border border-green-700 rounded">
+                <CheckCircle className="h-4 w-4 text-green-400 mx-auto mb-1" />
+                <div className="font-medium text-green-400">
                   {resultados.sucesso}
                 </div>
-                <div className="text-green-600 dark:text-green-500 text-xs">
+                <div className="text-green-500 text-xs">
                   Sucesso
                 </div>
               </div>
               
-              <div className="text-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                <AlertCircle className="h-4 w-4 text-red-600 mx-auto mb-1" />
-                <div className="font-medium text-red-700 dark:text-red-400">
+              <div className="text-center p-3 bg-red-900/30 border border-red-700 rounded">
+                <AlertCircle className="h-4 w-4 text-red-400 mx-auto mb-1" />
+                <div className="font-medium text-red-400">
                   {resultados.erro}
                 </div>
-                <div className="text-red-600 dark:text-red-500 text-xs">
+                <div className="text-red-500 text-xs">
                   Erros
                 </div>
               </div>
               
-              <div className="text-center p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                <AlertCircle className="h-4 w-4 text-yellow-600 mx-auto mb-1" />
-                <div className="font-medium text-yellow-700 dark:text-yellow-400">
+              <div className="text-center p-3 bg-yellow-900/30 border border-yellow-700 rounded">
+                <AlertCircle className="h-4 w-4 text-yellow-400 mx-auto mb-1" />
+                <div className="font-medium text-yellow-400">
                   {resultados.duplicatas}
                 </div>
-                <div className="text-yellow-600 dark:text-yellow-500 text-xs">
+                <div className="text-yellow-500 text-xs">
                   Duplicatas
                 </div>
               </div>
             </div>
             
             {resultados.erros.length > 0 && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
+              <Alert className="bg-red-900/20 border-red-700">
+                <AlertCircle className="h-4 w-4 text-red-400" />
+                <AlertDescription className="text-red-300">
                   <div className="font-medium mb-2">Erros encontrados:</div>
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    {resultados.erros.map((erro, index) => (
+                    {resultados.erros.slice(0, 5).map((erro, index) => (
                       <li key={index}>{erro}</li>
                     ))}
-                    {resultados.erro > 10 && (
-                      <li className="text-muted-foreground">
-                        ... e mais {resultados.erro - 10} erro(s)
+                    {resultados.erro > 5 && (
+                      <li className="text-red-400">
+                        ... e mais {resultados.erro - 5} erro(s)
                       </li>
                     )}
                   </ul>
@@ -394,20 +452,6 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
             )}
           </div>
         )}
-        
-        {/* Instruções */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <div className="font-medium mb-1">Instruções:</div>
-            <ul className="text-sm space-y-1">
-              <li>• Baixe o template para ver o formato correto</li>
-              <li>• Campos obrigatórios: ID único, número do pedido, SKU, data da venda</li>
-              <li>• Status válidos: concluida, pendente, cancelada, processando</li>
-              <li>• Formatos aceitos: Excel (.xlsx, .xls) e CSV</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
       </CardContent>
     </Card>
   );

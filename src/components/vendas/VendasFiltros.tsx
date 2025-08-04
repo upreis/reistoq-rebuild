@@ -1,8 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface FiltrosHistoricoVendas {
   termo_busca: string;
@@ -23,94 +22,89 @@ export function VendasFiltros({
   onAtualizarFiltros,
   onLimparFiltros
 }: VendasFiltrosProps) {
-  const temFiltrosAtivos = Object.values(filtros).some(valor => valor !== '');
+  const handleStatusFilter = (status: string) => {
+    onAtualizarFiltros({ status: status === 'all' ? '' : status });
+  };
 
   return (
-    <Card>
+    <Card className="bg-slate-900 border-slate-700">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Filtros</CardTitle>
-          {temFiltrosAtivos && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onLimparFiltros}
-              className="h-8 px-2"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Limpar
-            </Button>
-          )}
-        </div>
+        <CardTitle className="text-white flex items-center gap-2">
+          <Search className="h-5 w-5" />
+          Filtros Avançados
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <label htmlFor="busca" className="text-sm font-medium">
-              Buscar
-            </label>
-            <Input
-              id="busca"
-              placeholder="Nº pedido, SKU, produto..."
-              value={filtros.termo_busca}
-              onChange={(e) => onAtualizarFiltros({ termo_busca: e.target.value })}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="status" className="text-sm font-medium">
-              Status
-            </label>
-            <Select 
-              value={filtros.status || "all"} 
-              onValueChange={(value) => onAtualizarFiltros({ status: value === "all" ? "" : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="concluida">Concluída</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="cancelada">Cancelada</SelectItem>
-                <SelectItem value="processando">Processando</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Campo de busca */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Buscar por nº pedido, SKU, produto ou cliente..."
+            value={filtros.termo_busca}
+            onChange={(e) => onAtualizarFiltros({ termo_busca: e.target.value })}
+            className="pl-10 bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label htmlFor="cliente" className="text-sm font-medium">
-              Cliente
-            </label>
+        {/* Botões de filtro rápido */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={!filtros.status ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleStatusFilter('all')}
+            className={!filtros.status ? "bg-yellow-500 text-black hover:bg-yellow-600" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+          >
+            📊 Mostrar Todos
+          </Button>
+          
+          <Button
+            variant={filtros.status === 'pendente' ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleStatusFilter('pendente')}
+            className={filtros.status === 'pendente' ? "bg-yellow-500 text-black hover:bg-yellow-600" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+          >
+            ⚠️ Apenas Pendentes
+          </Button>
+          
+          <Button
+            variant={filtros.status === 'concluida' ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleStatusFilter('concluida')}
+            className={filtros.status === 'concluida' ? "bg-yellow-500 text-black hover:bg-yellow-600" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+          >
+            ✅ Apenas Concluídas
+          </Button>
+        </div>
+
+        {/* Filtros adicionais em linha */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <label className="text-sm text-slate-300">Cliente</label>
             <Input
-              id="cliente"
               placeholder="Nome ou documento..."
               value={filtros.cliente}
               onChange={(e) => onAtualizarFiltros({ cliente: e.target.value })}
+              className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
             />
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="data-inicio" className="text-sm font-medium">
-              Data Início
-            </label>
+          <div className="space-y-1">
+            <label className="text-sm text-slate-300">Data Início</label>
             <Input
-              id="data-inicio"
               type="date"
               value={filtros.data_inicio}
               onChange={(e) => onAtualizarFiltros({ data_inicio: e.target.value })}
+              className="bg-slate-800 border-slate-600 text-white"
             />
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="data-fim" className="text-sm font-medium">
-              Data Fim
-            </label>
+          <div className="space-y-1">
+            <label className="text-sm text-slate-300">Data Fim</label>
             <Input
-              id="data-fim"
               type="date"
               value={filtros.data_fim}
               onChange={(e) => onAtualizarFiltros({ data_fim: e.target.value })}
+              className="bg-slate-800 border-slate-600 text-white"
             />
           </div>
         </div>
