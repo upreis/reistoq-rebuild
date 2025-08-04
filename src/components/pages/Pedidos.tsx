@@ -19,7 +19,8 @@ export function Pedidos() {
     filtros,
     atualizarFiltros,
     limparFiltros,
-    recarregarDados
+    recarregarDados,
+    obterDetalhesPedido
   } = usePedidos();
 
   const {
@@ -50,12 +51,17 @@ export function Pedidos() {
     });
   };
 
-  const handleVerDetalhes = (pedido: Pedido) => {
-    // TODO: Implementar modal de detalhes do pedido
-    toast({
-      title: "Detalhes do pedido",
-      description: `Visualizando pedido #${pedido.numero}`,
-    });
+  const handleVerDetalhes = async (pedido: Pedido) => {
+    try {
+      const detalhes = await obterDetalhesPedido(pedido.numero);
+      console.log('Detalhes do pedido:', detalhes);
+      toast({
+        title: "Detalhes carregados",
+        description: `Pedido #${pedido.numero} - ${detalhes.cliente.nome}`,
+      });
+    } catch (error) {
+      // Erro já tratado no hook
+    }
   };
 
   const handleEditarPedido = (pedido: Pedido) => {

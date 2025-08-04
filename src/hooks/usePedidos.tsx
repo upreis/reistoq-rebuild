@@ -60,11 +60,36 @@ export function usePedidos() {
       setLoading(true);
       setError(null);
 
+      // Primeiro, tentar sincronizar com o Tiny ERP
+      console.log('Sincronizando pedidos com Tiny ERP...');
+      
+      const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-tiny', {
+        body: {
+          filtros: {
+            dataInicio: filtros.dataInicio,
+            dataFim: filtros.dataFim,
+            situacao: filtros.situacao
+          }
+        }
+      });
+
+      if (syncError) {
+        console.warn('Erro na sincronização com Tiny ERP:', syncError);
+        toast({
+          title: "Aviso",
+          description: "Erro na sincronização com Tiny ERP. Mostrando dados locais.",
+          variant: "destructive",
+        });
+      } else {
+        console.log('Sincronização concluída:', syncData?.message);
+      }
+
+      // Buscar dados atualizados do banco local
       let query = supabase
         .from('pedidos')
         .select('*');
 
-      // Aplicar filtros
+      // Aplicar filtros locais
       if (filtros.busca) {
         query = query.or(`numero.ilike.%${filtros.busca}%,numero_ecommerce.ilike.%${filtros.busca}%`);
       }
@@ -93,6 +118,14 @@ export function usePedidos() {
 
       setPedidos(data || []);
       calcularMetricas(data || []);
+      
+      // Toast de sucesso apenas se houve sincronização
+      if (!syncError && syncData) {
+        toast({
+          title: "Sincronização concluída",
+          description: syncData.message || "Pedidos atualizados com sucesso",
+        });
+      }
     } catch (err) {
       console.error('Erro ao buscar pedidos:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
@@ -138,6 +171,28 @@ export function usePedidos() {
     buscarPedidos();
   };
 
+  const obterDetalhesPedido = async (numeroPedido: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('obter-pedido-tiny', {
+        body: { numeroPedido }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data.pedido;
+    } catch (err) {
+      console.error('Erro ao obter detalhes do pedido:', err);
+      toast({
+        title: "Erro",
+        description: "Erro ao obter detalhes do pedido. Tente novamente.",
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
   useEffect(() => {
     buscarPedidos();
   }, [filtros]);
@@ -172,6 +227,7 @@ export function usePedidos() {
     filtros,
     atualizarFiltros,
     limparFiltros,
-    recarregarDados
+    recarregarDados,
+    obterDetalhesPedido
   };
 }

@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.previsao-reposicao]
 verify_jwt = false
+
+[functions.sync-pedidos-tiny]
+verify_jwt = false
+
+[functions.obter-pedido-tiny]
+verify_jwt = false
