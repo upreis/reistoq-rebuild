@@ -3,7 +3,7 @@ import { Upload, Download, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ interface EstoqueFileManagerProps {
 export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps) {
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const { toast } = useToast();
 
   const gerarTemplateExemplo = () => {
     const dadosExemplo = [
@@ -56,7 +57,10 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
     const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(data, 'template_estoque_exemplo.xlsx');
     
-    toast.success("Template de exemplo baixado com sucesso!");
+    toast({
+      title: "Template baixado!",
+      description: "Template de exemplo baixado com sucesso!",
+    });
   };
 
   const downloadEstoque = async () => {
@@ -70,7 +74,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
       if (error) throw error;
 
       if (!produtos || produtos.length === 0) {
-        toast.warning("Nenhum produto encontrado para download");
+        toast({
+          title: "Atenção",
+          description: "Nenhum produto encontrado para download",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -100,10 +108,17 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
       const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(data, `estoque_${new Date().toISOString().split('T')[0]}.xlsx`);
 
-      toast.success(`${produtos.length} produtos exportados com sucesso!`);
+      toast({
+        title: "Exportação concluída!",
+        description: `${produtos.length} produtos exportados com sucesso!`,
+      });
     } catch (error) {
       console.error('Erro ao baixar estoque:', error);
-      toast.error("Erro ao baixar dados do estoque");
+      toast({
+        title: "Erro",
+        description: "Erro ao baixar dados do estoque",
+        variant: "destructive",
+      });
     } finally {
       setDownloading(false);
     }
@@ -121,7 +136,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
       const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
       if (jsonData.length === 0) {
-        toast.error("Arquivo vazio ou formato inválido");
+        toast({
+          title: "Erro",
+          description: "Arquivo vazio ou formato inválido",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -130,7 +149,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
       const skusDuplicados = skusNaPlanilha.filter((sku, index) => skusNaPlanilha.indexOf(sku) !== index);
       
       if (skusDuplicados.length > 0) {
-        toast.error(`SKUs duplicados encontrados na planilha: ${[...new Set(skusDuplicados)].join(', ')}`);
+        toast({
+          title: "❌ UPLOAD BLOQUEADO",
+          description: `SKU Interno duplicado encontrado na planilha: ${[...new Set(skusDuplicados)].slice(0, 5).join(', ')}${skusDuplicados.length > 5 ? '...' : ''}`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -142,7 +165,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
 
       if (produtosExistentes && produtosExistentes.length > 0) {
         const skusExistentes = produtosExistentes.map(p => p.sku_interno);
-        toast.error(`SKUs já existem no sistema: ${skusExistentes.join(', ')}`);
+        toast({
+          title: "❌ UPLOAD BLOQUEADO",
+          description: `SKU Interno já existe no sistema: ${skusExistentes.slice(0, 5).join(', ')}${skusExistentes.length > 5 ? `... (+${skusExistentes.length - 5} mais)` : ''}`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -201,7 +228,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
 
           if (error) {
             console.error('Erro ao inserir produto:', produto, error);
-            toast.error(`Erro no produto ${produto.nome}: ${error.message}`);
+            toast({
+              title: "Erro no produto",
+              description: `Erro no produto ${produto.nome}: ${error.message}`,
+              variant: "destructive",
+            });
             erros++;
           } else {
             sucessos++;
@@ -213,15 +244,26 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
       }
 
       if (sucessos > 0) {
-        toast.success(`${sucessos} produtos importados com sucesso!`);
+        toast({
+          title: "✅ Importação concluída!",
+          description: `${sucessos} produtos importados com sucesso!`,
+        });
         onUploadSuccess();
       }
       if (erros > 0) {
-        toast.warning(`${erros} produtos com erro durante a importação`);
+        toast({
+          title: "⚠️ Alguns erros encontrados",
+          description: `${erros} produtos com erro durante a importação`,
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Erro ao processar arquivo:', error);
-      toast.error("Erro ao processar arquivo. Verifique o formato.");
+      toast({
+        title: "Erro",
+        description: "Erro ao processar arquivo. Verifique o formato.",
+        variant: "destructive",
+      });
     } finally {
       setUploading(false);
       // Reset input
@@ -238,6 +280,10 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
           <br />
           <span className="text-xs text-muted-foreground">
             Status válidos: ativo, baixo, critico, inativo
+          </span>
+          <br />
+          <span className="text-xs text-red-500 font-medium">
+            ⚠️ SKU Interno deve ser único - duplicatas não são permitidas
           </span>
         </CardDescription>
       </CardHeader>
