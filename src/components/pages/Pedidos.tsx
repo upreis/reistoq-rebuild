@@ -1,143 +1,127 @@
-import { Search, Filter, Download, RefreshCw } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-const pedidosExample = [
-  {
-    id: "12847",
-    cliente: "Empresa ABC Ltda",
-    data: "2024-01-15",
-    valor: "R$ 2.450,00",
-    status: "processado",
-    itens: 5
-  },
-  {
-    id: "12846",
-    cliente: "Comércio XYZ",
-    data: "2024-01-15",
-    valor: "R$ 890,50",
-    status: "pendente",
-    itens: 3
-  },
-  {
-    id: "12845",
-    cliente: "Distribuidora 123",
-    data: "2024-01-14",
-    valor: "R$ 3.200,00",
-    status: "enviado",
-    itens: 8
-  }
-];
+import { toast } from "@/hooks/use-toast";
+import { usePedidos } from "@/hooks/usePedidos";
+import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
+import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
+import { PedidosFiltros } from "@/components/pedidos/PedidosFiltros";
+import { PedidosTabela } from "@/components/pedidos/PedidosTabela";
+import type { Pedido } from "@/hooks/usePedidos";
 
 export function Pedidos() {
+  const {
+    pedidos,
+    metricas,
+    loading,
+    error,
+    filtros,
+    atualizarFiltros,
+    limparFiltros,
+    recarregarDados
+  } = usePedidos();
+
+  const {
+    pedidosPaginados,
+    paginaAtual,
+    totalPaginas,
+    irParaPagina,
+    proximaPagina,
+    paginaAnterior,
+    totalItens,
+    itemInicial,
+    itemFinal
+  } = usePedidosPaginado({ pedidos });
+
+  const handleSincronizar = () => {
+    recarregarDados();
+    toast({
+      title: "Sincronização iniciada",
+      description: "Os dados dos pedidos estão sendo atualizados.",
+    });
+  };
+
+  const handleExportar = () => {
+    // TODO: Implementar exportação de pedidos
+    toast({
+      title: "Exportação em desenvolvimento",
+      description: "A funcionalidade de exportação será implementada em breve.",
+    });
+  };
+
+  const handleVerDetalhes = (pedido: Pedido) => {
+    // TODO: Implementar modal de detalhes do pedido
+    toast({
+      title: "Detalhes do pedido",
+      description: `Visualizando pedido #${pedido.numero}`,
+    });
+  };
+
+  const handleEditarPedido = (pedido: Pedido) => {
+    // TODO: Implementar modal de edição do pedido
+    toast({
+      title: "Editar pedido",
+      description: `Editando pedido #${pedido.numero}`,
+    });
+  };
+
+  const handleProcessarPedido = (pedido: Pedido) => {
+    // TODO: Implementar processamento do pedido
+    toast({
+      title: "Processar pedido",
+      description: `Processando pedido #${pedido.numero}`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Pedidos</h1>
-          <p className="text-muted-foreground">Integração com Tiny ERP - Gestão completa de pedidos</p>
+          <p className="text-muted-foreground">Gestão completa de pedidos - Integração Tiny ERP</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
+          <Button variant="outline" onClick={handleSincronizar} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Sincronizar
           </Button>
-          <Button variant="secondary">
+          <Button variant="secondary" onClick={handleExportar}>
             <Download className="mr-2 h-4 w-4" />
             Exportar
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros de Busca</CardTitle>
-          <CardDescription>
-            Busque pedidos por período, cliente, status ou número do pedido
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Número do pedido..." className="pl-10" />
-            </div>
-            <Input placeholder="Cliente..." />
-            <Input type="date" />
-            <Button variant="default" className="w-full">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Métricas */}
+      <PedidosMetricas metricas={metricas} />
 
-      {/* Results */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Resultados</CardTitle>
-          <CardDescription>
-            {pedidosExample.length} pedidos encontrados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pedido</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Itens</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pedidosExample.map((pedido) => (
-                <TableRow key={pedido.id}>
-                  <TableCell className="font-medium">#{pedido.id}</TableCell>
-                  <TableCell>{pedido.cliente}</TableCell>
-                  <TableCell>{pedido.data}</TableCell>
-                  <TableCell>{pedido.valor}</TableCell>
-                  <TableCell>{pedido.itens}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        pedido.status === 'processado' ? 'default' :
-                        pedido.status === 'pendente' ? 'destructive' :
-                        'secondary'
-                      }
-                    >
-                      {pedido.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">Ver</Button>
-                      <Button size="sm" variant="secondary">Processar</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Filtros */}
+      <PedidosFiltros
+        filtros={filtros}
+        onFiltroChange={atualizarFiltros}
+        onLimparFiltros={limparFiltros}
+      />
 
-      {/* Integration Status */}
+      {/* Tabela de Pedidos */}
+      <PedidosTabela
+        pedidos={pedidosPaginados}
+        loading={loading}
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        totalItens={totalItens}
+        itemInicial={itemInicial}
+        itemFinal={itemFinal}
+        onPaginaChange={irParaPagina}
+        onProximaPagina={proximaPagina}
+        onPaginaAnterior={paginaAnterior}
+        onVerDetalhes={handleVerDetalhes}
+        onEditarPedido={handleEditarPedido}
+        onProcessarPedido={handleProcessarPedido}
+      />
+
+      {/* Status da Integração */}
       <Card>
         <CardHeader>
           <CardTitle>Status da Integração Tiny ERP</CardTitle>
