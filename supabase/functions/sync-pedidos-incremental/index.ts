@@ -119,12 +119,27 @@ Deno.serve(async (req) => {
 
     // Chamar função sync-pedidos-rapido
     console.log('📡 [DEBUG] Chamando sync-pedidos-rapido...');
-    console.log('📡 [DEBUG] Params para enviar:', JSON.stringify(params));
+    console.log('📡 [DEBUG] Params originais:', JSON.stringify(params));
+    
+    // Corrigir mapeamento de parâmetros: dataInicio/dataFim → dataInicial/dataFinal
+    const paramsCorrigidos = {
+      ...params,
+      filtros: params.filtros ? {
+        ...params.filtros,
+        dataInicial: params.filtros.dataInicio,
+        dataFinal: params.filtros.dataFim,
+        // Remove os parâmetros incorretos
+        dataInicio: undefined,
+        dataFim: undefined
+      } : undefined
+    };
+    
+    console.log('📡 [DEBUG] Params corrigidos:', JSON.stringify(paramsCorrigidos));
     
     const { data: result, error: functionError } = await supabase.functions.invoke(
       'sync-pedidos-rapido',
       {
-        body: params
+        body: paramsCorrigidos
       }
     );
 
