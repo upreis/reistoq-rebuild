@@ -279,11 +279,15 @@ Deno.serve(async (req) => {
     // Aplicar filtros de data
     if (filtros.filtros?.dataInicial || filtros.filtros?.dataInicio) {
       const dataInicial = filtros.filtros.dataInicial || filtros.filtros.dataInicio;
-      params.append('dataInicial', formatDateForTinyAPI(dataInicial));
+      const dataFormatada = formatDateForTinyAPI(dataInicial);
+      params.append('dataInicial', dataFormatada);
+      console.log(`📅 Data inicial aplicada: ${dataInicial} → ${dataFormatada}`);
     }
     if (filtros.filtros?.dataFinal || filtros.filtros?.dataFim) {
       const dataFinal = filtros.filtros.dataFinal || filtros.filtros.dataFim;
-      params.append('dataFinal', formatDateForTinyAPI(dataFinal));
+      const dataFormatada = formatDateForTinyAPI(dataFinal);
+      params.append('dataFinal', dataFormatada);
+      console.log(`📅 Data final aplicada: ${dataFinal} → ${dataFormatada}`);
     }
     
     // ✅ CORRIGIDO: Processar múltiplas situações com mapeamento
@@ -294,6 +298,8 @@ Deno.serve(async (req) => {
         console.log('🎯 Situações aplicadas:', situacaoMapeada);
       }
     }
+
+    console.log('📡 Parâmetros finais para API Tiny:', Object.fromEntries(params.entries()));
 
     console.log('📡 Buscando pedidos na API Tiny ERP...');
     
