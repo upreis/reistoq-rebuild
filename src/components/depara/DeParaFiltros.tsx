@@ -43,7 +43,7 @@ export function DeParaFiltros({
   const temFiltrosAtivos = buscaLocal || filtros.preenchimento !== 'todos';
 
   return (
-    <Card className="h-full">
+    <Card className="h-full min-h-[200px]">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Filtros Avançados</CardTitle>
       </CardHeader>

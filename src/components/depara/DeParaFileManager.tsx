@@ -252,7 +252,7 @@ export function DeParaFileManager({ onUploadSuccess }: DeParaFileManagerProps) {
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="h-full min-h-[200px]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5" />
