@@ -101,6 +101,60 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_vendas: {
+        Row: {
+          cliente_documento: string | null
+          cliente_nome: string | null
+          created_at: string
+          data_venda: string
+          id: string
+          id_unico: string
+          nome_produto: string | null
+          numero_pedido: string
+          observacoes: string | null
+          quantidade_vendida: number
+          sku_produto: string
+          status: string
+          updated_at: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          cliente_documento?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_venda: string
+          id?: string
+          id_unico: string
+          nome_produto?: string | null
+          numero_pedido: string
+          observacoes?: string | null
+          quantidade_vendida?: number
+          sku_produto: string
+          status?: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Update: {
+          cliente_documento?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_venda?: string
+          id?: string
+          id_unico?: string
+          nome_produto?: string | null
+          numero_pedido?: string
+          observacoes?: string | null
+          quantidade_vendida?: number
+          sku_produto?: string
+          status?: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: []
+      }
       itens_pedidos: {
         Row: {
           codigo_barras: string | null

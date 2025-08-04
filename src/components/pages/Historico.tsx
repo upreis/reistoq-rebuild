@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { useHistoricoMovimentacoes } from '@/hooks/useHistoricoMovimentacoes';
-import { useHistoricoPaginado } from '@/hooks/useHistoricoPaginado';
-import { HistoricoHeader } from '@/components/historico/HistoricoHeader';
-import { HistoricoFiltros } from '@/components/historico/HistoricoFiltros';
-import { HistoricoMetricas } from '@/components/historico/HistoricoMetricas';
-import { HistoricoFileManager } from '@/components/historico/HistoricoFileManager';
-import { HistoricoTabela } from '@/components/historico/HistoricoTabela';
-import { NovaMovimentacaoModal } from '@/components/historico/NovaMovimentacaoModal';
-import { MovimentacaoEditModal } from '@/components/historico/MovimentacaoEditModal';
+import { useHistoricoVendas } from '@/hooks/useHistoricoVendas';
+import { useHistoricoVendasPaginado } from '@/hooks/useHistoricoVendasPaginado';
+import { VendasHeader } from '@/components/vendas/VendasHeader';
+import { VendasFiltros } from '@/components/vendas/VendasFiltros';
+import { VendasMetricas } from '@/components/vendas/VendasMetricas';
+import { VendasTabela } from '@/components/vendas/VendasTabela';
+import { NovaVendaModal } from '@/components/vendas/NovaVendaModal';
+import { VendaEditModal } from '@/components/vendas/VendaEditModal';
 import { useRelatorios } from '@/hooks/useRelatorios';
 import {
   AlertDialog,
@@ -21,28 +20,28 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function Historico() {
-  const [movimentacoesSelecionadas, setMovimentacoesSelecionadas] = useState<string[]>([]);
+  const [vendasSelecionadas, setVendasSelecionadas] = useState<string[]>([]);
   const [showNovaModal, setShowNovaModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteMultipleDialog, setShowDeleteMultipleDialog] = useState(false);
-  const [movimentacaoParaEditar, setMovimentacaoParaEditar] = useState<any>(null);
-  const [movimentacaoParaExcluir, setMovimentacaoParaExcluir] = useState<string | null>(null);
+  const [vendaParaEditar, setVendaParaEditar] = useState<any>(null);
+  const [vendaParaExcluir, setVendaParaExcluir] = useState<string | null>(null);
 
   const {
-    movimentacoes,
+    vendas,
     metricas,
     loading,
     filtros,
     atualizarFiltros,
     limparFiltros,
     recarregarDados,
-    excluirMovimentacao,
-    excluirMovimentacoesSelecionadas
-  } = useHistoricoMovimentacoes();
+    excluirVenda,
+    excluirVendasSelecionadas
+  } = useHistoricoVendas();
 
   const {
-    movimentacoesPaginadas,
+    vendasPaginadas,
     paginaAtual,
     totalPaginas,
     irParaPagina,
@@ -51,45 +50,45 @@ export function Historico() {
     totalItens,
     itemInicial,
     itemFinal
-  } = useHistoricoPaginado({ movimentacoes });
+  } = useHistoricoVendasPaginado({ vendas });
 
   const { gerarRelatorio, downloadRelatorio } = useRelatorios();
 
-  const selecionarMovimentacao = (movimentacaoId: string) => {
-    setMovimentacoesSelecionadas(prev => 
-      prev.includes(movimentacaoId)
-        ? prev.filter(id => id !== movimentacaoId)
-        : [...prev, movimentacaoId]
+  const selecionarVenda = (vendaId: string) => {
+    setVendasSelecionadas(prev => 
+      prev.includes(vendaId)
+        ? prev.filter(id => id !== vendaId)
+        : [...prev, vendaId]
     );
   };
 
   const selecionarTodas = () => {
     if (todasSelecionadas) {
-      setMovimentacoesSelecionadas([]);
+      setVendasSelecionadas([]);
     } else {
-      setMovimentacoesSelecionadas(movimentacoesPaginadas.map(m => m.id));
+      setVendasSelecionadas(vendasPaginadas.map(v => v.id));
     }
   };
 
-  const todasSelecionadas = movimentacoesPaginadas.length > 0 && 
-    movimentacoesPaginadas.every(m => movimentacoesSelecionadas.includes(m.id));
+  const todasSelecionadas = vendasPaginadas.length > 0 && 
+    vendasPaginadas.every(v => vendasSelecionadas.includes(v.id));
 
-  const abrirEdicao = (movimentacao: any) => {
-    setMovimentacaoParaEditar(movimentacao);
+  const abrirEdicao = (venda: any) => {
+    setVendaParaEditar(venda);
     setShowEditModal(true);
   };
 
   const abrirExclusao = (id: string) => {
-    setMovimentacaoParaExcluir(id);
+    setVendaParaExcluir(id);
     setShowDeleteDialog(true);
   };
 
   const confirmarExclusao = async () => {
-    if (movimentacaoParaExcluir) {
-      await excluirMovimentacao(movimentacaoParaExcluir);
-      setMovimentacaoParaExcluir(null);
+    if (vendaParaExcluir) {
+      await excluirVenda(vendaParaExcluir);
+      setVendaParaExcluir(null);
       setShowDeleteDialog(false);
-      setMovimentacoesSelecionadas([]);
+      setVendasSelecionadas([]);
     }
   };
 
@@ -98,8 +97,8 @@ export function Historico() {
   };
 
   const confirmarExclusaoMultipla = async () => {
-    await excluirMovimentacoesSelecionadas(movimentacoesSelecionadas);
-    setMovimentacoesSelecionadas([]);
+    await excluirVendasSelecionadas(vendasSelecionadas);
+    setVendasSelecionadas([]);
     setShowDeleteMultipleDialog(false);
   };
 
@@ -114,63 +113,57 @@ export function Historico() {
 
   const handleModalSuccess = () => {
     recarregarDados();
-    setMovimentacoesSelecionadas([]);
+    setVendasSelecionadas([]);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <HistoricoHeader
-        movimentacoesSelecionadas={movimentacoesSelecionadas}
+      <VendasHeader
+        vendasSelecionadas={vendasSelecionadas}
         loading={loading}
         onRefresh={recarregarDados}
         onExcluirSelecionadas={abrirExclusaoMultipla}
-        onNovaMovimentacao={() => setShowNovaModal(true)}
+        onNovaVenda={() => setShowNovaModal(true)}
         onGerarRelatorio={handleGerarRelatorio}
       />
 
-      {/* Filters and File Management */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <HistoricoFiltros
-          filtros={filtros}
-          onAtualizarFiltros={atualizarFiltros}
-          onLimparFiltros={limparFiltros}
-        />
-        <HistoricoFileManager onUploadSuccess={handleModalSuccess} />
-      </div>
+      <VendasFiltros
+        filtros={filtros}
+        onAtualizarFiltros={atualizarFiltros}
+        onLimparFiltros={limparFiltros}
+      />
 
-      {/* Summary Cards */}
-      <HistoricoMetricas metricas={metricas} loading={loading} />
+      <VendasMetricas metricas={metricas} loading={loading} />
 
-      <HistoricoTabela
-        movimentacoes={movimentacoesPaginadas}
+      <VendasTabela
+        vendas={vendasPaginadas}
         loading={loading}
-        movimentacoesSelecionadas={movimentacoesSelecionadas}
+        vendasSelecionadas={vendasSelecionadas}
         todasSelecionadas={todasSelecionadas}
         paginaAtual={paginaAtual}
         totalPaginas={totalPaginas}
         itemInicial={itemInicial}
         itemFinal={itemFinal}
         totalItens={totalItens}
-        onSelecionarMovimentacao={selecionarMovimentacao}
+        onSelecionarVenda={selecionarVenda}
         onSelecionarTodas={selecionarTodas}
-        onEditarMovimentacao={abrirEdicao}
-        onExcluirMovimentacao={abrirExclusao}
+        onEditarVenda={abrirEdicao}
+        onExcluirVenda={abrirExclusao}
         onPaginar={irParaPagina}
         onPaginaAnterior={paginaAnterior}
         onProximaPagina={proximaPagina}
       />
 
-      <NovaMovimentacaoModal
+      <NovaVendaModal
         open={showNovaModal}
         onOpenChange={setShowNovaModal}
         onSuccess={handleModalSuccess}
       />
 
-      <MovimentacaoEditModal
+      <VendaEditModal
         open={showEditModal}
         onOpenChange={setShowEditModal}
-        movimentacao={movimentacaoParaEditar}
+        venda={vendaParaEditar}
         onSuccess={handleModalSuccess}
       />
 
@@ -179,7 +172,7 @@ export function Historico() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -196,7 +189,7 @@ export function Historico() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão múltipla</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir {movimentacoesSelecionadas.length} movimentação(ões) selecionada(s)? 
+              Tem certeza que deseja excluir {vendasSelecionadas.length} venda(s) selecionada(s)? 
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
