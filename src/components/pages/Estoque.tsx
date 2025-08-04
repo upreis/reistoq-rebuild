@@ -23,7 +23,7 @@ import { ProdutoImageUpload } from "@/components/estoque/ProdutoImageUpload";
 import { EstoqueHeader } from "@/components/estoque/EstoqueHeader";
 import { EstoqueFiltros } from "@/components/estoque/EstoqueFiltros";
 import { EstoqueMetricas } from "@/components/estoque/EstoqueMetricas";
-import { EstoqueTabela } from "@/components/estoque/EstoqueTabela";
+import EstoqueTabela from "@/components/estoque/EstoqueTabela";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
 import { EstoqueHistoricoMovimentacoes } from "@/components/estoque/EstoqueHistoricoMovimentacoes";

@@ -1,8 +1,10 @@
+import React, { useMemo, useCallback } from "react";
 import { Package, Edit, ArrowUpDown, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -66,14 +68,15 @@ export function EstoqueTabela({
   onProximaPagina,
   onAbrirPrevisao
 }: EstoqueTabelaProps) {
-  const formatarMoeda = (valor: number) => {
+  // Memoizar funções para evitar re-renders
+  const formatarMoeda = useCallback((valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(valor);
-  };
+  }, []);
 
-  const getStatusBadge = (produto: Produto) => {
+  const getStatusBadge = useCallback((produto: Produto) => {
     if (!produto.ativo) {
       return { variant: 'secondary' as const, texto: 'Inativo' };
     } else if (produto.quantidade_atual === 0) {
@@ -85,39 +88,69 @@ export function EstoqueTabela({
     } else {
       return { variant: 'default' as const, texto: 'Ativo' };
     }
-  };
+  }, []);
+
+  // Memoizar skeleton loading
+  const skeletonLoading = useMemo(() => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Produtos em Estoque</CardTitle>
+        <CardDescription>Carregando produtos...</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex space-x-4">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  ), []);
+
+  // Memoizar estado vazio
+  const emptyState = useMemo(() => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Produtos em Estoque</CardTitle>
+        <CardDescription>Nenhum produto encontrado</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center py-12">
+          <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum produto encontrado</h3>
+          <p className="text-muted-foreground mb-4">
+            Tente ajustar os filtros ou adicione um novo produto
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  ), []);
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex space-x-4">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-20" />
-          </div>
-        ))}
-      </div>
-    );
+    return skeletonLoading;
   }
 
   if (produtos.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum produto encontrado</h3>
-        <p className="text-muted-foreground mb-4">
-          Tente ajustar os filtros ou adicione um novo produto
-        </p>
-      </div>
-    );
+    return emptyState;
   }
 
   return (
-    <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Produtos em Estoque</CardTitle>
+        <CardDescription>
+          Controle de quantidades e alertas de estoque baixo
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
       {/* Informações da paginação */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
@@ -314,6 +347,11 @@ export function EstoqueTabela({
           </Pagination>
         </div>
       )}
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
+
+// Envolver o componente com React.memo para evitar re-renders desnecessários
+export default React.memo(EstoqueTabela);
