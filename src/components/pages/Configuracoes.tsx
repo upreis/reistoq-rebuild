@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,17 +18,52 @@ export function Configuracoes() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Carregar configurações existentes
+  useEffect(() => {
+    const loadConfiguracoes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('configuracoes')
+          .select('chave, valor')
+          .in('chave', ['tiny_token', 'telegram_token', 'telegram_chat_id']);
+
+        if (error) throw error;
+
+        data?.forEach((config) => {
+          switch (config.chave) {
+            case 'tiny_token':
+              setTinyToken(config.valor);
+              break;
+            case 'telegram_token':
+              setTelegramToken(config.valor);
+              break;
+            case 'telegram_chat_id':
+              setTelegramChatId(config.valor);
+              break;
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+      }
+    };
+
+    loadConfiguracoes();
+  }, []);
+
   const handleSaveConfig = async () => {
     setLoading(true);
     try {
-      // Salvar configurações no Supabase
+      // Salvar configurações no Supabase usando upsert com onConflict
       const updates = [];
       
       if (tinyToken) {
         updates.push(
           supabase
             .from('configuracoes')
-            .upsert({ chave: 'tiny_token', valor: tinyToken, tipo: 'string' })
+            .upsert(
+              { chave: 'tiny_token', valor: tinyToken, tipo: 'string' },
+              { onConflict: 'chave' }
+            )
         );
       }
       
@@ -36,7 +71,10 @@ export function Configuracoes() {
         updates.push(
           supabase
             .from('configuracoes')
-            .upsert({ chave: 'telegram_token', valor: telegramToken, tipo: 'string' })
+            .upsert(
+              { chave: 'telegram_token', valor: telegramToken, tipo: 'string' },
+              { onConflict: 'chave' }
+            )
         );
       }
       
@@ -44,11 +82,20 @@ export function Configuracoes() {
         updates.push(
           supabase
             .from('configuracoes')
-            .upsert({ chave: 'telegram_chat_id', valor: telegramChatId, tipo: 'string' })
+            .upsert(
+              { chave: 'telegram_chat_id', valor: telegramChatId, tipo: 'string' },
+              { onConflict: 'chave' }
+            )
         );
       }
 
-      await Promise.all(updates);
+      const results = await Promise.all(updates);
+      
+      // Verificar se todas as operações foram bem-sucedidas
+      const hasError = results.some(result => result.error);
+      if (hasError) {
+        throw new Error('Erro ao salvar algumas configurações');
+      }
       
       toast({
         title: "Configurações salvas",
@@ -59,7 +106,7 @@ export function Configuracoes() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível salvar as configurações.",
+        description: "Não foi possível salvar as configurações. Tente novamente.",
       });
     } finally {
       setLoading(false);
