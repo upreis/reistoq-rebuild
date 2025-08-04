@@ -56,20 +56,62 @@ interface FiltrosPedidos {
 }
 
 export function useItensPedidos() {
-  const [itens, setItens] = useState<ItemPedido[]>([]);
-  const [metricas, setMetricas] = useState<MetricasPedidos>({
-    totalItens: 0,
-    totalPedidos: 0,
-    pedidosPendentes: 0,
-    pedidosAprovados: 0,
-    pedidosEnviados: 0,
-    pedidosEntregues: 0,
-    valorTotal: 0
+  // ✅ Carregar dados salvos do localStorage
+  const [itens, setItens] = useState<ItemPedido[]>(() => {
+    const dadosSalvos = localStorage.getItem('pedidos-dados-cache');
+    if (dadosSalvos) {
+      try {
+        return JSON.parse(dadosSalvos);
+      } catch (error) {
+        console.warn('Erro ao carregar dados salvos:', error);
+        return [];
+      }
+    }
+    return [];
   });
+  
+  const [metricas, setMetricas] = useState<MetricasPedidos>(() => {
+    const metricasSalvas = localStorage.getItem('pedidos-metricas-cache');
+    if (metricasSalvas) {
+      try {
+        return JSON.parse(metricasSalvas);
+      } catch (error) {
+        console.warn('Erro ao carregar métricas salvas:', error);
+        return {
+          totalItens: 0,
+          totalPedidos: 0,
+          pedidosPendentes: 0,
+          pedidosAprovados: 0,
+          pedidosEnviados: 0,
+          pedidosEntregues: 0,
+          valorTotal: 0
+        };
+      }
+    }
+    return {
+      totalItens: 0,
+      totalPedidos: 0,
+      pedidosPendentes: 0,
+      pedidosAprovados: 0,
+      pedidosEnviados: 0,
+      pedidosEntregues: 0,
+      valorTotal: 0
+    };
+  });
+  
   const [loading, setLoading] = useState(false); // ✅ Inicia como false - loading só quando busca for solicitada
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
-    // ✅ DEFININDO FILTROS PARA BUSCAR OS DADOS SINCRONIZADOS
+    // ✅ Carregar filtros salvos do localStorage
+    const filtrosSalvos = localStorage.getItem('filtros-pedidos');
+    if (filtrosSalvos) {
+      try {
+        return JSON.parse(filtrosSalvos);
+      } catch (error) {
+        console.warn('Erro ao carregar filtros salvos:', error);
+      }
+    }
+    // ✅ Filtros padrão apenas se não houver filtros salvos
     return {
       busca: '',
       dataInicio: '2025-07-08',  // Data específica dos dados sincronizados
@@ -177,6 +219,9 @@ export function useItensPedidos() {
 
       // Processar dados e aplicar mapeamento DE/PARA
       const itensProcessados = await aplicarMapeamentos(data || []);
+      
+      // ✅ Salvar dados no localStorage para persistir entre navegações
+      localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
       
       setItens(itensProcessados);
       calcularMetricas(itensProcessados);
@@ -299,7 +344,7 @@ export function useItensPedidos() {
     
     const valorTotal = itensList.reduce((sum, item) => sum + (item.valor_total || 0), 0);
 
-    setMetricas({
+    const novasMetricas = {
       totalItens,
       totalPedidos,
       pedidosPendentes,
@@ -307,7 +352,12 @@ export function useItensPedidos() {
       pedidosEnviados,
       pedidosEntregues,
       valorTotal
-    });
+    };
+
+    // ✅ Salvar métricas no localStorage para persistir entre navegações
+    localStorage.setItem('pedidos-metricas-cache', JSON.stringify(novasMetricas));
+    
+    setMetricas(novasMetricas);
   };
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosPedidos>) => {
