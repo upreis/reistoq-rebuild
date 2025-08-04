@@ -327,34 +327,74 @@ Deno.serve(async (req) => {
 
           allPedidos.push(pedidoProcessado);
 
-          // ✅ DIAGNÓSTICO: Processar itens se existirem
+          // ✅ CORRIGIDO: Processar itens - API pode retornar itens diretamente no pedido ou em wrapper
+          let itensEncontrados = 0;
+          
+          // Verificar se os itens estão em pedido.itens diretamente
           if (pedido.itens && Array.isArray(pedido.itens)) {
-            console.log(`📦 Pedido ${pedido.numero}: ${pedido.itens.length} itens encontrados`);
-            for (const itemWrapper of pedido.itens) {
-              const item = itemWrapper.item;
+            console.log(`📦 Pedido ${pedido.numero}: ${pedido.itens.length} itens encontrados (formato direto)`);
+            
+            for (const item of pedido.itens) {
+              // Itens podem vir diretamente ou dentro de wrapper {item: {...}}
+              const itemData = item.item || item;
               
               const itemProcessado = {
-                pedido_id: pedido.id,          // ✅ CORRIGIDO: usar ID do pedido
+                pedido_id: pedido.id,
                 numero_pedido: pedido.numero,
-                sku: item.codigo,
-                descricao: item.descricao,
-                quantidade: parseInt(item.quantidade || '0'),
-                valor_unitario: parseFloat(item.valor_unitario || '0'),
-                valor_total: parseFloat(item.valor_total || '0'),
-                ncm: item.ncm,
-                observacoes: null
+                sku: itemData.codigo || itemData.sku || '',
+                descricao: itemData.descricao || '',
+                quantidade: parseInt(itemData.quantidade || '0'),
+                valor_unitario: parseFloat(itemData.valor_unitario || '0'),
+                valor_total: parseFloat(itemData.valor_total || '0'),
+                ncm: itemData.ncm || null,
+                codigo_barras: itemData.codigo_barras || null,
+                observacoes: itemData.observacoes || null
               };
 
               allItens.push(itemProcessado);
+              itensEncontrados++;
             }
-          } else {
-            // ✅ DIAGNÓSTICO CRÍTICO: Por que pedidos sem itens?
-            console.warn(`⚠️ Pedido ${pedido.numero} SEM ITENS! Estrutura:`, {
+          } 
+          // Verificar se os itens estão em outro formato/campo
+          else if (pedido.produtos && Array.isArray(pedido.produtos)) {
+            console.log(`📦 Pedido ${pedido.numero}: ${pedido.produtos.length} produtos encontrados`);
+            
+            for (const produto of pedido.produtos) {
+              const produtoData = produto.produto || produto;
+              
+              const itemProcessado = {
+                pedido_id: pedido.id,
+                numero_pedido: pedido.numero,
+                sku: produtoData.codigo || produtoData.sku || '',
+                descricao: produtoData.descricao || '',
+                quantidade: parseInt(produtoData.quantidade || '0'),
+                valor_unitario: parseFloat(produtoData.valor_unitario || '0'),
+                valor_total: parseFloat(produtoData.valor_total || '0'),
+                ncm: produtoData.ncm || null,
+                codigo_barras: produtoData.codigo_barras || null,
+                observacoes: produtoData.observacoes || null
+              };
+
+              allItens.push(itemProcessado);
+              itensEncontrados++;
+            }
+          }
+          else {
+            // ✅ DIAGNÓSTICO CRÍTICO: Estrutura completa do pedido para debug
+            console.error(`⚠️ Pedido ${pedido.numero} SEM ITENS! Estrutura completa:`, {
               tem_itens: !!pedido.itens,
               tipo_itens: typeof pedido.itens,
-              é_array: Array.isArray(pedido.itens),
-              keys_pedido: Object.keys(pedido)
+              é_array_itens: Array.isArray(pedido.itens),
+              tem_produtos: !!pedido.produtos,
+              tipo_produtos: typeof pedido.produtos,
+              é_array_produtos: Array.isArray(pedido.produtos),
+              todas_keys_pedido: Object.keys(pedido),
+              estrutura_pedido: JSON.stringify(pedido, null, 2).substring(0, 500)
             });
+          }
+          
+          if (itensEncontrados > 0) {
+            console.log(`✅ Pedido ${pedido.numero}: ${itensEncontrados} itens processados com sucesso`);
           }
         }
 
@@ -381,9 +421,70 @@ Deno.serve(async (req) => {
 
     console.log(`📊 Processamento concluído: ${allPedidos.length} pedidos, ${allItens.length} itens`);
 
-    // ✅ OTIMIZAÇÃO: Removida busca individual de detalhes que causava timeout
-    // A API pedidos.pesquisa.php com com_itens='S' já retorna os itens
-    console.log('⚡ Sincronização otimizada - sem chamadas extras de detalhes');
+    // ✅ CRÍTICO: Buscar detalhes individuais dos pedidos para obter itens
+    // A API pedidos.pesquisa.php não está retornando itens mesmo com com_itens='S'
+    if (allPedidos.length > 0 && allItens.length === 0) {
+      console.log('🔍 Pedidos sem itens detectados. Buscando detalhes individuais...');
+      
+      // Processar em lotes pequenos para evitar timeout
+      const loteSize = 5;
+      for (let i = 0; i < Math.min(allPedidos.length, 20); i += loteSize) { // Limitar a 20 pedidos para não dar timeout
+        const lote = allPedidos.slice(i, i + loteSize);
+        
+        for (const pedido of lote) {
+          try {
+            const detalhesParams = new URLSearchParams({
+              token: config.tiny_erp_token,
+              formato: 'json',
+              id: pedido.id
+            });
+            
+            const detalhesData = await makeApiCallWithRetry(
+              `${config.tiny_api_url}/pedido.obter.php`,
+              detalhesParams,
+              config,
+              `Detalhes pedido ${pedido.numero}`
+            );
+            
+            const pedidoDetalhado = detalhesData.retorno?.pedido;
+            if (pedidoDetalhado?.itens && Array.isArray(pedidoDetalhado.itens)) {
+              console.log(`📦 Pedido ${pedido.numero}: ${pedidoDetalhado.itens.length} itens encontrados nos detalhes`);
+              
+              for (const itemWrapper of pedidoDetalhado.itens) {
+                const item = itemWrapper.item || itemWrapper;
+                
+                const itemProcessado = {
+                  pedido_id: pedido.id,
+                  numero_pedido: pedido.numero,
+                  sku: item.codigo || '',
+                  descricao: item.descricao || '',
+                  quantidade: parseInt(item.quantidade || '0'),
+                  valor_unitario: parseFloat(item.valor_unitario || '0'),
+                  valor_total: parseFloat(item.valor_total || '0'),
+                  ncm: item.ncm || null,
+                  codigo_barras: item.codigo_barras || null,
+                  observacoes: item.observacoes || null
+                };
+
+                allItens.push(itemProcessado);
+              }
+            }
+            
+            // Delay entre requisições para não sobrecarregar a API
+            await sleep(500);
+          } catch (error) {
+            console.warn(`⚠️ Erro ao buscar detalhes do pedido ${pedido.numero}:`, error.message);
+          }
+        }
+        
+        // Delay entre lotes
+        await sleep(1000);
+      }
+      
+      console.log(`📊 Após busca de detalhes: ${allItens.length} itens encontrados`);
+    } else if (allItens.length > 0) {
+      console.log('⚡ Itens já obtidos da pesquisa principal - sem necessidade de busca individual');
+    }
 
     // Salvar dados no Supabase
     console.log('💾 Salvando dados no Supabase...');
