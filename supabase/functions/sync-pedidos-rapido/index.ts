@@ -177,10 +177,10 @@ async function makeApiCallWithRetry(
                      jsonData.retorno?.erros?.[0]?.erro || 
                      'Erro desconhecido';
 
-        // Tratamento especial para "sem registros" - não é erro real
+        // Tratamento especial para "sem registros" - retorna indicador
         if (erro === 'A consulta não retornou registros') {
-          console.log(`[${context}] Sem registros encontrados - finalizando paginação`);
-          break;
+          console.log(`[${context}] Sem registros encontrados na página`);
+          return { sem_registros: true };
         }
         
         throw new Error(`API Tiny: ${erro}`);
@@ -320,6 +320,12 @@ Deno.serve(async (req) => {
           config,
           `Página ${paginaAtual}`
         );
+
+        // ✅ CRÍTICO: Verificar se não há registros e parar a paginação
+        if (jsonData.sem_registros) {
+          console.log(`📄 Página ${paginaAtual}: Sem registros encontrados - finalizando busca`);
+          break;
+        }
 
         totalPaginas = parseInt(jsonData.retorno?.numero_paginas || '1');
         const pedidos = jsonData.retorno?.pedidos || [];
