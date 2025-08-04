@@ -26,7 +26,7 @@ import { EstoqueMetricas } from "@/components/estoque/EstoqueMetricas";
 import { EstoqueTabela } from "@/components/estoque/EstoqueTabela";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
-import { MovimentacoesRecentes } from "@/components/estoque/MovimentacoesRecentes";
+import { EstoqueHistoricoMovimentacoes } from "@/components/estoque/EstoqueHistoricoMovimentacoes";
 import { PrevisaoReposicaoModal } from "@/components/estoque/PrevisaoReposicaoModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -249,8 +249,8 @@ export function Estoque() {
         </CardContent>
       </Card>
 
-      {/* Recent Movements */}
-      <MovimentacoesRecentes />
+      {/* Histórico de Movimentações */}
+      <EstoqueHistoricoMovimentacoes />
 
       {/* Modais */}
       <ProdutoDetalhesModal
