@@ -71,11 +71,18 @@ export function EstoqueFiltros({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as categorias</SelectItem>
-                <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
-                <SelectItem value="Roupas">Roupas</SelectItem>
-                <SelectItem value="Casa">Casa</SelectItem>
-                <SelectItem value="Esporte">Esporte</SelectItem>
+                <SelectItem value="Acessórios para Veículos">Acessórios para Veículos</SelectItem>
+                <SelectItem value="Alimentos e Bebidas">Alimentos e Bebidas</SelectItem>
+                <SelectItem value="Beleza e Cuidado Pessoal">Beleza e Cuidado Pessoal</SelectItem>
+                <SelectItem value="Brinquedos e Hobbies">Brinquedos e Hobbies</SelectItem>
+                <SelectItem value="Calçados, Roupas e Bolsas">Calçados, Roupas e Bolsas</SelectItem>
+                <SelectItem value="Casa, Móveis e Decoração">Casa, Móveis e Decoração</SelectItem>
+                <SelectItem value="Eletrônicos, Áudio e Vídeo">Eletrônicos, Áudio e Vídeo</SelectItem>
+                <SelectItem value="Esportes e Fitness">Esportes e Fitness</SelectItem>
+                <SelectItem value="Ferramentas e Construção">Ferramentas e Construção</SelectItem>
+                <SelectItem value="Informática">Informática</SelectItem>
                 <SelectItem value="Livros">Livros</SelectItem>
+                <SelectItem value="Saúde">Saúde</SelectItem>
               </SelectContent>
             </Select>
 
@@ -85,9 +92,10 @@ export function EstoqueFiltros({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="baixo">Estoque Baixo</SelectItem>
                 <SelectItem value="critico">Estoque Crítico</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
               </SelectContent>
             </Select>
 
