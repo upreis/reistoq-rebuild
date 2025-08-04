@@ -27,24 +27,21 @@ export function HistoricoFiltros({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Filter className="h-5 w-5" />
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Filter className="h-4 w-4" />
           Filtros de Busca
         </CardTitle>
-        <CardDescription>
-          Filtre o histórico por produto, tipo de movimentação ou período
-        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Buscar produto, SKU ou motivo..."
+              placeholder="Buscar..."
               value={filtros.termo_busca}
               onChange={(e) => onAtualizarFiltros({ termo_busca: e.target.value })}
-              className="pl-10"
+              className="pl-10 h-9"
             />
           </div>
 
@@ -52,11 +49,11 @@ export function HistoricoFiltros({
             value={filtros.tipo_movimentacao || 'all'}
             onValueChange={(value) => onAtualizarFiltros({ tipo_movimentacao: value === 'all' ? '' : value })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Tipo de movimentação" />
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="entrada">Entrada</SelectItem>
               <SelectItem value="saida">Saída</SelectItem>
             </SelectContent>
@@ -66,29 +63,18 @@ export function HistoricoFiltros({
             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               type="date"
-              placeholder="Data início"
               value={filtros.data_inicio}
               onChange={(e) => onAtualizarFiltros({ data_inicio: e.target.value })}
-              className="pl-10"
-            />
-          </div>
-
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              type="date"
-              placeholder="Data fim"
-              value={filtros.data_fim}
-              onChange={(e) => onAtualizarFiltros({ data_fim: e.target.value })}
-              className="pl-10"
+              className="pl-10 h-9"
             />
           </div>
 
           <Button
             variant={temFiltrosAtivos ? "outline" : "secondary"}
             onClick={onLimparFiltros}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
             disabled={!temFiltrosAtivos}
+            size="sm"
           >
             <X className="h-4 w-4" />
             Limpar

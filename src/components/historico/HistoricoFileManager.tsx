@@ -181,16 +181,13 @@ export function HistoricoFileManager({ onUploadSuccess }: HistoricoFileManagerPr
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <FileText className="h-4 w-4" />
           Gerenciar Arquivos
         </CardTitle>
-        <CardDescription>
-          Importe ou exporte dados de movimentações via planilha Excel
-        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="pt-0 space-y-4">
         {uploading && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -201,12 +198,13 @@ export function HistoricoFileManager({ onUploadSuccess }: HistoricoFileManagerPr
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant="outline"
             onClick={baixarTemplate}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
             disabled={uploading}
+            size="sm"
           >
             <Download className="h-4 w-4" />
             Template
@@ -222,8 +220,9 @@ export function HistoricoFileManager({ onUploadSuccess }: HistoricoFileManagerPr
             />
             <Button
               variant="outline"
-              className="w-full flex items-center gap-2"
+              className="w-full flex items-center gap-2 h-9"
               disabled={uploading}
+              size="sm"
             >
               <Upload className="h-4 w-4" />
               Importar
@@ -233,21 +232,20 @@ export function HistoricoFileManager({ onUploadSuccess }: HistoricoFileManagerPr
           <Button
             variant="outline"
             onClick={exportarDados}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
             disabled={uploading}
+            size="sm"
           >
             <Download className="h-4 w-4" />
             Exportar
           </Button>
         </div>
 
-        <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-          <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-          <div className="text-xs text-muted-foreground">
-            <p className="font-medium mb-1">Formato do arquivo:</p>
-            <p>• Arquivo Excel (.xlsx ou .xls)</p>
-            <p>• Colunas: produto_id, tipo_movimentacao, quantidade_anterior, quantidade_nova, quantidade_movimentada, motivo, observacoes</p>
-            <p>• Use o template para garantir o formato correto</p>
+        <div className="flex items-start gap-2 p-2 bg-muted/50 rounded text-xs text-muted-foreground">
+          <AlertCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <span className="font-medium">Excel (.xlsx): </span>
+            produto_id, tipo_movimentacao, quantidade_anterior, quantidade_nova, quantidade_movimentada, motivo, observacoes
           </div>
         </div>
       </CardContent>
