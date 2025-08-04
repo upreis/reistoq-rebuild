@@ -151,14 +151,11 @@ export function PedidosTabelaItens({
                 <TableHead>Cliente</TableHead>
                 <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>SKU Estoque</TableHead>
-                <TableHead>SKU KIT</TableHead>
-                <TableHead>Qtd KIT</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Qtd</TableHead>
                 <TableHead>Valor Unit.</TableHead>
                 <TableHead>Total Item</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead>Data Pedido</TableHead>
                 <TableHead>Data Prevista</TableHead>
                 <TableHead>Estoque</TableHead>
@@ -166,6 +163,10 @@ export function PedidosTabelaItens({
                 <TableHead>Desconto</TableHead>
                 <TableHead>Rastreamento</TableHead>
                 <TableHead>Observações</TableHead>
+                <TableHead>SKU Estoque</TableHead>
+                <TableHead>SKU KIT</TableHead>
+                <TableHead>Qtd KIT</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -189,46 +190,37 @@ export function PedidosTabelaItens({
                   <TableCell className="font-mono text-xs">
                     {item.cpf_cnpj || '-'}
                   </TableCell>
-                  <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
-                    <div className="space-y-1">
-                      <div className="font-mono text-sm">{item.sku}</div>
-                      {item.sku_estoque && item.sku_estoque !== item.sku && (
-                        <div className="flex items-center gap-1 text-xs text-green-600">
-                          <ExternalLink className="h-3 w-3" />
-                          {item.sku_estoque}
-                        </div>
-                      )}
-                      {item.mapeamento_aplicado?.sku_simples && (
-                        <div className="text-xs text-blue-600">
-                          Simples: {item.mapeamento_aplicado.sku_simples}
-                        </div>
-                      )}
-                      {item.linha_destacada && (
-                        <div className="text-xs text-orange-600 font-medium">
-                          ⚠️ Sem mapeamento
-                        </div>
-                      )}
-                    </div>
-                   </TableCell>
-                   <TableCell className="font-mono text-sm">
-                     {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
-                   </TableCell>
-                   <TableCell className="font-mono text-sm">
-                     {item.mapeamento_aplicado?.sku_simples || '-'}
-                   </TableCell>
-                   <TableCell className="text-center">
-                     {item.mapeamento_aplicado?.quantidade || '-'}
+                   <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
+                     <div className="space-y-1">
+                       <div className="font-mono text-sm">{item.sku}</div>
+                       {item.sku_estoque && item.sku_estoque !== item.sku && (
+                         <div className="flex items-center gap-1 text-xs text-green-600">
+                           <ExternalLink className="h-3 w-3" />
+                           {item.sku_estoque}
+                         </div>
+                       )}
+                       {item.mapeamento_aplicado?.sku_simples && (
+                         <div className="text-xs text-blue-600">
+                           Simples: {item.mapeamento_aplicado.sku_simples}
+                         </div>
+                       )}
+                       {item.linha_destacada && (
+                         <div className="text-xs text-orange-600 font-medium">
+                           ⚠️ Sem mapeamento
+                         </div>
+                       )}
+                     </div>
                    </TableCell>
                    <TableCell>
                      <div className="max-w-60 truncate">
                        {item.descricao}
-                      {item.produto_nome && item.produto_nome !== item.descricao && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Estoque: {item.produto_nome}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
+                       {item.produto_nome && item.produto_nome !== item.descricao && (
+                         <div className="text-xs text-muted-foreground mt-1">
+                           Estoque: {item.produto_nome}
+                         </div>
+                       )}
+                     </div>
+                   </TableCell>
                   <TableCell className="text-center">
                     {item.quantidade}
                   </TableCell>
@@ -309,9 +301,21 @@ export function PedidosTabelaItens({
                       )}
                       {!item.obs && !item.obs_interna && !item.observacoes && '-'}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
+                   </TableCell>
+                   <TableCell className="font-mono text-sm">
+                     {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
+                   </TableCell>
+                   <TableCell className="font-mono text-sm">
+                     {item.mapeamento_aplicado?.sku_simples || '-'}
+                   </TableCell>
+                   <TableCell className="text-center">
+                     {item.mapeamento_aplicado?.quantidade || '-'}
+                   </TableCell>
+                   <TableCell>
+                     <Badge variant="outline">-</Badge>
+                   </TableCell>
+                   <TableCell>
+                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
                           <MoreHorizontal className="h-4 w-4" />
