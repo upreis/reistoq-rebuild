@@ -94,33 +94,33 @@ function determinarNomeEcommerce(pedido: any): string {
 
 // ✅ CORRIGIDO: Função para mapear situações conforme tabela auxiliar do Tiny ERP
 function mapearSituacoes(situacao: string | string[]): string {
-  // Mapeamento correto conforme documentação oficial da API Tiny
+  // Mapeamento correto conforme imagem da documentação oficial da API Tiny
   const mapeamento: { [key: string]: string } = {
-    // Formatos do frontend para códigos corretos da API Tiny
+    // Formatos do frontend para códigos corretos da API Tiny conforme imagem
+    'Em Aberto': 'aberto',
     'em aberto': 'aberto',
     'Em aberto': 'aberto', 
-    'Em Aberto': 'aberto',
     'aprovado': 'aprovado',
     'Aprovado': 'aprovado',
+    'Preparando Envio': 'preparando_envio',
     'preparando envio': 'preparando_envio',
     'Preparando envio': 'preparando_envio',
-    'Preparando Envio': 'preparando_envio',
     'faturado': 'faturado',
     'Faturado': 'faturado',
     'atendido': 'faturado', // Faturado = Atendido conforme tabela
     'Atendido': 'faturado',
+    'Pronto para Envio': 'pronto_envio',
     'pronto para envio': 'pronto_envio',
     'Pronto para envio': 'pronto_envio', 
-    'Pronto para Envio': 'pronto_envio',
     'enviado': 'enviado',
     'Enviado': 'enviado',
     'entregue': 'entregue',
     'Entregue': 'entregue',
+    'Nao Entregue': 'nao_entregue',
     'nao entregue': 'nao_entregue',
     'Nao entregue': 'nao_entregue',
     'Não entregue': 'nao_entregue',
     'Não Entregue': 'nao_entregue',
-    'Nao Entregue': 'nao_entregue',
     'cancelado': 'cancelado',
     'Cancelado': 'cancelado'
   };
