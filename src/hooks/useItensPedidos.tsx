@@ -69,11 +69,11 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
-    // ✅ Configuração para mostrar os dados existentes (março-abril 2025)
+    // ✅ Filtros para julho-agosto 2025 (onde deve haver dados reais)
     return {
       busca: '',
-      dataInicio: '2025-03-01',  // Início de março
-      dataFim: '2025-04-30',     // Final de abril
+      dataInicio: '2025-07-05',  // 5 de julho
+      dataFim: '2025-08-03',     // 3 de agosto  
       situacoes: []
     };
   });
@@ -84,10 +84,10 @@ export function useItensPedidos() {
     if (filtrosSalvos) {
       try {
         const filtrosCarregados = JSON.parse(filtrosSalvos);
-        // Se não tem datas salvas, usa as datas padrão (março-abril)
+        // Se não tem datas salvas, usa as datas padrão (julho-agosto)
         if (!filtrosCarregados.dataInicio || !filtrosCarregados.dataFim) {
-          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || '2025-03-01';
-          filtrosCarregados.dataFim = filtrosCarregados.dataFim || '2025-04-30';
+          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || '2025-07-05';
+          filtrosCarregados.dataFim = filtrosCarregados.dataFim || '2025-08-03';
         }
         setFiltros(filtrosCarregados);
       } catch (error) {

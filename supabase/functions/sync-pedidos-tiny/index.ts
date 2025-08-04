@@ -229,7 +229,7 @@ serve(async (req) => {
     const { filtros = {} } = await req.json().catch(() => ({}));
     
     // Criar chave de cache baseada nos filtros
-    const cacheKey = `pedidos-${filtros.dataInicio || 'sem-data'}-${filtros.dataFim || 'sem-data'}-${JSON.stringify(filtros.situacoes || [])}-v2`;
+    const cacheKey = `pedidos-${filtros.dataInicio || 'sem-data'}-${filtros.dataFim || 'sem-data'}-${JSON.stringify(filtros.situacoes || [])}-v3`;
     
     // Verificar cache primeiro
     const cachedResult = getFromCache(cacheKey);
