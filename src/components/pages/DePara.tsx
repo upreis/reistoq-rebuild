@@ -38,8 +38,7 @@ export default function DePara() {
     limparFiltros,
     recarregarDados,
     excluirMapeamento,
-    excluirMapeamentosSelecionados,
-    alternarStatusMapeamento
+    excluirMapeamentosSelecionados
   } = useDePara();
 
   const {
@@ -147,7 +146,6 @@ export default function DePara() {
         onSelecionarTodos={selecionarTodos}
         onAbrirEdicao={abrirEdicao}
         onExcluirMapeamento={abrirExclusao}
-        onAlternarStatus={alternarStatusMapeamento}
         onPaginar={irParaPagina}
         onPaginaAnterior={paginaAnterior}
         onProximaPagina={proximaPagina}

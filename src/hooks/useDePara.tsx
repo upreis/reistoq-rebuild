@@ -22,7 +22,7 @@ export interface DeParaMetricas {
 
 export interface FiltrosDePara {
   busca: string;
-  status: string;
+  preenchimento: 'todos' | 'pendentes' | 'preenchidos';
 }
 
 export function useDePara() {
@@ -36,7 +36,7 @@ export function useDePara() {
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosDePara>({
     busca: '',
-    status: ''
+    preenchimento: 'todos'
   });
   const { toast } = useToast();
 
@@ -57,22 +57,35 @@ export function useDePara() {
         );
       }
 
-      if (filtros.status) {
-        if (filtros.status === 'ativo') {
-          query = query.eq('ativo', true);
-        } else if (filtros.status === 'inativo') {
-          query = query.eq('ativo', false);
-        }
-      }
-
       const { data, error } = await query;
 
       if (error) {
         throw error;
       }
 
-      setMapeamentos(data || []);
-      calcularMetricas(data || []);
+      let mapeamentosFiltrados = data || [];
+
+      // Aplicar filtro de preenchimento no lado do cliente
+      if (filtros.preenchimento !== 'todos') {
+        mapeamentosFiltrados = mapeamentosFiltrados.filter(mapeamento => {
+          const temSkuPedido = !!mapeamento.sku_pedido;
+          const temSkuCorrespondente = !!mapeamento.sku_correspondente;
+          
+          if (filtros.preenchimento === 'pendentes') {
+            return temSkuPedido && !temSkuCorrespondente;
+          } else if (filtros.preenchimento === 'preenchidos') {
+            return temSkuPedido && temSkuCorrespondente;
+          }
+          return true;
+        });
+      }
+
+      if (error) {
+        throw error;
+      }
+
+      setMapeamentos(mapeamentosFiltrados);
+      calcularMetricas(mapeamentosFiltrados);
     } catch (err: any) {
       console.error('Erro ao buscar mapeamentos:', err);
       setError(err.message);
@@ -105,7 +118,7 @@ export function useDePara() {
   const limparFiltros = () => {
     setFiltros({
       busca: '',
-      status: ''
+      preenchimento: 'todos'
     });
   };
 
@@ -161,29 +174,6 @@ export function useDePara() {
     }
   };
 
-  const alternarStatusMapeamento = async (id: string, novoStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('mapeamentos_depara')
-        .update({ ativo: novoStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Status atualizado",
-        description: `Mapeamento ${novoStatus ? 'ativado' : 'desativado'} com sucesso.`,
-      });
-
-      await buscarMapeamentos();
-    } catch (err: any) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: err.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   // Buscar mapeamentos quando componente monta ou filtros mudam
   useEffect(() => {
@@ -223,7 +213,6 @@ export function useDePara() {
     limparFiltros,
     recarregarDados,
     excluirMapeamento,
-    excluirMapeamentosSelecionados,
-    alternarStatusMapeamento
+    excluirMapeamentosSelecionados
   };
 }

@@ -36,7 +36,7 @@ interface DeParaTabelaProps {
   onSelecionarTodos: () => void;
   onAbrirEdicao: (mapeamento: MapeamentoDePara) => void;
   onExcluirMapeamento: (id: string) => void;
-  onAlternarStatus: (id: string, novoStatus: boolean) => void;
+  
   onPaginar: (pagina: number) => void;
   onPaginaAnterior: () => void;
   onProximaPagina: () => void;
@@ -56,7 +56,7 @@ export function DeParaTabela({
   onSelecionarTodos,
   onAbrirEdicao,
   onExcluirMapeamento,
-  onAlternarStatus,
+  
   onPaginar,
   onPaginaAnterior,
   onProximaPagina
@@ -129,7 +129,7 @@ export function DeParaTabela({
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TableHead>
-            <TableHead className="text-muted-foreground">Status</TableHead>
+            
             <TableHead className="text-muted-foreground">Observações</TableHead>
             <TableHead className="text-muted-foreground">Ações</TableHead>
           </TableRow>
@@ -158,11 +158,6 @@ export function DeParaTabela({
               <TableCell className="text-foreground font-medium">
                 {mapeamento.quantidade}
               </TableCell>
-              <TableCell>
-                <Badge variant={mapeamento.ativo ? "default" : "secondary"} className="text-xs">
-                  {mapeamento.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </TableCell>
               <TableCell className="text-foreground max-w-48 truncate" title={mapeamento.observacoes || ""}>
                 {mapeamento.observacoes || <span className="text-muted-foreground">-</span>}
               </TableCell>
@@ -175,14 +170,6 @@ export function DeParaTabela({
                     onClick={() => onAbrirEdicao(mapeamento)}
                   >
                     <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant={mapeamento.ativo ? "secondary" : "default"}
-                    className="text-xs px-2"
-                    onClick={() => onAlternarStatus(mapeamento.id, !mapeamento.ativo)}
-                  >
-                    {mapeamento.ativo ? "Desativar" : "Ativar"}
                   </Button>
                   <Button 
                     size="sm" 

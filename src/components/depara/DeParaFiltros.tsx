@@ -3,7 +3,6 @@ import { Search, Filter, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FiltrosDePara } from "@/hooks/useDePara";
 
 interface DeParaFiltrosProps {
@@ -41,7 +40,7 @@ export function DeParaFiltros({
     };
   }
 
-  const temFiltrosAtivos = buscaLocal || filtros.status;
+  const temFiltrosAtivos = buscaLocal || filtros.preenchimento !== 'todos';
 
   return (
     <Card className="h-full">
@@ -68,26 +67,36 @@ export function DeParaFiltros({
           </div>
         </div>
 
-        {/* Filtros em linha */}
-        <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Status
-            </label>
-            <Select
-              value={filtros.status || 'all'}
-              onValueChange={(value) => onAtualizarFiltros({ status: value === 'all' ? '' : value })}
+        {/* Filtros de preenchimento */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-foreground">
+            Status de Preenchimento
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={filtros.preenchimento === 'todos' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onAtualizarFiltros({ preenchimento: 'todos' })}
+              className="flex items-center gap-2"
             >
-              <SelectTrigger>
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Todos os status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
+              📊 Mostrar Todos
+            </Button>
+            <Button
+              variant={filtros.preenchimento === 'pendentes' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onAtualizarFiltros({ preenchimento: 'pendentes' })}
+              className="flex items-center gap-2"
+            >
+              ⚠️ Apenas Pendentes
+            </Button>
+            <Button
+              variant={filtros.preenchimento === 'preenchidos' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onAtualizarFiltros({ preenchimento: 'preenchidos' })}
+              className="flex items-center gap-2"
+            >
+              ✅ Apenas Preenchidos
+            </Button>
           </div>
         </div>
 
