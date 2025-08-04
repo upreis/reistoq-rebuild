@@ -69,32 +69,27 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
-    // ✅ CORRIGIDO: Filtros para buscar TODOS os dados reais
+    // ✅ DEFININDO FILTROS PARA BUSCAR OS DADOS SINCRONIZADOS
     return {
       busca: '',
-      dataInicio: '2020-01-01',  // Data ampla para pegar todo histórico
-      dataFim: '2030-12-31',     // Data futura para não limitar  
-      situacoes: []              // Sem filtro de situação = busca todas
+      dataInicio: '2025-07-08',  // Data específica dos dados sincronizados
+      dataFim: '2025-07-08',     // Mesmo dia para testar
+      situacoes: ['Entregue']    // Situação correta (maiúscula)
     };
   });
 
-  // Carregar filtros salvos do localStorage (se existirem)
-  useEffect(() => {
-    const filtrosSalvos = localStorage.getItem('filtros-pedidos');
-    if (filtrosSalvos) {
-      try {
-        const filtrosCarregados = JSON.parse(filtrosSalvos);
-        // ✅ CORRIGIDO: Se não tem datas salvas, usa as datas amplas para buscar todos os dados
-        if (!filtrosCarregados.dataInicio || !filtrosCarregados.dataFim) {
-          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || '2020-01-01';
-          filtrosCarregados.dataFim = filtrosCarregados.dataFim || '2030-12-31';
-        }
-        setFiltros(filtrosCarregados);
-      } catch (error) {
-        console.warn('Erro ao carregar filtros salvos:', error);
-      }
-    }
-  }, []);
+  // ✅ DESABILITADO: Não carregar filtros salvos para usar filtros corretos
+  // useEffect(() => {
+  //   const filtrosSalvos = localStorage.getItem('filtros-pedidos');
+  //   if (filtrosSalvos) {
+  //     try {
+  //       const filtrosCarregados = JSON.parse(filtrosSalvos);
+  //       setFiltros(filtrosCarregados);
+  //     } catch (error) {
+  //       console.warn('Erro ao carregar filtros salvos:', error);
+  //     }
+  //   }
+  // }, []);
 
   // Salvar filtros no localStorage sempre que mudarem
   useEffect(() => {
@@ -356,10 +351,10 @@ export function useItensPedidos() {
     }
   };
 
-  // Carregamento inicial apenas - sem recarregar automaticamente nos filtros
+  // Carregamento inicial e recarregamento quando filtros mudarem
   useEffect(() => {
     buscarItens();
-  }, []); // Remove a dependência dos filtros
+  }, [filtros]); // ✅ REATIVADO: Recarregar quando filtros mudarem
 
   // Real-time subscription para itens_pedidos
   useEffect(() => {
