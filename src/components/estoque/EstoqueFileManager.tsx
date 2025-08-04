@@ -30,7 +30,7 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
         'Preço de Custo': 7,
         'Preço de Venda': 8,
         'URL Imagem': '',
-        'Status': 'ATIVO'
+        'Status': 'ativo'
       },
       {
         'Código de Barras': '7.89E+13',
@@ -44,7 +44,7 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
         'Preço de Custo': 2,
         'Preço de Venda': 3,
         'URL Imagem': '',
-        'Status': 'ATIVO'
+        'Status': 'ativo'
       }
     ];
 
@@ -130,6 +130,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
 
       for (const row of jsonData) {
         try {
+          const statusRaw = row['Status']?.toString()?.toLowerCase() || 'ativo';
+          // Mapear valores válidos para a constraint
+          const statusValidos = ['ativo', 'baixo', 'critico', 'inativo'];
+          const status = statusValidos.includes(statusRaw) ? statusRaw : 'ativo';
+
           const produto = {
             codigo_barras: row['Código de Barras']?.toString() || null,
             sku_interno: row['SKU Interno']?.toString() || `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -142,7 +147,7 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
             preco_custo: parseFloat(row['Preço de Custo']) || 0,
             preco_venda: parseFloat(row['Preço de Venda']) || 0,
             url_imagem: row['URL Imagem']?.toString() || null,
-            status: row['Status']?.toString() || 'ativo'
+            status: status
           };
 
           if (!produto.nome) {
@@ -192,6 +197,10 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
         <CardTitle className="text-lg">Importar/Exportar Estoque</CardTitle>
         <CardDescription>
           Gerencie seus dados de estoque via planilhas XLSX/CSV
+          <br />
+          <span className="text-xs text-muted-foreground">
+            Status válidos: ativo, baixo, critico, inativo
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent>
