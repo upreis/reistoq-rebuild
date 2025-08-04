@@ -28,17 +28,40 @@ interface PedidosFiltrosCompactosProps {
 
 export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltros, onBuscarPedidos, loading }: PedidosFiltrosCompactosProps) {
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [dataInicio, setDataInicio] = useState<Date | undefined>(
-    filtros.dataInicio ? new Date(filtros.dataInicio) : undefined
-  );
-  const [dataFim, setDataFim] = useState<Date | undefined>(
-    filtros.dataFim ? new Date(filtros.dataFim) : undefined
-  );
+  
+  // ✅ Inicialização correta das datas para evitar problemas de timezone
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
+    if (filtros.dataInicio) {
+      const [ano, mes, dia] = filtros.dataInicio.split('-');
+      return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+    }
+    return undefined;
+  });
+  
+  const [dataFim, setDataFim] = useState<Date | undefined>(() => {
+    if (filtros.dataFim) {
+      const [ano, mes, dia] = filtros.dataFim.split('-');
+      return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+    }
+    return undefined;
+  });
 
   // ✅ Sincronizar estado local com filtros vindos do hook
   useEffect(() => {
-    setDataInicio(filtros.dataInicio ? new Date(filtros.dataInicio) : undefined);
-    setDataFim(filtros.dataFim ? new Date(filtros.dataFim) : undefined);
+    // ✅ Corrigir problema de timezone: criar data no horário local
+    if (filtros.dataInicio) {
+      const [ano, mes, dia] = filtros.dataInicio.split('-');
+      setDataInicio(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
+    } else {
+      setDataInicio(undefined);
+    }
+    
+    if (filtros.dataFim) {
+      const [ano, mes, dia] = filtros.dataFim.split('-');
+      setDataFim(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
+    } else {
+      setDataFim(undefined);
+    }
   }, [filtros.dataInicio, filtros.dataFim]);
 
   const situacoes = [
