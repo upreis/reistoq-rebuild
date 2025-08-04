@@ -257,6 +257,7 @@ export function VendasTabela({
                     onCheckedChange={onSelecionarTodas}
                   />
                 </TableHead>
+                <TableHead>ID Único</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Nº Pedido</TableHead>
                 <TableHead>SKU</TableHead>
@@ -280,6 +281,7 @@ export function VendasTabela({
                       onCheckedChange={() => onSelecionarVenda(venda.id)}
                     />
                   </TableCell>
+                  <TableCell className="font-mono text-sm">{venda.id_unico}</TableCell>
                   <TableCell className="font-medium">
                     {formatarData(venda.data_venda)}
                   </TableCell>
