@@ -212,7 +212,8 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
             preco_custo: parseFloat(row['Preço de Custo']) || 0,
             preco_venda: parseFloat(row['Preço de Venda']) || 0,
             url_imagem: row['URL Imagem']?.toString() || null,
-            status: status
+            status: status,
+            ativo: true // ✅ CORRIGIDO: Sempre inserir como ativo
           };
 
           if (!produto.nome) {
