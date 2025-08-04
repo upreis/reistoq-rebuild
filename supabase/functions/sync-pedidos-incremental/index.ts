@@ -86,7 +86,7 @@ async function buscarConfiguracoes(supabase: any) {
   const { data: configs, error } = await supabase
     .from('configuracoes')
     .select('chave, valor')
-    .in('chave', ['tiny_token', 'tiny_api_url']);
+    .in('chave', ['tiny_erp_token', 'tiny_api_url']);
 
   if (error) throw new Error(`Erro config: ${error.message}`);
 
@@ -96,7 +96,7 @@ async function buscarConfiguracoes(supabase: any) {
   }, {});
 
   return {
-    token: configMap.tiny_token,
+    token: configMap.tiny_erp_token,
     url: configMap.tiny_api_url
   };
 }
