@@ -108,6 +108,13 @@ export function Pedidos() {
         loading={loading}
       />
 
+      {/* Controle de Sincronização */}
+      <PedidosControleSincronizacao
+        onSincronizar={recarregarDados}
+        loading={loading}
+        ultimaSincronizacao={new Date().toISOString()}
+      />
+
       {/* Tabela de Itens de Pedidos */}
       <PedidosTabelaItens
         itens={pedidosPaginados}
@@ -125,12 +132,6 @@ export function Pedidos() {
         onProcessarPedido={handleProcessarPedido}
       />
 
-      {/* Controle de Sincronização */}
-      <PedidosControleSincronizacao
-        onSincronizar={recarregarDados}
-        loading={loading}
-        ultimaSincronizacao={new Date().toISOString()}
-      />
     </div>
   );
 }
