@@ -6,7 +6,6 @@ import { DeParaMetricas } from '@/components/depara/DeParaMetricas';
 import { DeParaFiltros } from '@/components/depara/DeParaFiltros';
 import { DeParaFileManager } from '@/components/depara/DeParaFileManager';
 import { DeParaTabela } from '@/components/depara/DeParaTabela';
-import { DeParaAlertas } from '@/components/depara/DeParaAlertas';
 import { NovoMapeamentoModal } from '@/components/depara/NovoMapeamentoModal';
 import { MapeamentoEditModal } from '@/components/depara/MapeamentoEditModal';
 import { MapeamentoDePara } from '@/hooks/useDePara';
@@ -132,9 +131,6 @@ export default function DePara() {
 
       {/* Summary Cards */}
       <DeParaMetricas metricas={metricas} loading={loading} />
-
-      {/* Alert Configuration */}
-      <DeParaAlertas />
 
       <DeParaTabela
         mapeamentos={mapeamentosPaginados}

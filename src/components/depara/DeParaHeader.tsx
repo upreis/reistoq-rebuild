@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeftRight, Plus, Trash2 } from "lucide-react";
+import { DeParaControleAlertas } from "./DeParaControleAlertas";
 
 interface DeParaHeaderProps {
   mapeamentosSelecionados: string[];
@@ -36,6 +37,8 @@ export function DeParaHeader({
             Excluir Selecionados ({mapeamentosSelecionados.length})
           </Button>
         )}
+        
+        <DeParaControleAlertas />
         
         <Button onClick={onNovoMapeamento} className="gap-2">
           <Plus className="h-4 w-4" />

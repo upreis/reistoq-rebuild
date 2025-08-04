@@ -47,17 +47,17 @@ async function buscarConfiguracoes(): Promise<{ telegram: TelegramConfig }> {
   const { data: telegramToken, error: tokenError } = await supabase
     .from('configuracoes')
     .select('valor')
-    .eq('chave', 'telegram_token_depara')
+    .eq('chave', 'telegram_token')
     .single();
 
   const { data: telegramChatId, error: chatError } = await supabase
     .from('configuracoes')
     .select('valor')
-    .eq('chave', 'telegram_chat_id_depara')
+    .eq('chave', 'telegram_chat_id')
     .single();
 
   if (tokenError || chatError || !telegramToken || !telegramChatId) {
-    throw new Error('Configurações do Telegram não encontradas para DePara');
+    throw new Error('Configurações do Telegram não encontradas');
   }
 
   return {
