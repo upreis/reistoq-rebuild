@@ -81,7 +81,7 @@ export function usePedidos() {
         query = query.lte('data_pedido', filtros.dataFim);
       }
 
-      if (filtros.situacao) {
+      if (filtros.situacao && filtros.situacao !== 'todas') {
         query = query.eq('situacao', filtros.situacao);
       }
 

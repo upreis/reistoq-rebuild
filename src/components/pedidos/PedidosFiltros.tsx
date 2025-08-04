@@ -18,7 +18,7 @@ interface PedidosFiltrosProps {
 
 export function PedidosFiltros({ filtros, onFiltroChange, onLimparFiltros }: PedidosFiltrosProps) {
   const situacoes = [
-    { value: '', label: 'Todas as situações' },
+    { value: 'todas', label: 'Todas as situações' },
     { value: 'pendente', label: 'Pendente' },
     { value: 'processado', label: 'Processado' },
     { value: 'enviado', label: 'Enviado' },
