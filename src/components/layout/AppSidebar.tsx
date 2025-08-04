@@ -34,7 +34,7 @@ const navigationItems = [
     description: 'Gestão de pedidos'
   },
   {
-    title: 'DE/PARA',
+    title: 'SKU Mapa',
     url: '/depara',
     icon: ArrowLeftRight,
     description: 'Mapeamento de SKUs'
