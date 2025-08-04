@@ -49,6 +49,7 @@ interface MetricasPedidos {
 }
 
 interface FiltrosPedidos {
+  busca: string;
   dataInicio: string;
   dataFim: string;
   situacoes: string[];
@@ -68,6 +69,7 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>({
+    busca: '',
     dataInicio: '',
     dataFim: '',
     situacoes: []
@@ -141,6 +143,10 @@ export function useItensPedidos() {
         `);
 
       // Aplicar filtros
+      if (filtros.busca) {
+        query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
+      }
+
       if (filtros.dataInicio) {
         query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
       }
@@ -306,6 +312,7 @@ export function useItensPedidos() {
 
   const limparFiltros = () => {
     setFiltros({
+      busca: '',
       dataInicio: '',
       dataFim: '',
       situacoes: []
