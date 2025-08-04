@@ -169,12 +169,11 @@ export function Configuracoes() {
               <AlertDescription>
                 <strong>Como configurar o Telegram:</strong>
                 <ol className="list-decimal list-inside mt-2 space-y-1">
-                  <li>Abra o Telegram e procure por "@BotFather"</li>
-                  <li>Digite "/newbot" e siga as instruções</li>
-                  <li>Copie o token do bot criado</li>
-                  <li>Adicione o bot ao seu grupo/canal</li>
-                  <li>Para obter o Chat ID, adicione "@userinfobot" ao grupo</li>
-                  <li>Digite "/start" no @userinfobot para ver o Chat ID</li>
+                  <li><strong>Criar Bot:</strong> Procure "@BotFather" no Telegram, digite "/newbot" e siga as instruções</li>
+                  <li><strong>Token:</strong> Copie o token do bot criado e cole no primeiro campo</li>
+                  <li><strong>Chat ID (Método 2024):</strong> Procure "@getidsbot", envie qualquer mensagem e copie o ID retornado</li>
+                  <li><strong>Alternativa:</strong> Use "@userinfobot" e digite "/start" para ver seu Chat ID</li>
+                  <li>O Chat ID será um número positivo (chat pessoal) ou negativo (grupo)</li>
                 </ol>
                 <Button 
                   variant="link" 
