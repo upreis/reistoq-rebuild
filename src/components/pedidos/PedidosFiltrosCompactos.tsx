@@ -72,10 +72,8 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
     { value: 'Pronto para Envio', label: 'Pronto para Envio' },
     { value: 'Enviado', label: 'Enviado' },
     { value: 'Entregue', label: 'Entregue' },
-    { value: 'Cancelado', label: 'Cancelado' },
-    { value: 'Em Separacao', label: 'Em Separação' },
-    { value: 'Atendido', label: 'Atendido' },
-    { value: 'Nao Entregue', label: 'Não Entregue' }
+    { value: 'Nao Entregue', label: 'Não Entregue' },
+    { value: 'Cancelado', label: 'Cancelado' }
   ];
 
   const handleSituacaoChange = (situacao: string, checked: boolean) => {

@@ -120,6 +120,7 @@ function mapearSituacoes(situacao: string | string[]): string {
     'Nao entregue': 'nao_entregue',
     'Não entregue': 'nao_entregue',
     'Não Entregue': 'nao_entregue',
+    'Nao Entregue': 'nao_entregue',
     'cancelado': 'cancelado',
     'Cancelado': 'cancelado'
   };
@@ -309,17 +310,17 @@ Deno.serve(async (req) => {
       console.log(`📅 Data final aplicada: ${dataFinal} → ${dataFormatada}`);
     }
     
-    // 🚫 REMOVIDO: Parâmetro situacao não é obrigatório conforme exemplo da API Tiny
-    // Testando sem filtros de situação conforme documentação oficial
-    /*
-    if (filtros.filtros?.situacao) {
-      const situacaoMapeada = mapearSituacoes(filtros.filtros.situacao);
-      if (situacaoMapeada) {
-        params.append('situacao', situacaoMapeada);
-        console.log('🎯 Situações aplicadas:', situacaoMapeada);
+    // ✅ FILTRO DE SITUAÇÃO: Aplicar filtros de situação se fornecidos
+    if (filtros.filtros?.situacao || filtros.filtros?.situacoes) {
+      const situacoes = filtros.filtros.situacoes || (filtros.filtros.situacao ? [filtros.filtros.situacao] : []);
+      if (situacoes && situacoes.length > 0) {
+        const situacaoMapeada = mapearSituacoes(situacoes);
+        if (situacaoMapeada) {
+          params.append('situacao', situacaoMapeada);
+          console.log('🎯 Situações aplicadas:', situacaoMapeada);
+        }
       }
     }
-    */
 
     console.log('📡 Parâmetros finais para API Tiny:', Object.fromEntries(params.entries()));
 
