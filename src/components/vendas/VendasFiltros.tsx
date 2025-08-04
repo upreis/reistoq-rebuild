@@ -51,7 +51,7 @@ export function VendasFiltros({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-slate-800 border-slate-600 text-white hover:bg-slate-700",
+                    "w-[140px] justify-start text-left font-normal bg-slate-800 border-slate-600 text-white hover:bg-slate-700",
                     !filtros.data_inicio && "text-slate-400"
                   )}
                 >
@@ -78,7 +78,7 @@ export function VendasFiltros({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-slate-800 border-slate-600 text-white hover:bg-slate-700",
+                    "w-[140px] justify-start text-left font-normal bg-slate-800 border-slate-600 text-white hover:bg-slate-700",
                     !filtros.data_fim && "text-slate-400"
                   )}
                 >
