@@ -1,13 +1,12 @@
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { useItensPedidos } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
 import { PedidosFiltrosCompactos } from "@/components/pedidos/PedidosFiltrosCompactos";
 import { PedidosTabelaItens } from "@/components/pedidos/PedidosTabelaItens";
+import { PedidosControleSincronizacao } from "@/components/pedidos/PedidosControleSincronizacao";
 import type { ItemPedido } from "@/hooks/useItensPedidos";
 
 export function Pedidos() {
@@ -19,6 +18,7 @@ export function Pedidos() {
     filtros,
     atualizarFiltros,
     limparFiltros,
+    buscarComFiltros,
     recarregarDados,
     obterDetalhesPedido
   } = useItensPedidos();
@@ -36,7 +36,7 @@ export function Pedidos() {
   } = usePedidosPaginado({ pedidos: itens });
 
   const handleBuscarPedidos = () => {
-    recarregarDados();
+    buscarComFiltros();
     toast({
       title: "Buscando pedidos",
       description: "Os pedidos estão sendo carregados com os filtros aplicados.",
@@ -125,21 +125,12 @@ export function Pedidos() {
         onProcessarPedido={handleProcessarPedido}
       />
 
-      {/* Status da Integração */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Status da Integração Tiny ERP</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Última sincronização: há 5 minutos</p>
-              <p className="text-sm font-medium text-foreground">Conectado e funcionando</p>
-            </div>
-            <Badge variant="default">Online</Badge>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Controle de Sincronização */}
+      <PedidosControleSincronizacao
+        onSincronizar={recarregarDados}
+        loading={loading}
+        ultimaSincronizacao={new Date().toISOString()}
+      />
     </div>
   );
 }

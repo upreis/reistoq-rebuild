@@ -312,17 +312,23 @@ export function useItensPedidos() {
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosPedidos>) => {
     setFiltros(prev => ({ ...prev, ...novosFiltros }));
+    // Não buscar automaticamente - apenas atualizar filtros
   };
 
   const limparFiltros = () => {
     const filtrosLimpos = {
       busca: '',
-      dataInicio: '2020-01-01',    // ✅ Data ampla para buscar tudo
-      dataFim: '2030-12-31',       // ✅ Data futura
-      situacoes: []
+      dataInicio: '2025-07-08',     // ✅ Manter data específica dos dados
+      dataFim: '2025-07-08',        // ✅ Manter data específica dos dados
+      situacoes: ['Entregue']       // ✅ Manter situação correta
     };
     setFiltros(filtrosLimpos);
     localStorage.setItem('filtros-pedidos', JSON.stringify(filtrosLimpos));
+    // Não buscar automaticamente - apenas limpar filtros
+  };
+
+  const buscarComFiltros = () => {
+    buscarItens();
   };
 
   const recarregarDados = () => {
@@ -351,10 +357,10 @@ export function useItensPedidos() {
     }
   };
 
-  // Carregamento inicial e recarregamento quando filtros mudarem
+  // Carregamento inicial apenas - busca automática controlada separadamente
   useEffect(() => {
     buscarItens();
-  }, [filtros]); // ✅ REATIVADO: Recarregar quando filtros mudarem
+  }, []); // Sem dependência dos filtros - busca apenas no carregamento inicial
 
   // Real-time subscription para itens_pedidos
   useEffect(() => {
@@ -397,6 +403,7 @@ export function useItensPedidos() {
     filtros,
     atualizarFiltros,
     limparFiltros,
+    buscarComFiltros,
     recarregarDados,
     obterDetalhesPedido
   };
