@@ -9,7 +9,7 @@ import { Estoque } from '@/components/pages/Estoque';
 import { Scanner } from '@/components/pages/Scanner';
 import { Historico } from '@/components/pages/Historico';
 import { Configuracoes } from '@/components/pages/Configuracoes';
-import { DePara } from '@/components/pages/DePara';
+import DePara from '@/components/pages/DePara';
 
 export function MainLayout() {
   return (
