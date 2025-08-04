@@ -249,7 +249,10 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
           title: "✅ Importação concluída!",
           description: `${sucessos} produtos importados com sucesso!`,
         });
-        onUploadSuccess();
+        // Força um delay antes de recarregar para garantir que os dados foram salvos
+        setTimeout(() => {
+          onUploadSuccess();
+        }, 1000);
       }
       if (erros > 0) {
         toast({
