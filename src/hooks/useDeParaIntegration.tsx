@@ -41,6 +41,9 @@ export interface ItemPedidoEnriquecido {
   valor_desconto?: number;
   obs?: string;
   obs_interna?: string;
+  // Campos do estoque
+  produto_nome?: string;
+  estoque_atual?: number;
 }
 
 export function useDeParaIntegration() {

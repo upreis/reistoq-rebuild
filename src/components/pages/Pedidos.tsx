@@ -62,7 +62,8 @@ export function Pedidos() {
   const handleVerDetalhes = async (item: ItemPedido) => {
     try {
       const detalhes = await obterDetalhesPedido(item.numero_pedido);
-      console.log('Detalhes do pedido:', detalhes);
+      setItemSelecionado(item);
+      setModalDetalhes(true);
       toast({
         title: "Detalhes carregados",
         description: `Pedido #${item.numero_pedido} - ${item.nome_cliente}`,
@@ -73,19 +74,26 @@ export function Pedidos() {
   };
 
   const handleEditarPedido = (item: ItemPedido) => {
-    // TODO: Implementar modal de edição do pedido
-    toast({
-      title: "Editar pedido",
-      description: `Editando pedido #${item.numero_pedido}`,
-    });
+    setItemSelecionado(item);
+    setModalEdicao(true);
   };
 
   const handleProcessarPedido = (item: ItemPedido) => {
-    // TODO: Implementar processamento do pedido
-    toast({
-      title: "Processar pedido",
-      description: `Processando pedido #${item.numero_pedido}`,
-    });
+    setItemSelecionado(item);
+    setModalProcessamento(true);
+  };
+
+  const handleSalvarEdicao = async (itemEditado: Partial<ItemPedido>) => {
+    if (!itemEditado.id) return;
+    await editarItem(itemEditado);
+    setModalEdicao(false);
+    setItemSelecionado(null);
+  };
+
+  const handleFinalizarProcessamento = async (itemProcessado: ItemPedido) => {
+    await processarItem(itemProcessado);
+    setModalProcessamento(false);
+    setItemSelecionado(null);
   };
 
   return (
@@ -118,7 +126,7 @@ export function Pedidos() {
       />
 
       <PedidosTabelaItens
-        itens={pedidosPaginados}
+        itens={itensEnriquecidos.slice((paginaAtual - 1) * 20, paginaAtual * 20)}
         loading={loading}
         paginaAtual={paginaAtual}
         totalPaginas={totalPaginas}
@@ -133,6 +141,26 @@ export function Pedidos() {
         onProcessarPedido={handleProcessarPedido}
       />
 
+      {/* Modais */}
+      <PedidoDetalhesModal
+        open={modalDetalhes}
+        onOpenChange={setModalDetalhes}
+        item={itemSelecionado}
+      />
+
+      <PedidoEditModal
+        open={modalEdicao}
+        onOpenChange={setModalEdicao}
+        item={itemSelecionado}
+        onSalvar={handleSalvarEdicao}
+      />
+
+      <PedidoProcessamentoModal
+        open={modalProcessamento}
+        onOpenChange={setModalProcessamento}
+        item={itemSelecionado}
+        onProcessar={handleFinalizarProcessamento}
+      />
     </div>
   );
 }
