@@ -208,7 +208,21 @@ export function useItensPedidos() {
       }
 
       if (filtros.situacoes.length > 0) {
-        query = query.filter('pedidos.situacao', 'in', `(${filtros.situacoes.join(',')})`);
+        // ✅ Mapear situações do frontend para os valores corretos do banco de dados
+        const mapeamentoSituacoes: { [key: string]: string } = {
+          'Em Aberto': 'Em aberto',
+          'Aprovado': 'Aprovado', 
+          'Preparando Envio': 'Preparando envio',
+          'Faturado': 'Faturado',
+          'Pronto para Envio': 'Pronto para envio',
+          'Enviado': 'Enviado',
+          'Entregue': 'Entregue',
+          'Nao Entregue': 'Não entregue',
+          'Cancelado': 'Cancelado'
+        };
+        
+        const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
+        query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
