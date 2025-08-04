@@ -66,6 +66,20 @@ function convertDateFormat(dateStr: string): string {
   return dateStr;
 }
 
+// Nova função para converter datas dos filtros para o formato da API Tiny
+function formatDateForTinyAPI(dateStr: string): string {
+  if (!dateStr) return '';
+  // Se já está no formato DD/MM/YYYY, retorna como está
+  if (dateStr.includes('/')) return dateStr;
+  
+  // Converte YYYY-MM-DD para DD/MM/YYYY
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+}
+
 function determinarNomeEcommerce(pedido: any): string {
   const numeroEcommerce = pedido.numero_ecommerce || '';
   
@@ -214,10 +228,10 @@ Deno.serve(async (req) => {
     });
 
     if (filtros.dataInicio) {
-      params.append('dataInicial', filtros.dataInicio);
+      params.append('dataInicial', formatDateForTinyAPI(filtros.dataInicio));
     }
     if (filtros.dataFim) {
-      params.append('dataFinal', filtros.dataFim);
+      params.append('dataFinal', formatDateForTinyAPI(filtros.dataFim));
     }
 
     console.log('📡 Buscando pedidos na API Tiny ERP...');
