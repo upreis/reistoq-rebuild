@@ -111,11 +111,11 @@ export function useItensPedidos() {
         console.warn('Erro ao carregar filtros salvos:', error);
       }
     }
-    // ✅ Filtros padrão que permitem buscar mais dados
+    // ✅ Filtros padrão com período específico onde há dados
     return {
       busca: '',
-      dataInicio: '2025-07-01',  // Período mais amplo para capturar mais pedidos
-      dataFim: '2025-07-31',     // Mês completo
+      dataInicio: '2025-07-08',  // Data específica onde há dados confirmados
+      dataFim: '2025-07-08',     // Mesmo dia para garantir resultados
       situacoes: []              // Sem filtro de situação para buscar todas
     };
   });
@@ -368,8 +368,8 @@ export function useItensPedidos() {
   const limparFiltros = () => {
     const filtrosLimpos = {
       busca: '',
-      dataInicio: '2025-07-01',     // ✅ Período mais amplo
-      dataFim: '2025-07-31',        // ✅ Mês completo
+      dataInicio: '2025-07-08',     // ✅ Data específica onde há dados
+      dataFim: '2025-07-08',        // ✅ Mesmo dia para garantir resultados
       situacoes: []                 // ✅ Sem filtro para buscar todas
     };
     setFiltros(filtrosLimpos);

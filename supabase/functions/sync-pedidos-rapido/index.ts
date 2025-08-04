@@ -96,13 +96,26 @@ function determinarNomeEcommerce(pedido: any): string {
 function mapearSituacoes(situacao: string | string[]): string {
   // Mapeamento de situações do frontend para API Tiny
   const mapeamento: { [key: string]: string } = {
+    // Lowercase (formato antigo)
     'em aberto': 'em_aberto',
     'aprovado': 'aprovado',
     'preparando envio': 'preparando_envio',
     'faturado': 'faturado',
     'enviado': 'enviado',
     'entregue': 'entregue',
-    'cancelado': 'cancelado'
+    'cancelado': 'cancelado',
+    // Capitalized (formato atual)
+    'Em Aberto': 'em_aberto',
+    'Aprovado': 'aprovado',
+    'Preparando Envio': 'preparando_envio',
+    'Faturado': 'faturado',
+    'Enviado': 'enviado',
+    'Entregue': 'entregue',
+    'Cancelado': 'cancelado',
+    'Em Separacao': 'em_separacao',
+    'Atendido': 'atendido',
+    'Nao Entregue': 'nao_entregue',
+    'Pronto para Envio': 'pronto_para_envio'
   };
   
   if (typeof situacao === 'string') {
