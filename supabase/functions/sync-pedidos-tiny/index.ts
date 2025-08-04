@@ -317,34 +317,6 @@ serve(async (req) => {
             qtdItens: pedido.itens?.length || 0,
             itensRaw: pedido.itens ? JSON.stringify(pedido.itens).substring(0, 200) : 'SEM ITENS'
           });
-
-          // ✅ Se o pedido não tem itens, tentar buscar detalhes via pedidos.obter.php
-          let itensDetalhados = pedido.itens || [];
-          if (!pedido.itens || pedido.itens.length === 0) {
-            try {
-              console.log(`🔍 Buscando detalhes do pedido ${pedido.numero} (ID: ${pedido.id})`);
-              
-              const detalhesParams = new URLSearchParams({
-                token: tinyToken,
-                formato: 'JSON',
-                id: pedido.id
-              });
-
-              const detalhesResponse = await makeApiCallWithTimeout(
-                `${tinyApiUrl}/pedido.obter.php`,
-                detalhesParams,
-                15000
-              );
-
-              if (detalhesResponse.retorno.status === 'OK' && detalhesResponse.retorno.pedido) {
-                const pedidoDetalhado = detalhesResponse.retorno.pedido;
-                itensDetalhados = pedidoDetalhado.itens || [];
-                console.log(`✅ Pedido ${pedido.numero}: encontrados ${itensDetalhados.length} itens nos detalhes`);
-              }
-            } catch (error) {
-              console.log(`⚠️ Erro ao buscar detalhes do pedido ${pedido.numero}:`, error.message);
-            }
-          }
           
           const pedidoProcessado: TinyPedido = {
             id: pedido.id || '',
@@ -362,7 +334,7 @@ serve(async (req) => {
             obs_interna: pedido.obs_interna || null,
             codigo_rastreamento: pedido.codigo_rastreamento || null,
             url_rastreamento: pedido.url_rastreamento || null,
-            itens: itensDetalhados
+            itens: pedido.itens || []
           };
           
           allPedidos.push(pedidoProcessado);
