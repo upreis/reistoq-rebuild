@@ -30,10 +30,10 @@ export function NovoMapeamentoModal({ open, onOpenChange, onSuccess }: NovoMapea
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.sku_pedido.trim() || !formData.sku_correspondente.trim()) {
+    if (!formData.sku_pedido.trim()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "SKU do Pedido e SKU Correspondente são obrigatórios.",
+        title: "Campo obrigatório",
+        description: "SKU do Pedido é obrigatório.",
         variant: "destructive",
       });
       return;
@@ -62,7 +62,7 @@ export function NovoMapeamentoModal({ open, onOpenChange, onSuccess }: NovoMapea
         .from('mapeamentos_depara')
         .insert({
           sku_pedido: formData.sku_pedido.trim(),
-          sku_correspondente: formData.sku_correspondente.trim(),
+          sku_correspondente: formData.sku_correspondente.trim() || null,
           sku_simples: formData.sku_simples.trim() || null,
           quantidade: formData.quantidade,
           ativo: formData.ativo,
@@ -124,13 +124,12 @@ export function NovoMapeamentoModal({ open, onOpenChange, onSuccess }: NovoMapea
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sku_correspondente">SKU Correto Do Pedido *</Label>
+            <Label htmlFor="sku_correspondente">SKU Correto Do Pedido</Label>
             <Input
               id="sku_correspondente"
               value={formData.sku_correspondente}
               onChange={(e) => handleInputChange('sku_correspondente', e.target.value)}
               placeholder="Ex: SKU001-CORRIGIDO"
-              required
             />
           </div>
 
@@ -145,14 +144,12 @@ export function NovoMapeamentoModal({ open, onOpenChange, onSuccess }: NovoMapea
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quantidade">Quantidade Do Kit *</Label>
+            <Label htmlFor="quantidade">Quantidade Do Kit</Label>
             <Input
               id="quantidade"
               type="number"
-              min="1"
               value={formData.quantidade}
-              onChange={(e) => handleInputChange('quantidade', parseInt(e.target.value) || 1)}
-              required
+              onChange={(e) => handleInputChange('quantidade', parseInt(e.target.value) || 0)}
             />
           </div>
 
