@@ -125,6 +125,27 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
         return;
       }
 
+      // Verificar SKUs duplicados na planilha
+      const skusNaPlanilha = jsonData.map(row => row['SKU Interno']?.toString()?.trim()).filter(Boolean);
+      const skusDuplicados = skusNaPlanilha.filter((sku, index) => skusNaPlanilha.indexOf(sku) !== index);
+      
+      if (skusDuplicados.length > 0) {
+        toast.error(`SKUs duplicados encontrados na planilha: ${[...new Set(skusDuplicados)].join(', ')}`);
+        return;
+      }
+
+      // Verificar SKUs que já existem no banco
+      const { data: produtosExistentes } = await supabase
+        .from('produtos')
+        .select('sku_interno')
+        .in('sku_interno', skusNaPlanilha);
+
+      if (produtosExistentes && produtosExistentes.length > 0) {
+        const skusExistentes = produtosExistentes.map(p => p.sku_interno);
+        toast.error(`SKUs já existem no sistema: ${skusExistentes.join(', ')}`);
+        return;
+      }
+
       let sucessos = 0;
       let erros = 0;
 
@@ -144,7 +165,7 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
               .from('produtos')
               .select('id')
               .eq('codigo_barras', codigoBarras)
-              .single();
+              .maybeSingle();
             
             if (existingProduct) {
               codigoBarras = null; // Remove código duplicado
