@@ -60,11 +60,7 @@ export function DeParaFiltros({
           </div>
         </div>
 
-        {/* Filtros de preenchimento */}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-foreground">
-            Status de Preenchimento
-          </label>
           <div className="flex flex-wrap gap-2">
             <Button
               variant={filtros.preenchimento === 'todos' ? 'default' : 'outline'}
