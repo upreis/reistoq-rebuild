@@ -92,41 +92,36 @@ function determinarNomeEcommerce(pedido: any): string {
   return numeroEcommerce ? 'Loja Virtual' : 'Balcão';
 }
 
-// ✅ CORRIGIDO: Função para mapear situações com formato correto da API Tiny
+// ✅ CORRIGIDO: Função para mapear situações conforme tabela auxiliar do Tiny ERP
 function mapearSituacoes(situacao: string | string[]): string {
-  // Mapeamento correto - API Tiny aceita primeira maiúscula
+  // Mapeamento correto conforme documentação oficial da API Tiny
   const mapeamento: { [key: string]: string } = {
-    // Formatos do frontend para formato API Tiny (primeira maiúscula)
-    'em aberto': 'Em Aberto',
-    'Em aberto': 'Em Aberto',
-    'Em Aberto': 'Em Aberto',
-    'aprovado': 'Aprovado',
-    'Aprovado': 'Aprovado',
-    'preparando envio': 'Preparando envio',
-    'Preparando envio': 'Preparando envio',
-    'Preparando Envio': 'Preparando envio',
-    'faturado': 'Faturado',
-    'Faturado': 'Faturado',
-    'pronto para envio': 'Pronto para envio',
-    'Pronto para envio': 'Pronto para envio',
-    'Pronto para Envio': 'Pronto para envio',
-    'enviado': 'Enviado',
-    'Enviado': 'Enviado',
-    'entregue': 'Entregue',
-    'Entregue': 'Entregue',
-    'cancelado': 'Cancelado',
-    'Cancelado': 'Cancelado',
-    'em separacao': 'Em separação',
-    'Em separacao': 'Em separação',
-    'Em Separacao': 'Em separação',
-    'Em separação': 'Em separação',
-    'Em Separação': 'Em separação',
-    'atendido': 'Atendido',
-    'Atendido': 'Atendido',
-    'nao entregue': 'Não Entregue',
-    'Nao entregue': 'Não Entregue',
-    'Não entregue': 'Não Entregue',
-    'Não Entregue': 'Não Entregue'
+    // Formatos do frontend para códigos corretos da API Tiny
+    'em aberto': 'aberto',
+    'Em aberto': 'aberto', 
+    'Em Aberto': 'aberto',
+    'aprovado': 'aprovado',
+    'Aprovado': 'aprovado',
+    'preparando envio': 'preparando_envio',
+    'Preparando envio': 'preparando_envio',
+    'Preparando Envio': 'preparando_envio',
+    'faturado': 'faturado',
+    'Faturado': 'faturado',
+    'atendido': 'faturado', // Faturado = Atendido conforme tabela
+    'Atendido': 'faturado',
+    'pronto para envio': 'pronto_envio',
+    'Pronto para envio': 'pronto_envio', 
+    'Pronto para Envio': 'pronto_envio',
+    'enviado': 'enviado',
+    'Enviado': 'enviado',
+    'entregue': 'entregue',
+    'Entregue': 'entregue',
+    'nao entregue': 'nao_entregue',
+    'Nao entregue': 'nao_entregue',
+    'Não entregue': 'nao_entregue',
+    'Não Entregue': 'nao_entregue',
+    'cancelado': 'cancelado',
+    'Cancelado': 'cancelado'
   };
   
   if (typeof situacao === 'string') {
@@ -314,7 +309,9 @@ Deno.serve(async (req) => {
       console.log(`📅 Data final aplicada: ${dataFinal} → ${dataFormatada}`);
     }
     
-    // ✅ CORRIGIDO: Processar múltiplas situações com mapeamento
+    // 🚫 REMOVIDO: Parâmetro situacao não é obrigatório conforme exemplo da API Tiny
+    // Testando sem filtros de situação conforme documentação oficial
+    /*
     if (filtros.filtros?.situacao) {
       const situacaoMapeada = mapearSituacoes(filtros.filtros.situacao);
       if (situacaoMapeada) {
@@ -322,6 +319,7 @@ Deno.serve(async (req) => {
         console.log('🎯 Situações aplicadas:', situacaoMapeada);
       }
     }
+    */
 
     console.log('📡 Parâmetros finais para API Tiny:', Object.fromEntries(params.entries()));
 
