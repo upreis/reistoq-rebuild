@@ -130,13 +130,28 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
   
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    console.log('🚀 === INICIO SYNC INCREMENTAL ===');
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    console.log('🔧 Variáveis ambiente:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      urlLength: supabaseUrl?.length,
+      keyLength: supabaseKey?.length
+    });
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Variáveis de ambiente Supabase não configuradas');
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Cliente Supabase criado');
 
-    console.log('🚀 Sync incremental iniciado');
-
+    console.log('🔍 Chamando buscarConfiguracoes...');
     const config = await buscarConfiguracoes(supabase);
+    console.log('🎯 Configurações retornadas:', { hasToken: !!config.token, hasUrl: !!config.url });
     
     if (!config.token || !config.url) {
       throw new Error('Configurações Tiny ERP não encontradas');
