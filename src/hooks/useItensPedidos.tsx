@@ -109,7 +109,7 @@ export function useItensPedidos() {
       // Primeiro, sincronizar com o Tiny ERP se necessário
       console.log('Sincronizando pedidos com Tiny ERP...');
       
-      const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-tiny', {
+      const { data: syncData, error: syncError } = await supabase.functions.invoke('processar-pedidos-robusto', {
         body: {
           filtros: {
             dataInicio: filtros.dataInicio,
