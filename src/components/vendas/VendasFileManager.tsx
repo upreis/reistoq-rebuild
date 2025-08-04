@@ -160,6 +160,10 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
       
       setProgress(20);
       
+      // Adicionar logs de debug para verificar estrutura da planilha
+      console.log('Primeira linha da planilha:', jsonData[0]);
+      console.log('Colunas detectadas:', Object.keys(jsonData[0]));
+      
       // Validar e processar cada linha
       jsonData.forEach((linha: any, index: number) => {
         const numeroLinha = index + 2; // +2 porque Excel começa em 1 e tem header
@@ -216,21 +220,25 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
           return new Date().toISOString().split('T')[0];
         };
         
-        // Converter tipos
+        // Converter tipos (adicionar log de debug)
+        console.log(`Processando linha ${numeroLinha}:`, linha);
+        
         const vendaProcessada: VendaImportacao = {
-          id_unico: linha.id_unico.trim(),
-          numero_pedido: linha.numero_pedido.trim(),
-          sku_produto: linha.sku_produto.trim(),
-          nome_produto: linha.nome_produto?.trim() || null,
-          quantidade_vendida: parseInt(linha.quantidade_vendida),
-          valor_unitario: parseFloat(linha.valor_unitario),
-          valor_total: parseFloat(linha.valor_total),
-          cliente_nome: linha.cliente_nome?.trim() || null,
-          cliente_documento: linha.cliente_documento?.trim() || null,
-          status: linha.status || 'concluida',
-          observacoes: linha.observacoes?.trim() || null,
+          id_unico: linha.id_unico?.toString().trim() || '',
+          numero_pedido: linha.numero_pedido?.toString().trim() || '',
+          sku_produto: linha.sku_produto?.toString().trim() || '',
+          nome_produto: linha.nome_produto?.toString().trim() || null,
+          quantidade_vendida: parseInt(linha.quantidade_vendida) || 0,
+          valor_unitario: parseFloat(linha.valor_unitario) || 0,
+          valor_total: parseFloat(linha.valor_total) || 0,
+          cliente_nome: linha.cliente_nome?.toString().trim() || null,
+          cliente_documento: linha.cliente_documento?.toString().trim() || null,
+          status: linha.status?.toString().trim() || 'concluida',
+          observacoes: linha.observacoes?.toString().trim() || null,
           data_venda: converterDataExcel(linha.data_venda)
         };
+        
+        console.log(`Venda processada linha ${numeroLinha}:`, vendaProcessada);
         
         vendasProcessadas.push(vendaProcessada);
       });

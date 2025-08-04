@@ -259,12 +259,15 @@ export function VendasTabela({
                 </TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Nº Pedido</TableHead>
+                <TableHead>SKU</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>Qtd</TableHead>
                 <TableHead>Valor Unit.</TableHead>
                 <TableHead>Valor Total</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Observações</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -281,33 +284,28 @@ export function VendasTabela({
                     {formatarData(venda.data_venda)}
                   </TableCell>
                   <TableCell>{venda.numero_pedido}</TableCell>
+                  <TableCell className="font-mono text-sm">{venda.sku_produto}</TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{venda.nome_produto || venda.sku_produto}</div>
-                      {venda.nome_produto && (
-                        <div className="text-sm text-muted-foreground">
-                          SKU: {venda.sku_produto}
-                        </div>
-                      )}
-                    </div>
+                    <div className="font-medium">{venda.nome_produto || 'N/A'}</div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{venda.cliente_nome || 'N/A'}</div>
-                      {venda.cliente_documento && (
-                        <div className="text-sm text-muted-foreground">
-                          {venda.cliente_documento}
-                        </div>
-                      )}
-                    </div>
+                    <div className="font-medium">{venda.cliente_nome || 'N/A'}</div>
                   </TableCell>
-                  <TableCell>{venda.quantidade_vendida}</TableCell>
+                  <TableCell>
+                    <div className="text-sm">{venda.cliente_documento || 'N/A'}</div>
+                  </TableCell>
+                  <TableCell className="text-center">{venda.quantidade_vendida}</TableCell>
                   <TableCell>{formatarMoeda(venda.valor_unitario)}</TableCell>
                   <TableCell className="font-medium">
                     {formatarMoeda(venda.valor_total)}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(venda.status)}
+                  </TableCell>
+                  <TableCell className="max-w-32 truncate">
+                    <div title={venda.observacoes || ''}>
+                      {venda.observacoes || 'N/A'}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
