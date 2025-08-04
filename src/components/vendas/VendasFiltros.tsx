@@ -5,26 +5,19 @@ import { Search } from "lucide-react";
 
 interface FiltrosHistoricoVendas {
   termo_busca: string;
-  status: string;
   data_inicio: string;
   data_fim: string;
-  cliente: string;
 }
 
 interface VendasFiltrosProps {
   filtros: FiltrosHistoricoVendas;
   onAtualizarFiltros: (filtros: Partial<FiltrosHistoricoVendas>) => void;
-  onLimparFiltros: () => void;
 }
 
 export function VendasFiltros({
   filtros,
-  onAtualizarFiltros,
-  onLimparFiltros
+  onAtualizarFiltros
 }: VendasFiltrosProps) {
-  const handleStatusFilter = (status: string) => {
-    onAtualizarFiltros({ status: status === 'all' ? '' : status });
-  };
 
   return (
     <Card className="bg-slate-900 border-slate-700">
@@ -46,48 +39,8 @@ export function VendasFiltros({
           />
         </div>
 
-        {/* Botões de filtro rápido */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={!filtros.status ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleStatusFilter('all')}
-            className={!filtros.status ? "bg-yellow-500 text-black hover:bg-yellow-600" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
-          >
-            📊 Mostrar Todos
-          </Button>
-          
-          <Button
-            variant={filtros.status === 'pendente' ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleStatusFilter('pendente')}
-            className={filtros.status === 'pendente' ? "bg-yellow-500 text-black hover:bg-yellow-600" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
-          >
-            ⚠️ Apenas Pendentes
-          </Button>
-          
-          <Button
-            variant={filtros.status === 'concluida' ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleStatusFilter('concluida')}
-            className={filtros.status === 'concluida' ? "bg-yellow-500 text-black hover:bg-yellow-600" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
-          >
-            ✅ Apenas Concluídas
-          </Button>
-        </div>
-
-        {/* Filtros adicionais em linha */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <label className="text-sm text-slate-300">Cliente</label>
-            <Input
-              placeholder="Nome ou documento..."
-              value={filtros.cliente}
-              onChange={(e) => onAtualizarFiltros({ cliente: e.target.value })}
-              className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
-            />
-          </div>
-          
+        {/* Filtros de data */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-sm text-slate-300">Data Início</label>
             <Input

@@ -30,10 +30,8 @@ interface HistoricoVendasMetricas {
 
 interface FiltrosHistoricoVendas {
   termo_busca: string;
-  status: string;
   data_inicio: string;
   data_fim: string;
-  cliente: string;
 }
 
 export function useHistoricoVendas() {
@@ -49,10 +47,8 @@ export function useHistoricoVendas() {
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosHistoricoVendas>({
     termo_busca: '',
-    status: '',
     data_inicio: '',
     data_fim: '',
-    cliente: '',
   });
 
   const { toast } = useToast();
@@ -69,11 +65,7 @@ export function useHistoricoVendas() {
 
       // Aplicar filtros
       if (filtros.termo_busca) {
-        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,nome_produto.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%`);
-      }
-
-      if (filtros.status) {
-        query = query.eq('status', filtros.status);
+        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,nome_produto.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%,cliente_nome.ilike.%${filtros.termo_busca}%,cliente_documento.ilike.%${filtros.termo_busca}%`);
       }
 
       if (filtros.data_inicio) {
@@ -82,10 +74,6 @@ export function useHistoricoVendas() {
 
       if (filtros.data_fim) {
         query = query.lte('data_venda', filtros.data_fim);
-      }
-
-      if (filtros.cliente) {
-        query = query.or(`cliente_nome.ilike.%${filtros.cliente}%,cliente_documento.ilike.%${filtros.cliente}%`);
       }
 
       const { data, error } = await query.limit(1000);
@@ -137,10 +125,8 @@ export function useHistoricoVendas() {
   const limparFiltros = () => {
     setFiltros({
       termo_busca: '',
-      status: '',
       data_inicio: '',
       data_fim: '',
-      cliente: '',
     });
   };
 

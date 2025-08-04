@@ -132,7 +132,6 @@ export function Historico() {
         <VendasFiltros
           filtros={filtros}
           onAtualizarFiltros={atualizarFiltros}
-          onLimparFiltros={limparFiltros}
         />
         <VendasFileManager onUploadSuccess={handleModalSuccess} />
       </div>
