@@ -151,6 +151,9 @@ export function PedidosTabelaItens({
                 <TableHead>Cliente</TableHead>
                 <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>SKU</TableHead>
+                <TableHead>SKU Estoque</TableHead>
+                <TableHead>SKU KIT</TableHead>
+                <TableHead>Qtd KIT</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Qtd</TableHead>
                 <TableHead>Valor Unit.</TableHead>
@@ -206,10 +209,19 @@ export function PedidosTabelaItens({
                         </div>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-60 truncate">
-                      {item.descricao}
+                   </TableCell>
+                   <TableCell className="font-mono text-sm">
+                     {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
+                   </TableCell>
+                   <TableCell className="font-mono text-sm">
+                     {item.mapeamento_aplicado?.sku_simples || '-'}
+                   </TableCell>
+                   <TableCell className="text-center">
+                     {item.mapeamento_aplicado?.quantidade || '-'}
+                   </TableCell>
+                   <TableCell>
+                     <div className="max-w-60 truncate">
+                       {item.descricao}
                       {item.produto_nome && item.produto_nome !== item.descricao && (
                         <div className="text-xs text-muted-foreground mt-1">
                           Estoque: {item.produto_nome}
