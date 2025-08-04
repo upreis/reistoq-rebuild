@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_depara: {
+        Row: {
+          acao: string
+          created_at: string
+          id: string
+          mapeamento_id: string
+          motivo: string | null
+          usuario_id: string | null
+          valores_anteriores: Json | null
+          valores_novos: Json | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          id?: string
+          mapeamento_id: string
+          motivo?: string | null
+          usuario_id?: string | null
+          valores_anteriores?: Json | null
+          valores_novos?: Json | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          id?: string
+          mapeamento_id?: string
+          motivo?: string | null
+          usuario_id?: string | null
+          valores_anteriores?: Json | null
+          valores_novos?: Json | null
+        }
+        Relationships: []
+      }
       itens_pedidos: {
         Row: {
           codigo_barras: string | null
@@ -128,35 +161,53 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          data_mapeamento: string | null
           id: string
+          motivo_criacao: string | null
           observacoes: string | null
+          pedidos_aguardando: number | null
+          prioridade: string | null
           quantidade: number
           sku_correspondente: string | null
           sku_pedido: string
           sku_simples: string | null
+          tempo_criacao_pedido: string | null
           updated_at: string
+          usuario_mapeamento: string | null
         }
         Insert: {
           ativo?: boolean
           created_at?: string
+          data_mapeamento?: string | null
           id?: string
+          motivo_criacao?: string | null
           observacoes?: string | null
+          pedidos_aguardando?: number | null
+          prioridade?: string | null
           quantidade?: number
           sku_correspondente?: string | null
           sku_pedido: string
           sku_simples?: string | null
+          tempo_criacao_pedido?: string | null
           updated_at?: string
+          usuario_mapeamento?: string | null
         }
         Update: {
           ativo?: boolean
           created_at?: string
+          data_mapeamento?: string | null
           id?: string
+          motivo_criacao?: string | null
           observacoes?: string | null
+          pedidos_aguardando?: number | null
+          prioridade?: string | null
           quantidade?: number
           sku_correspondente?: string | null
           sku_pedido?: string
           sku_simples?: string | null
+          tempo_criacao_pedido?: string | null
           updated_at?: string
+          usuario_mapeamento?: string | null
         }
         Relationships: []
       }

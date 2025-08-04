@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useDePara } from '@/hooks/useDePara';
 import { useDeParaPaginado } from '@/hooks/useDeParaPaginado';
 import { DeParaHeader } from '@/components/depara/DeParaHeader';
-import { DeParaMetricas } from '@/components/depara/DeParaMetricas';
+import { DeParaMetricasAvancadas } from '@/components/depara/DeParaMetricasAvancadas';
 import { DeParaFiltros } from '@/components/depara/DeParaFiltros';
 import { DeParaFileManager } from '@/components/depara/DeParaFileManager';
 import { DeParaTabela } from '@/components/depara/DeParaTabela';
+import { DeParaOperacoesLote } from '@/components/depara/DeParaOperacoesLote';
+import { DeParaHistorico } from '@/components/depara/DeParaHistorico';
 import { NovoMapeamentoModal } from '@/components/depara/NovoMapeamentoModal';
 import { MapeamentoEditModal } from '@/components/depara/MapeamentoEditModal';
 import { MapeamentoDePara } from '@/hooks/useDePara';
@@ -130,7 +132,7 @@ export default function DePara() {
       </div>
 
       {/* Summary Cards */}
-      <DeParaMetricas metricas={metricas} loading={loading} />
+      <DeParaMetricasAvancadas metricas={metricas} loading={loading} />
 
       <DeParaTabela
         mapeamentos={mapeamentosPaginados}
@@ -150,6 +152,15 @@ export default function DePara() {
         onPaginaAnterior={paginaAnterior}
         onProximaPagina={proximaPagina}
       />
+
+      {/* Operações em Lote */}
+      <DeParaOperacoesLote 
+        mapeamentosSelecionados={mapeamentosSelecionados}
+        onRecarregarDados={recarregarDados}
+      />
+
+      {/* Histórico */}
+      <DeParaHistorico />
 
       <NovoMapeamentoModal
         open={showNovoModal}
