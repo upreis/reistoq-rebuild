@@ -69,15 +69,17 @@ export function useItensPedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
-    // ✅ Inicialização automática das datas (última semana) como no sistema anterior
-    const hoje = new Date();
-    const semanaPassada = new Date();
-    semanaPassada.setDate(hoje.getDate() - 7);
+    // ✅ Inicialização automática das datas (últimos 30 dias, não incluindo hoje)
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1); // Ontem (não hoje)
+    
+    const trintaDiasAtras = new Date();
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30); // 30 dias atrás
     
     return {
       busca: '',
-      dataInicio: semanaPassada.toISOString().split('T')[0], // YYYY-MM-DD
-      dataFim: hoje.toISOString().split('T')[0],             // YYYY-MM-DD
+      dataInicio: trintaDiasAtras.toISOString().split('T')[0], // YYYY-MM-DD
+      dataFim: ontem.toISOString().split('T')[0],              // YYYY-MM-DD (ontem)
       situacoes: []
     };
   });
@@ -90,12 +92,14 @@ export function useItensPedidos() {
         const filtrosCarregados = JSON.parse(filtrosSalvos);
         // Se não tem datas salvas, mantém as datas inicializadas automaticamente
         if (!filtrosCarregados.dataInicio || !filtrosCarregados.dataFim) {
-          const hoje = new Date();
-          const semanaPassada = new Date();
-          semanaPassada.setDate(hoje.getDate() - 7);
+          const ontem = new Date();
+          ontem.setDate(ontem.getDate() - 1); // Ontem (não hoje)
           
-          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || semanaPassada.toISOString().split('T')[0];
-          filtrosCarregados.dataFim = filtrosCarregados.dataFim || hoje.toISOString().split('T')[0];
+          const trintaDiasAtras = new Date();
+          trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30); // 30 dias atrás
+          
+          filtrosCarregados.dataInicio = filtrosCarregados.dataInicio || trintaDiasAtras.toISOString().split('T')[0];
+          filtrosCarregados.dataFim = filtrosCarregados.dataFim || ontem.toISOString().split('T')[0];
         }
         setFiltros(filtrosCarregados);
       } catch (error) {

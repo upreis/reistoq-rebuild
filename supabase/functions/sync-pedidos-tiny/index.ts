@@ -252,8 +252,8 @@ serve(async (req) => {
     const params = new URLSearchParams({
       token: tinyToken,
       formato: 'JSON',
-      pagina: '1'
-      // ✅ REMOVIDO com_itens=S temporariamente para debug
+      pagina: '1',
+      com_itens: 'S' // ✅ REABILITADO: busca com itens já incluídos
     });
 
     // Aplicar filtros se fornecidos - usando formato correto DD/MM/YYYY para API do Tiny
