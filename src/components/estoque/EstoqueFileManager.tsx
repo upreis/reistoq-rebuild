@@ -157,10 +157,11 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
         return;
       }
 
-      // Verificar SKUs que já existem no banco
+      // Verificar SKUs que já existem no banco (apenas produtos ativos)
       const { data: produtosExistentes } = await supabase
         .from('produtos')
         .select('sku_interno')
+        .eq('ativo', true)
         .in('sku_interno', skusNaPlanilha);
 
       if (produtosExistentes && produtosExistentes.length > 0) {
