@@ -72,7 +72,7 @@ const buscarProdutosEmAlerta = async () => {
     .from('produtos')
     .select('id, sku_interno, nome, categoria, quantidade_atual, estoque_minimo, estoque_maximo')
     .eq('ativo', true)
-    .or('quantidade_atual.eq.0,quantidade_atual.lte.estoque_minimo');
+    .or('quantidade_atual.eq.0,quantidade_atual.lt.estoque_minimo');
 
   if (error) {
     throw new Error(`Erro ao buscar produtos: ${error.message}`);
