@@ -48,11 +48,7 @@ export function DeParaFiltros({
         <CardTitle className="text-lg">Filtros Avançados</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Campo de busca */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Buscar mapeamentos
-          </label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
