@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, CalendarIcon } from "lucide-react";
+import { Search, CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -58,6 +58,13 @@ export function VendasFiltros({
     }
   };
 
+  // Função para limpar os filtros de data
+  const limparFiltrosData = () => {
+    onAtualizarFiltros({ data_inicio: "", data_fim: "" });
+    localStorage.removeItem('vendas-data-inicio');
+    localStorage.removeItem('vendas-data-fim');
+  };
+
   return (
     <Card className="border-slate-700">
       <CardHeader className="pb-4">
@@ -80,7 +87,7 @@ export function VendasFiltros({
             />
           </div>
           
-          {/* Date Pickers agrupados no final */}
+          {/* Date Pickers agrupados no final com botão de limpar */}
           <div className="flex gap-2">
             <Popover>
               <PopoverTrigger asChild>
@@ -129,6 +136,19 @@ export function VendasFiltros({
                 />
               </PopoverContent>
             </Popover>
+            
+            {/* Botão para limpar filtros de data */}
+            {(filtros.data_inicio || filtros.data_fim) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={limparFiltrosData}
+                className="text-slate-400 hover:text-white hover:bg-slate-700"
+                title="Limpar filtros de data"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
