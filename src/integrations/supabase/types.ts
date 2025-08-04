@@ -68,6 +68,62 @@ export type Database = {
         }
         Relationships: []
       }
+      itens_pedidos: {
+        Row: {
+          codigo_barras: string | null
+          created_at: string
+          descricao: string
+          id: string
+          ncm: string | null
+          numero_pedido: string
+          observacoes: string | null
+          pedido_id: string
+          quantidade: number
+          sku: string
+          updated_at: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          codigo_barras?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          ncm?: string | null
+          numero_pedido: string
+          observacoes?: string | null
+          pedido_id: string
+          quantidade?: number
+          sku: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Update: {
+          codigo_barras?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          ncm?: string | null
+          numero_pedido?: string
+          observacoes?: string | null
+          pedido_id?: string
+          quantidade?: number
+          sku?: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itens_pedidos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mapeamentos_depara: {
         Row: {
           ativo: boolean

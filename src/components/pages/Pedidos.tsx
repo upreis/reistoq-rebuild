@@ -3,16 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { usePedidos } from "@/hooks/usePedidos";
+import { useItensPedidos } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
-import { PedidosFiltros } from "@/components/pedidos/PedidosFiltros";
-import { PedidosTabela } from "@/components/pedidos/PedidosTabela";
-import type { Pedido } from "@/hooks/usePedidos";
+import { PedidosFiltrosAvancados } from "@/components/pedidos/PedidosFiltrosAvancados";
+import { PedidosTabelaItens } from "@/components/pedidos/PedidosTabelaItens";
+import type { ItemPedido } from "@/hooks/useItensPedidos";
 
 export function Pedidos() {
   const {
-    pedidos,
+    itens,
     metricas,
     loading,
     error,
@@ -21,7 +21,7 @@ export function Pedidos() {
     limparFiltros,
     recarregarDados,
     obterDetalhesPedido
-  } = usePedidos();
+  } = useItensPedidos();
 
   const {
     pedidosPaginados,
@@ -33,7 +33,7 @@ export function Pedidos() {
     totalItens,
     itemInicial,
     itemFinal
-  } = usePedidosPaginado({ pedidos });
+  } = usePedidosPaginado({ pedidos: itens });
 
   const handleSincronizar = () => {
     recarregarDados();
@@ -51,32 +51,32 @@ export function Pedidos() {
     });
   };
 
-  const handleVerDetalhes = async (pedido: Pedido) => {
+  const handleVerDetalhes = async (item: ItemPedido) => {
     try {
-      const detalhes = await obterDetalhesPedido(pedido.numero);
+      const detalhes = await obterDetalhesPedido(item.numero_pedido);
       console.log('Detalhes do pedido:', detalhes);
       toast({
         title: "Detalhes carregados",
-        description: `Pedido #${pedido.numero} - ${detalhes.cliente.nome}`,
+        description: `Pedido #${item.numero_pedido} - ${item.nome_cliente}`,
       });
     } catch (error) {
       // Erro já tratado no hook
     }
   };
 
-  const handleEditarPedido = (pedido: Pedido) => {
+  const handleEditarPedido = (item: ItemPedido) => {
     // TODO: Implementar modal de edição do pedido
     toast({
       title: "Editar pedido",
-      description: `Editando pedido #${pedido.numero}`,
+      description: `Editando pedido #${item.numero_pedido}`,
     });
   };
 
-  const handleProcessarPedido = (pedido: Pedido) => {
+  const handleProcessarPedido = (item: ItemPedido) => {
     // TODO: Implementar processamento do pedido
     toast({
       title: "Processar pedido",
-      description: `Processando pedido #${pedido.numero}`,
+      description: `Processando pedido #${item.numero_pedido}`,
     });
   };
 
@@ -104,15 +104,15 @@ export function Pedidos() {
       <PedidosMetricas metricas={metricas} />
 
       {/* Filtros */}
-      <PedidosFiltros
+      <PedidosFiltrosAvancados
         filtros={filtros}
         onFiltroChange={atualizarFiltros}
         onLimparFiltros={limparFiltros}
       />
 
-      {/* Tabela de Pedidos */}
-      <PedidosTabela
-        pedidos={pedidosPaginados}
+      {/* Tabela de Itens de Pedidos */}
+      <PedidosTabelaItens
+        itens={pedidosPaginados}
         loading={loading}
         paginaAtual={paginaAtual}
         totalPaginas={totalPaginas}

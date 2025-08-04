@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Pedido } from '@/hooks/usePedidos';
+import { ItemPedido } from '@/hooks/useItensPedidos';
 
 interface UsePedidosPaginadoProps {
-  pedidos: Pedido[];
+  pedidos: ItemPedido[];
   itensPorPagina?: number;
 }
 

@@ -24,6 +24,18 @@ interface TinyPedido {
   obs_interna?: string;
 }
 
+interface TinyItemPedido {
+  codigo: string;
+  descricao: string;
+  unidade: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  ncm?: string;
+  codigo_barras?: string;
+  observacoes?: string;
+}
+
 interface TinyApiResponse {
   retorno: {
     status: string;
@@ -177,17 +189,107 @@ serve(async (req) => {
 
     console.log(`Processando ${pedidosProcessados.length} pedidos`);
 
-    // Inserir/atualizar pedidos no banco
-    for (const pedido of pedidosProcessados) {
-      const { error } = await supabaseClient
-        .from('pedidos')
-        .upsert(pedido, { 
-          onConflict: 'numero',
-          ignoreDuplicates: false 
+    // Função para buscar itens detalhados do pedido
+    const buscarItensPedido = async (numeroPedido: string): Promise<TinyItemPedido[]> => {
+      try {
+        const paramsDetalhe = new URLSearchParams({
+          token: tinyToken,
+          formato: 'JSON',
+          id: numeroPedido
         });
 
-      if (error) {
-        console.error('Erro ao salvar pedido:', pedido.numero, error);
+        const detalheResponse = await fetch(`${tinyApiUrl}/pedido.obter.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: paramsDetalhe
+        });
+
+        if (!detalheResponse.ok) {
+          console.error(`Erro ao buscar detalhes do pedido ${numeroPedido}:`, detalheResponse.status);
+          return [];
+        }
+
+        const detalheData = await detalheResponse.json();
+        
+        if (detalheData.retorno.status === 'Erro') {
+          console.error(`Erro ao buscar detalhes do pedido ${numeroPedido}:`, detalheData.retorno.erros);
+          return [];
+        }
+
+        const pedidoCompleto = detalheData.retorno.pedido;
+        const itens = pedidoCompleto.itens || [];
+
+        return itens.map((item: any) => ({
+          codigo: item.item?.codigo || '',
+          descricao: item.item?.descricao || '',
+          unidade: item.item?.unidade || 'UN',
+          quantidade: parseFloat(String(item.item?.quantidade || '0').replace(',', '.')) || 0,
+          valor_unitario: parseFloat(String(item.item?.valor_unitario || '0').replace(',', '.')) || 0,
+          valor_total: parseFloat(String(item.item?.valor_total || '0').replace(',', '.')) || 0,
+          ncm: item.item?.ncm || null,
+          codigo_barras: item.item?.codigo_barras || null,
+          observacoes: item.item?.observacoes || null
+        }));
+      } catch (error) {
+        console.error(`Erro ao buscar itens do pedido ${numeroPedido}:`, error);
+        return [];
+      }
+    };
+
+    // Inserir/atualizar pedidos no banco e buscar itens
+    for (const pedido of pedidosProcessados) {
+      try {
+        // Salvar pedido
+        const { data: pedidoSalvo, error: errorPedido } = await supabaseClient
+          .from('pedidos')
+          .upsert(pedido, { 
+            onConflict: 'numero',
+            ignoreDuplicates: false 
+          })
+          .select()
+          .single();
+
+        if (errorPedido) {
+          console.error('Erro ao salvar pedido:', pedido.numero, errorPedido);
+          continue;
+        }
+
+        // Buscar itens detalhados do pedido
+        const itens = await buscarItensPedido(pedido.numero);
+        
+        if (itens.length > 0) {
+          // Preparar itens para inserção
+          const itensParaInserir = itens.map(item => ({
+            pedido_id: pedidoSalvo.id,
+            numero_pedido: pedido.numero,
+            sku: item.codigo,
+            descricao: item.descricao,
+            quantidade: item.quantidade,
+            valor_unitario: item.valor_unitario,
+            valor_total: item.valor_total,
+            ncm: item.ncm,
+            codigo_barras: item.codigo_barras,
+            observacoes: item.observacoes
+          }));
+
+          // Inserir itens do pedido
+          const { error: errorItens } = await supabaseClient
+            .from('itens_pedidos')
+            .upsert(itensParaInserir, { 
+              onConflict: 'numero_pedido,sku',
+              ignoreDuplicates: false 
+            });
+
+          if (errorItens) {
+            console.error('Erro ao salvar itens do pedido:', pedido.numero, errorItens);
+          } else {
+            console.log(`Salvos ${itens.length} itens para o pedido ${pedido.numero}`);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao processar pedido completo:', pedido.numero, error);
       }
     }
 

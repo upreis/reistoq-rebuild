@@ -3,9 +3,12 @@ import { Package, Clock, CheckCircle, DollarSign } from "lucide-react";
 
 interface PedidosMetricasProps {
   metricas: {
+    totalItens: number;
     totalPedidos: number;
     pedidosPendentes: number;
-    pedidosProcessados: number;
+    pedidosAprovados: number;
+    pedidosEnviados: number;
+    pedidosEntregues: number;
     valorTotal: number;
   };
 }
@@ -20,6 +23,12 @@ export function PedidosMetricas({ metricas }: PedidosMetricasProps) {
 
   const cardsMetricas = [
     {
+      titulo: "Total de Itens",
+      valor: metricas.totalItens.toString(),
+      icone: Package,
+      cor: "text-blue-600"
+    },
+    {
       titulo: "Total de Pedidos",
       valor: metricas.totalPedidos.toString(),
       icone: Package,
@@ -32,10 +41,22 @@ export function PedidosMetricas({ metricas }: PedidosMetricasProps) {
       cor: "text-yellow-600"
     },
     {
-      titulo: "Processados",
-      valor: metricas.pedidosProcessados.toString(),
+      titulo: "Aprovados",
+      valor: metricas.pedidosAprovados.toString(),
+      icone: CheckCircle,
+      cor: "text-orange-600"
+    },
+    {
+      titulo: "Enviados",
+      valor: metricas.pedidosEnviados.toString(),
       icone: CheckCircle,
       cor: "text-green-600"
+    },
+    {
+      titulo: "Entregues",
+      valor: metricas.pedidosEntregues.toString(),
+      icone: CheckCircle,
+      cor: "text-emerald-600"
     },
     {
       titulo: "Valor Total",
