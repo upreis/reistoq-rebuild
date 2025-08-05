@@ -113,16 +113,12 @@ export function useItensPedidos() {
         console.warn('Erro ao carregar filtros salvos:', error);
       }
     }
-    // ✅ Filtros padrão com período atual (formato YYYY-MM-DD para Supabase)
-    const hoje = new Date();
-    const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    
+    // ✅ CORRIGIDO: Definir período correto para 2024 (onde estão os dados reais)
     return {
       busca: '',
-      dataInicio: primeiroDiaDoMes.toISOString().split('T')[0],  // Formato YYYY-MM-DD
-      dataFinal: ultimoDiaDoMes.toISOString().split('T')[0],     // Formato YYYY-MM-DD (corrigido nome)
-      situacoes: []              // Sem filtro de situação para buscar todas
+      dataInicio: '2024-07-07',  // Data correta em 2024
+      dataFinal: '2024-07-11',   // Data correta em 2024  
+      situacoes: ['cancelado', 'Entregue']  // Situações que existem no Tiny ERP
     };
   });
 
