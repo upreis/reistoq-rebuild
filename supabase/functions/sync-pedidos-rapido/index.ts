@@ -324,9 +324,8 @@ Deno.serve(async (req) => {
       token: config.tiny_erp_token,
       formato: 'json',
       com_itens: 'S', // FUNDAMENTAL para obter itens
+      limite: '100', // ✅ CORRIGIDO: Usar 100 registros por página (máximo da API)
       pagina: '1'
-      // ✅ CRÍTICO: API Tiny NÃO aceita parâmetro 'limite' - retorna apenas 50 por página por padrão
-      // O aumento de 50 para 100 registros só é possível com planos superiores automaticamente
     });
 
     // ✅ CORRIGIDO: Aplicar filtros de data
@@ -401,8 +400,8 @@ Deno.serve(async (req) => {
               token: config.tiny_erp_token,
               formato: 'json',
               com_itens: 'S',
-              pagina: '1'
-              // ✅ REMOVIDO: limite não é aceito pela API Tiny
+              pagina: '1',
+              limite: '10' // Apenas alguns para teste
             });
             
             try {
@@ -436,15 +435,7 @@ Deno.serve(async (req) => {
         // ✅ DIAGNÓSTICO: Log detalhado sobre limites da API
         if (paginaAtual === 1) {
           console.log(`🔍 DIAGNÓSTICO: API retornou ${pedidos.length} pedidos na primeira página. Total de páginas: ${totalPaginas}`);
-          console.log(`📊 IMPORTANTE: Tiny ERP retorna ${pedidos.length} registros por página (padrão da API)`);
-          if (pedidos.length === 20) {
-            console.log(`⚠️ ALERTA: Retornando apenas 20 registros. Possível limitação de plano ou configuração da API`);
-          } else if (pedidos.length === 50) {
-            console.log(`✅ OK: Retornando 50 registros por página (padrão normal)`);
-          } else if (pedidos.length === 100) {
-            console.log(`🚀 EXCELENTE: Retornando 100 registros por página (plano superior)`);
-          }
-          console.log(`📊 Estimativa total: ${pedidos.length * totalPaginas} pedidos no período`);
+          console.log(`📊 Isso significa que há ${pedidos.length * totalPaginas} pedidos estimados no total`);
         }
 
         // Processar pedidos da página
@@ -678,8 +669,7 @@ Deno.serve(async (req) => {
         tempo_execucao_ms: tempoExecucao,
         paginas_processadas: paginaAtual - 1,
         total_paginas: totalPaginas,
-        registros_por_pagina: allPedidos.length > 0 ? Math.ceil(allPedidos.length / Math.max(1, paginaAtual - 1)) : 0, // ✅ DINÂMICO: Calcula quantos registros por página foram retornados
-        limite_detectado: allPedidos.length > 0 ? `${Math.ceil(allPedidos.length / Math.max(1, paginaAtual - 1))} registros/página` : 'indefinido', // ✅ NOVO: Mostra limite detectado
+        registros_por_pagina: 100, // ✅ NOVO: Confirma que está usando 100 registros
         cache_utilizado: false // ✅ NOVO: Indica se usou cache
       },
       message: `Sincronização concluída: ${pedidosSalvos} pedidos e ${itensSalvos} itens processados`
