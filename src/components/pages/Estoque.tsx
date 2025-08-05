@@ -239,9 +239,6 @@ export function Estoque() {
         onAbrirPrevisao={abrirPrevisao}
       />
 
-      {/* Histórico de Movimentações */}
-      <EstoqueHistoricoMovimentacoes />
-
       {/* Modais */}
       <ProdutoDetalhesModal
         produto={produtoSelecionado}
