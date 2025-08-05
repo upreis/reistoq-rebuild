@@ -10,32 +10,6 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export function Scanner() {
-  console.log('🖥️ Scanner: Componente inicializando...');
-  
-  let scannerData;
-  try {
-    scannerData = useBarcodeScanner();
-    console.log('✅ Scanner: Hook useBarcodeScanner carregado:', { 
-      isNative: scannerData.isNative,
-      loading: scannerData.loading 
-    });
-  } catch (error) {
-    console.error('❌ Scanner: Erro ao carregar useBarcodeScanner:', error);
-    // Fallback para evitar crash
-    scannerData = {
-      isScanning: false,
-      isNative: false,
-      loading: false,
-      lastScanResult: '',
-      scannedProduct: null,
-      scanHistory: [],
-      startScan: async () => console.log('Scanner não disponível'),
-      stopScan: async () => console.log('Scanner não disponível'),
-      buscarManualmente: async () => console.log('Busca não disponível'),
-      limparResultado: () => console.log('Limpeza não disponível')
-    };
-  }
-
   const {
     isScanning,
     isNative,
@@ -47,16 +21,9 @@ export function Scanner() {
     stopScan,
     buscarManualmente,
     limparResultado
-  } = scannerData;
+  } = useBarcodeScanner();
 
   const [manualCode, setManualCode] = useState('');
-  
-  console.log('🖥️ Scanner: Estado atual:', { 
-    isScanning, 
-    isNative, 
-    loading, 
-    manualCodeLength: manualCode.length 
-  });
   return (
     <div className="space-y-6">
       {/* Header */}
