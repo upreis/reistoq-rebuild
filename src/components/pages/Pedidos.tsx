@@ -3,7 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useItensPedidos, type ItemPedido } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
-import { useDeParaIntegration } from "@/hooks/useDeParaIntegration";
+import { useDeParaIntegration, type ItemPedidoEnriquecido } from "@/hooks/useDeParaIntegration";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
 import { FiltrosAvancadosPedidos, type FiltrosAvancados } from "@/components/pedidos/FiltrosAvancadosPedidos";
 import { DashboardMiniPedidos } from "@/components/pedidos/DashboardMiniPedidos";
@@ -66,7 +66,7 @@ export function Pedidos() {
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedido | null>(null);
   const [processandoBaixaEstoque, setProcessandoBaixaEstoque] = useState(false);
   const [estoqueDisponivel, setEstoqueDisponivel] = useState<Record<string, number>>({});
-  const [itensSelecionados, setItensSelecionados] = useState<any[]>([]);
+  const [itensSelecionados, setItensSelecionados] = useState<ItemPedidoEnriquecido[]>([]);
 
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(itens);
@@ -118,15 +118,19 @@ export function Pedidos() {
   useEffect(() => {
     if (itensEnriquecidos.length > 0) {
       verificarEstoqueDisponivel();
-      
-      // Auto-selecionar itens elegíveis quando carregar novos dados
+    }
+  }, [itensEnriquecidos.length]);
+
+  // useEffect para auto-selecionar itens elegíveis quando dados carregarem
+  useEffect(() => {
+    if (itensEnriquecidos.length > 0 && Object.keys(estoqueDisponivel).length > 0) {
       const itensElegiveis = itensEnriquecidos.filter(item => {
         const status = obterStatusEstoque(item);
         return status === 'disponivel';
       });
       setItensSelecionados(itensElegiveis);
     }
-  }, [itensEnriquecidos.length]);
+  }, [itensEnriquecidos.length, estoqueDisponivel]);
 
   const {
     pedidosPaginados,

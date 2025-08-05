@@ -26,13 +26,13 @@ export function PedidosBarraAcoes({
   };
 
   // Filtrar itens selecionados e elegíveis para baixa de estoque
-  const itensElegiveis = itensSelecionados.filter(item => {
+  const itensElegiveis = (itensSelecionados || []).filter(item => {
     const status = obterStatusEstoque?.(item);
     return status === 'disponivel';
   });
 
   const exportarTodos = () => {
-    const itensParaExportar = itensSelecionados.length > 0 ? itensSelecionados : itens;
+    const itensParaExportar = (itensSelecionados || []).length > 0 ? itensSelecionados : itens;
     
     if (itensParaExportar.length === 0) {
       toast({
@@ -112,11 +112,11 @@ export function PedidosBarraAcoes({
               </Badge>
             </div>
             
-            {itensSelecionados.length > 0 && (
+            {(itensSelecionados || []).length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Selecionados:</span>
                 <Badge variant="secondary" className="px-3 py-1">
-                  {itensSelecionados.length} {itensSelecionados.length === 1 ? 'item' : 'itens'}
+                  {(itensSelecionados || []).length} {(itensSelecionados || []).length === 1 ? 'item' : 'itens'}
                 </Badge>
               </div>
             )}
