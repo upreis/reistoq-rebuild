@@ -219,9 +219,28 @@ export function Pedidos() {
           
           const jaProcessado = item.ja_processado;
           
-          return temMapeamento && (temQuantidade || item.quantidade > 0) && 
+          const passouFiltro = temMapeamento && (temQuantidade || item.quantidade > 0) && 
                  situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado;
+          
+          // Debug detalhado
+          console.log(`[DEBUG BOTÃO] Item ${item.sku}:`, {
+            temMapeamento: !!temMapeamento,
+            skuCorresp: item.mapeamento_aplicado?.sku_correspondente,
+            skuSimples: item.mapeamento_aplicado?.sku_simples,
+            temQuantidade: !!temQuantidade,
+            quantidadeMapeamento: item.mapeamento_aplicado?.quantidade,
+            quantidadeItem: item.quantidade,
+            situacao: item.situacao,
+            situacaoLower,
+            situacaoValida: situacoesBaixarEstoque.includes(situacaoLower),
+            jaProcessado,
+            passouFiltro
+          });
+          
+          return passouFiltro;
         });
+        
+        console.log(`[DEBUG BOTÃO] Total itens: ${itens.length}, Enriquecidos: ${itensEnriquecidos.length}, Com mapeamento: ${itensComMapeamento.length}`);
         
         return (
           <div className="flex justify-end">
