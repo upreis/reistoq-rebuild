@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useItensPedidos, type ItemPedido } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { useDeParaIntegration, type ItemPedidoEnriquecido } from "@/hooks/useDeParaIntegration";
-import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
+import { PedidosBarraStatus } from "@/components/pedidos/PedidosBarraStatus";
 import { FiltrosAvancadosPedidos, type FiltrosAvancados } from "@/components/pedidos/FiltrosAvancadosPedidos";
 import { DashboardMiniPedidos } from "@/components/pedidos/DashboardMiniPedidos";
 import { PedidosTabelaAvancada } from "@/components/pedidos/PedidosTabelaAvancada";
@@ -315,8 +315,8 @@ export function Pedidos() {
         obterStatusEstoque={obterStatusEstoque}
       />
 
-      {/* Métricas */}
-      <PedidosMetricas metricas={metricas} />
+      {/* Barra de Status */}
+      <PedidosBarraStatus metricas={metricas} />
 
       {/* Filtros Avançados */}
       <FiltrosAvancadosPedidos
