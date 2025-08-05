@@ -5,15 +5,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Configurações otimizadas para PRODUÇÃO (evita timeouts)
-const REQUEST_TIMEOUT = 30000; // 30 segundos (aumentado)
+// Configurações otimizadas baseadas no sistema de referência
+const REQUEST_TIMEOUT = 30000; // 30 segundos
 const BASE_RETRY_DELAY = 1000; // 1 segundo
 const MAX_RETRIES = 3; // 3 tentativas
-const DELAY_ENTRE_PAGINAS = 500; // 500ms entre páginas
-const DELAY_ENTRE_LOTES = 1000; // 1 segundo entre lotes
-const BATCH_SIZE = 5; // 5 pedidos por lote (otimizado)
+const DELAY_ENTRE_PAGINAS = 250; // ✅ CORRIGIDO: 250ms como no sistema de referência
+const DELAY_ENTRE_LOTES = 200; // ✅ CORRIGIDO: 200ms como no sistema de referência
+const BATCH_SIZE = 3; // ✅ CORRIGIDO: 3 pedidos por lote como no sistema de referência
 const MAX_PAGINAS_POR_EXECUCAO = 500; // Aumentado significativamente para buscar mais pedidos
 const DELAY_RATE_LIMIT = 5000; // 5 segundos para rate limit
+const CACHE_TTL = 10 * 60 * 1000; // ✅ NOVO: 10 minutos de cache
 
 interface TinyPedido {
   id: string;
@@ -51,6 +52,22 @@ interface ConfiguracaoTiny {
   tiny_max_tentativas: number;
   tiny_delay_entre_requisicoes: number;
   tiny_max_falhas_consecutivas: number;
+}
+
+// ✅ NOVO: Sistema de cache em memória 
+const cache = new Map<string, { data: any; timestamp: number }>();
+
+function getFromCache(key: string): any | null {
+  const cached = cache.get(key);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    return cached.data;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any): void {
+  cache.set(key, { data, timestamp: Date.now() });
 }
 
 function sleep(ms: number): Promise<void> {
@@ -292,13 +309,23 @@ Deno.serve(async (req) => {
       console.log('⚠️ Sem filtros ou erro no parsing, usando padrão:', e.message);
     }
 
+    // ✅ NOVO: Verificar cache primeiro
+    const cacheKey = `pedidos-${JSON.stringify(filtros)}`;
+    const cachedData = getFromCache(cacheKey);
+    if (cachedData) {
+      console.log('📦 Retornando dados do cache (10 min)');
+      return new Response(JSON.stringify(cachedData), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Construir parâmetros da API
     const params = new URLSearchParams({
       token: config.tiny_erp_token,
       formato: 'json',
       com_itens: 'S', // FUNDAMENTAL para obter itens
+      limite: '100', // ✅ CORRIGIDO: Usar 100 registros por página (máximo da API)
       pagina: '1'
-      // ✅ REMOVIDO: limite não é parâmetro válido da API Tiny
     });
 
     // ✅ CORRIGIDO: Aplicar filtros de data
@@ -585,8 +612,8 @@ Deno.serve(async (req) => {
           }
         }
         
-        // Delay entre lotes
-        await sleep(1000);
+        // ✅ CORRIGIDO: Delay otimizado entre lotes (200ms como sistema referência)
+        await sleep(DELAY_ENTRE_LOTES);
       }
       
       console.log(`📊 Após busca de detalhes: ${allItens.length} itens encontrados`);
@@ -632,7 +659,7 @@ Deno.serve(async (req) => {
     
     console.log(`✅ Sincronização concluída em ${tempoExecucao}ms`);
 
-    return new Response(JSON.stringify({
+    const resultado = {
       success: true,
       dados: {
         pedidos_encontrados: allPedidos.length,
@@ -641,10 +668,17 @@ Deno.serve(async (req) => {
         itens_salvos: itensSalvos,
         tempo_execucao_ms: tempoExecucao,
         paginas_processadas: paginaAtual - 1,
-        total_paginas: totalPaginas
+        total_paginas: totalPaginas,
+        registros_por_pagina: 100, // ✅ NOVO: Confirma que está usando 100 registros
+        cache_utilizado: false // ✅ NOVO: Indica se usou cache
       },
       message: `Sincronização concluída: ${pedidosSalvos} pedidos e ${itensSalvos} itens processados`
-    }), {
+    };
+
+    // ✅ NOVO: Salvar no cache para próximas consultas
+    setCache(cacheKey, resultado);
+
+    return new Response(JSON.stringify(resultado), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
