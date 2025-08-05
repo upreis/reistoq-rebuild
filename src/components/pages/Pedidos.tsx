@@ -6,7 +6,7 @@ import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { useDeParaIntegration, type ItemPedidoEnriquecido } from "@/hooks/useDeParaIntegration";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
 import { FiltrosAvancadosPedidos, type FiltrosAvancados } from "@/components/pedidos/FiltrosAvancadosPedidos";
-import { DashboardMiniPedidos } from "@/components/pedidos/DashboardMiniPedidos";
+import { PedidosBarraStatus } from "@/components/pedidos/PedidosBarraStatus";
 import { PedidosTabelaAvancada } from "@/components/pedidos/PedidosTabelaAvancada";
 import { PedidosControleSincronizacao } from "@/components/pedidos/PedidosControleSincronizacao";
 import { PedidosBarraAcoes } from "@/components/pedidos/PedidosBarraAcoes";
@@ -67,9 +67,34 @@ export function Pedidos() {
   const [processandoBaixaEstoque, setProcessandoBaixaEstoque] = useState(false);
   const [estoqueDisponivel, setEstoqueDisponivel] = useState<Record<string, number>>({});
   const [itensSelecionados, setItensSelecionados] = useState<ItemPedidoEnriquecido[]>([]);
+  const [filtroStatusAtivo, setFiltroStatusAtivo] = useState("todos");
 
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(itens);
+
+  // Filtrar itens baseado no status ativo
+  const itensFiltrados = itensEnriquecidos.filter(item => {
+    if (filtroStatusAtivo === "todos") return true;
+    
+    const status = obterStatusEstoque(item);
+    
+    switch (filtroStatusAtivo) {
+      case "problemas":
+        return status === 'sem-estoque' || status === 'sem-mapeamento';
+      case "urgentes":
+        return item.valor_total > 1000; // Considerar como urgente pedidos de alto valor
+      case "disponivel":
+        return status === 'disponivel';
+      case "processados":
+        return status === 'processado';
+      case "sem_estoque":
+        return status === 'sem-estoque';
+      case "sem_mapeamento":
+        return status === 'sem-mapeamento';
+      default:
+        return true;
+    }
+  });
 
   // Função para verificar estoque disponível
   const verificarEstoqueDisponivel = async () => {
@@ -309,14 +334,13 @@ export function Pedidos() {
         </div>
       </div>
 
-      {/* Dashboard Mini */}
-      <DashboardMiniPedidos 
+      {/* Barra de Status Compacta */}
+      <PedidosBarraStatus 
         itens={itensEnriquecidos}
+        filtroAtivo={filtroStatusAtivo}
+        onFiltroChange={setFiltroStatusAtivo}
         obterStatusEstoque={obterStatusEstoque}
       />
-
-      {/* Métricas */}
-      <PedidosMetricas metricas={metricas} />
 
       {/* Filtros Avançados */}
       <FiltrosAvancadosPedidos
@@ -329,7 +353,7 @@ export function Pedidos() {
 
       {/* Barra de Ações Automática */}
       <PedidosBarraAcoes
-        itens={itensEnriquecidos}
+        itens={itensFiltrados}
         itensSelecionados={itensSelecionados}
         obterStatusEstoque={obterStatusEstoque}
         processandoBaixaEstoque={processandoBaixaEstoque}
@@ -363,7 +387,7 @@ export function Pedidos() {
 
       {/* Tabela de Pedidos */}
       <PedidosTabelaAvancada
-        itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
+        itens={itensFiltrados.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
         itensSelecionados={itensSelecionados}
         onSelecaoChange={setItensSelecionados}
         loading={loading}
