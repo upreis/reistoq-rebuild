@@ -344,7 +344,7 @@ Deno.serve(async (req) => {
         params.set('pagina', paginaAtual.toString());
         
         const jsonData = await makeApiCallWithRetry(
-          `${config.tiny_api_url}/pedidos.pesquisa.php`,
+          `https://api.tiny.com.br/api2/pedidos.pesquisa.php`,
           params,
           config,
           `Página ${paginaAtual}`
@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
             });
             
             const detalhesData = await makeApiCallWithRetry(
-              `${config.tiny_api_url}/pedido.obter.php`,
+              `https://api.tiny.com.br/api2/pedido.obter.php`,
               detalhesParams,
               config,
               `Detalhes pedido ${pedido.numero}`

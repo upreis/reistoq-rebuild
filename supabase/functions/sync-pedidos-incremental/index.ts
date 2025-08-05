@@ -10,7 +10,7 @@ interface ProcessarParams {
     dataInicio?: string;
     dataInicial?: string;  // Também aceitar formato correto
     dataFim?: string;
-    dataFinal?: string;    // Também aceitar formato correto
+    dataFinal?: string;    // Formato correto agora é dataFinal
     situacao?: string | string[];  // ✅ Aceitar string ou array
   };
 }

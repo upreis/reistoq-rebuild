@@ -93,7 +93,7 @@ serve(async (req) => {
     });
 
     // Fazer requisição para a API do Tiny
-    const tinyResponse = await fetch(`${tinyApiUrl}/pedido.obter.php`, {
+    const tinyResponse = await fetch(`https://api.tiny.com.br/api2/pedido.obter.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

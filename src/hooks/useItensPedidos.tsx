@@ -53,7 +53,7 @@ interface MetricasPedidos {
 interface FiltrosPedidos {
   busca: string;
   dataInicio: string;
-  dataFim: string;
+  dataFinal: string;  // Corrigido de dataFim para dataFinal
   situacoes: string[];
 }
 
@@ -121,7 +121,7 @@ export function useItensPedidos() {
     return {
       busca: '',
       dataInicio: primeiroDiaDoMes.toISOString().split('T')[0],  // Formato YYYY-MM-DD
-      dataFim: ultimoDiaDoMes.toISOString().split('T')[0],       // Formato YYYY-MM-DD
+      dataFinal: ultimoDiaDoMes.toISOString().split('T')[0],     // Formato YYYY-MM-DD (corrigido nome)
       situacoes: []              // Sem filtro de situação para buscar todas
     };
   });
@@ -163,7 +163,7 @@ export function useItensPedidos() {
         body: {
           filtros: {
             dataInicio: formatarDataParaTiny(filtros.dataInicio),
-            dataFim: formatarDataParaTiny(filtros.dataFim),
+            dataFim: formatarDataParaTiny(filtros.dataFinal),
             // ✅ CORRIGIDO: Enviar todas as situações selecionadas
             situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
           }
@@ -216,8 +216,8 @@ export function useItensPedidos() {
         query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
       }
 
-      if (filtros.dataFim) {
-        query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFim);
+      if (filtros.dataFinal) {
+        query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFinal);
       }
 
       if (filtros.situacoes.length > 0) {
@@ -416,7 +416,7 @@ export function useItensPedidos() {
     const filtrosLimpos = {
       busca: '',
       dataInicio: primeiroDiaDoMes.toISOString().split('T')[0],  // Formato YYYY-MM-DD
-      dataFim: ultimoDiaDoMes.toISOString().split('T')[0],       // Formato YYYY-MM-DD
+      dataFinal: ultimoDiaDoMes.toISOString().split('T')[0],     // Formato YYYY-MM-DD (corrigido)
       situacoes: []                 // ✅ Sem filtro para buscar todas
     };
     setFiltros(filtrosLimpos);

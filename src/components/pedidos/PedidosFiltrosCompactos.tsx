@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 interface FiltrosPedidosCompactos {
   busca: string;
   dataInicio: string;
-  dataFim: string;
+  dataFinal: string;  // Corrigido de dataFim para dataFinal
   situacoes: string[];
 }
 
@@ -39,8 +39,8 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
   });
   
   const [dataFim, setDataFim] = useState<Date | undefined>(() => {
-    if (filtros.dataFim) {
-      const [ano, mes, dia] = filtros.dataFim.split('-');
+    if (filtros.dataFinal) {
+      const [ano, mes, dia] = filtros.dataFinal.split('-');
       return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
     }
     return undefined;
@@ -56,13 +56,13 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
       setDataInicio(undefined);
     }
     
-    if (filtros.dataFim) {
-      const [ano, mes, dia] = filtros.dataFim.split('-');
+    if (filtros.dataFinal) {
+      const [ano, mes, dia] = filtros.dataFinal.split('-');
       setDataFim(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
     } else {
       setDataFim(undefined);
     }
-  }, [filtros.dataInicio, filtros.dataFim]);
+  }, [filtros.dataInicio, filtros.dataFinal]);
 
   const situacoes = [
     { value: 'Em Aberto', label: 'Em Aberto' },
@@ -90,7 +90,7 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
 
   const handleDataFimChange = (date: Date | undefined) => {
     setDataFim(date);
-    onFiltroChange({ dataFim: date ? format(date, 'yyyy-MM-dd') : '' });
+    onFiltroChange({ dataFinal: date ? format(date, 'yyyy-MM-dd') : '' });
   };
 
   const formatPeriodo = () => {
