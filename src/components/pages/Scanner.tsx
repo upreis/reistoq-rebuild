@@ -1,10 +1,29 @@
-import { ScanLine, Camera, Search, Package } from "lucide-react";
+import { ScanLine, Camera, Search, Package, X, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
+import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function Scanner() {
+  const {
+    isScanning,
+    isNative,
+    loading,
+    lastScanResult,
+    scannedProduct,
+    scanHistory,
+    startScan,
+    stopScan,
+    buscarManualmente,
+    limparResultado
+  } = useBarcodeScanner();
+
+  const [manualCode, setManualCode] = useState('');
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -31,12 +50,31 @@ export function Scanner() {
           <CardContent>
             <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
               <div className="text-center">
-                <ScanLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">Camera desativada</p>
-                <Button variant="premium">
-                  <Camera className="mr-2 h-4 w-4" />
-                  Ativar Câmera
-                </Button>
+                {isScanning ? (
+                  <>
+                    <ScanLine className="mx-auto h-12 w-12 text-primary mb-4 animate-pulse" />
+                    <p className="text-primary mb-4">Escaneando...</p>
+                    <Button variant="destructive" onClick={stopScan}>
+                      <X className="mr-2 h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <ScanLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      {isNative ? "Câmera pronta para usar" : "Scanner disponível apenas em dispositivos móveis"}
+                    </p>
+                    <Button 
+                      variant="premium" 
+                      onClick={startScan}
+                      disabled={!isNative || loading}
+                    >
+                      <Camera className="mr-2 h-4 w-4" />
+                      {loading ? "Carregando..." : "Ativar Câmera"}
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             
@@ -68,23 +106,43 @@ export function Scanner() {
               <Input 
                 placeholder="Digite ou cole o código aqui..."
                 className="text-center font-mono"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    buscarManualmente(manualCode);
+                  }
+                }}
               />
             </div>
             
-            <Button className="w-full" variant="secondary">
+            <Button 
+              className="w-full" 
+              variant="secondary"
+              onClick={() => buscarManualmente(manualCode)}
+              disabled={loading || !manualCode.trim()}
+            >
               <Search className="mr-2 h-4 w-4" />
-              Buscar Produto
+              {loading ? "Buscando..." : "Buscar Produto"}
             </Button>
 
-            <div className="border rounded-lg p-4">
-              <h4 className="font-medium text-muted-foreground mb-2">Último código lido:</h4>
-              <p className="font-mono text-foreground bg-muted p-2 rounded">
-                7891234567890
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Lido há 2 minutos
-              </p>
-            </div>
+            {lastScanResult && (
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-foreground">Último código lido:</h4>
+                  <Button variant="ghost" size="sm" onClick={limparResultado}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="font-mono text-foreground bg-muted p-2 rounded">
+                  {lastScanResult}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  <Clock className="inline h-3 w-3 mr-1" />
+                  Agora mesmo
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -101,36 +159,82 @@ export function Scanner() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium text-foreground">Produto Exemplo</h3>
-                <p className="text-muted-foreground">SKU: SKU-001234</p>
+          {loading ? (
+            <div className="border rounded-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <Skeleton className="h-6 w-20" />
               </div>
-              <Badge variant="default">Em Estoque</Badge>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Quantidade Atual</p>
-                <p className="text-xl font-bold text-foreground">120 unidades</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Estoque Mínimo</p>
-                <p className="text-xl font-bold text-foreground">30 unidades</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Última Movimentação</p>
-                <p className="text-xl font-bold text-foreground">há 2 dias</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
               </div>
             </div>
+          ) : scannedProduct ? (
+            <div className="border rounded-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-medium text-foreground">{scannedProduct.nome}</h3>
+                  <p className="text-muted-foreground">SKU: {scannedProduct.sku_interno}</p>
+                  <p className="text-sm text-muted-foreground">Código: {scannedProduct.codigo_barras}</p>
+                </div>
+                <Badge variant={scannedProduct.status === 'ativo' ? 'default' : 'secondary'}>
+                  {scannedProduct.status === 'ativo' ? 'Em Estoque' : scannedProduct.status}
+                </Badge>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Quantidade Atual</p>
+                  <p className="text-xl font-bold text-foreground">{scannedProduct.quantidade_atual} unidades</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Estoque Mínimo</p>
+                  <p className="text-xl font-bold text-foreground">{scannedProduct.estoque_minimo} unidades</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Última Movimentação</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {scannedProduct.ultima_movimentacao 
+                      ? formatDistanceToNow(new Date(scannedProduct.ultima_movimentacao), { 
+                          addSuffix: true, 
+                          locale: ptBR 
+                        })
+                      : 'Nunca'
+                    }
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex gap-3 mt-6">
-              <Button variant="secondary">Ver Detalhes</Button>
-              <Button variant="outline">Movimentar Estoque</Button>
-              <Button variant="outline">Histórico</Button>
+              <div className="flex gap-3 mt-6">
+                <Button variant="secondary">Ver Detalhes</Button>
+                <Button variant="outline">Movimentar Estoque</Button>
+                <Button variant="outline">Histórico</Button>
+              </div>
             </div>
-          </div>
+          ) : lastScanResult ? (
+            <div className="border rounded-lg p-6 text-center">
+              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Produto não encontrado</h3>
+              <p className="text-muted-foreground mb-4">
+                Código {lastScanResult} não foi encontrado no sistema
+              </p>
+              <Button variant="outline" onClick={limparResultado}>
+                Tentar novamente
+              </Button>
+            </div>
+          ) : (
+            <div className="border rounded-lg p-6 text-center">
+              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                {isNative ? "Escaneie ou digite um código para ver os detalhes do produto" : "Digite um código para buscar o produto"}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -144,22 +248,37 @@ export function Scanner() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[
-              { codigo: "7891234567890", produto: "Produto A", timestamp: "há 5 min" },
-              { codigo: "7891234567891", produto: "Produto B", timestamp: "há 12 min" },
-              { codigo: "7891234567892", produto: "Produto C", timestamp: "há 1 hora" }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-mono text-sm text-foreground">{item.codigo}</p>
-                  <p className="text-sm text-muted-foreground">{item.produto}</p>
+            {scanHistory.length > 0 ? (
+              scanHistory.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-mono text-sm text-foreground">{item.codigo}</p>
+                    <p className={`text-sm ${item.found ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {item.produto}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(item.timestamp), { 
+                        addSuffix: true, 
+                        locale: ptBR 
+                      })}
+                    </p>
+                    <Badge 
+                      variant={item.found ? "default" : "destructive"}
+                      className="text-xs"
+                    >
+                      {item.found ? "Encontrado" : "Não encontrado"}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">{item.timestamp}</p>
-                  <Button size="sm" variant="ghost">Consultar</Button>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <ScanLine className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">Nenhum código escaneado ainda</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
