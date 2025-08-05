@@ -60,8 +60,8 @@ export function usePedidos() {
       setLoading(true);
       setError(null);
 
-      // Primeiro, tentar sincronizar com o Tiny ERP
-      console.log('Sincronizando pedidos com Tiny ERP...');
+      // ✅ SOLUÇÃO 4: ARQUITETURA OTIMIZADA - Buscar e receber dados diretamente da edge function
+      console.log('🚀 Buscando pedidos com arquitetura otimizada...');
       
       const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-rapido', {
         body: {
@@ -74,56 +74,84 @@ export function usePedidos() {
       });
 
       if (syncError) {
-        console.warn('Erro na sincronização com Tiny ERP:', syncError);
+        console.warn('❌ Erro na sincronização com Tiny ERP:', syncError);
         toast({
-          title: "Aviso",
-          description: "Erro na sincronização com Tiny ERP. Mostrando dados locais.",
+          title: "Erro",
+          description: "Erro na sincronização com Tiny ERP. Tente novamente.",
           variant: "destructive",
         });
-      } else {
-        console.log('Sincronização concluída:', syncData?.message);
+        throw syncError;
       }
 
-      // Buscar dados atualizados do banco local
-      let query = supabase
-        .from('pedidos')
-        .select('*');
+      // ✅ NOVO: Usar dados retornados diretamente (sem consulta local duplicada)
+      if (syncData?.pedidos) {
+        console.log(`🎯 Recebidos ${syncData.pedidos.length} pedidos diretamente da edge function`);
+        
+        // Aplicar filtros locais apenas nos dados já sincronizados
+        let pedidosFiltrados = syncData.pedidos;
 
-      // Aplicar filtros locais
-      if (filtros.busca) {
-        query = query.or(`numero.ilike.%${filtros.busca}%,numero_ecommerce.ilike.%${filtros.busca}%`);
-      }
+        // Aplicar filtros que não são tratados pela edge function
+        if (filtros.busca) {
+          pedidosFiltrados = pedidosFiltrados.filter((p: any) => 
+            p.numero?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+            p.numero_ecommerce?.toLowerCase().includes(filtros.busca.toLowerCase())
+          );
+        }
 
-      if (filtros.cliente) {
-        query = query.ilike('nome_cliente', `%${filtros.cliente}%`);
-      }
+        if (filtros.cliente) {
+          pedidosFiltrados = pedidosFiltrados.filter((p: any) => 
+            p.nome_cliente?.toLowerCase().includes(filtros.cliente.toLowerCase())
+          );
+        }
 
-      if (filtros.dataInicio) {
-        query = query.gte('data_pedido', filtros.dataInicio);
-      }
-
-      if (filtros.dataFim) {
-        query = query.lte('data_pedido', filtros.dataFim);
-      }
-
-      if (filtros.situacao && filtros.situacao !== 'todas') {
-        query = query.eq('situacao', filtros.situacao);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setPedidos(data || []);
-      calcularMetricas(data || []);
-      
-      // Toast de sucesso apenas se houve sincronização
-      if (!syncError && syncData) {
+        setPedidos(pedidosFiltrados);
+        calcularMetricas(pedidosFiltrados);
+        
         toast({
-          title: "Sincronização concluída",
-          description: syncData.message || "Pedidos atualizados com sucesso",
+          title: "✅ Sincronização concluída",
+          description: syncData.message || `${pedidosFiltrados.length} pedidos carregados com sucesso`,
+        });
+      } else {
+        // Fallback: se a edge function não retornar dados, usar consulta local
+        console.log('⚠️ Edge function não retornou dados. Usando fallback para consulta local...');
+        
+        let query = supabase
+          .from('pedidos')
+          .select('*');
+
+        // Aplicar filtros locais
+        if (filtros.busca) {
+          query = query.or(`numero.ilike.%${filtros.busca}%,numero_ecommerce.ilike.%${filtros.busca}%`);
+        }
+
+        if (filtros.cliente) {
+          query = query.ilike('nome_cliente', `%${filtros.cliente}%`);
+        }
+
+        if (filtros.dataInicio) {
+          query = query.gte('data_pedido', filtros.dataInicio);
+        }
+
+        if (filtros.dataFim) {
+          query = query.lte('data_pedido', filtros.dataFim);
+        }
+
+        if (filtros.situacao && filtros.situacao !== 'todas') {
+          query = query.eq('situacao', filtros.situacao);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        setPedidos(data || []);
+        calcularMetricas(data || []);
+        
+        toast({
+          title: "Dados carregados",
+          description: `${data?.length || 0} pedidos carregados do cache local`,
         });
       }
     } catch (err) {

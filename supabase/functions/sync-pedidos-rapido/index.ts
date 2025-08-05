@@ -75,12 +75,21 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// SEMPRE converter datas para formato DB (YYYY-MM-DD) para salvar no Supabase
 function convertDateFormat(dateStr: string): string {
   if (!dateStr) return '';
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+  
+  // Se está no formato DD/MM/YYYY, converte para YYYY-MM-DD para o banco
+  if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+    const [day, month, year] = dateStr.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
+  
+  // Se já está no formato YYYY-MM-DD, retorna como está
+  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return dateStr;
+  }
+  
   return dateStr;
 }
 
@@ -645,16 +654,29 @@ Deno.serve(async (req) => {
       console.log('⚡ Itens já obtidos da pesquisa principal - sem necessidade de busca individual');
     }
 
-    // ✅ ULTRA OTIMIZADO: Salvar dados no Supabase em paralelo
-    console.log('🚀 Salvando dados no Supabase em paralelo...');
+    // ✅ SOLUÇÃO 3: LOGS DETALHADOS na inserção de dados no banco
+    console.log('🚀 Salvando dados no Supabase com logs detalhados...');
 
     let pedidosSalvos = 0;
     let itensSalvos = 0;
+
+    // Log das datas que serão inseridas para verificação
+    if (allPedidos.length > 0) {
+      console.log('📅 LOGS DE DATAS - Primeiros 3 pedidos que serão inseridos:');
+      allPedidos.slice(0, 3).forEach((pedido, index) => {
+        console.log(`  Pedido ${index + 1} (${pedido.numero}):`, {
+          data_pedido_original: pedido.data_pedido,
+          data_prevista_original: pedido.data_prevista,
+          formato_correto: pedido.data_pedido.match(/^\d{4}-\d{2}-\d{2}$/) ? '✅ YYYY-MM-DD' : '❌ Formato incorreto'
+        });
+      });
+    }
 
     // Executar salvamento de pedidos e itens em paralelo
     const salvarPromises = [];
 
     if (allPedidos.length > 0) {
+      console.log(`💾 Iniciando salvamento de ${allPedidos.length} pedidos...`);
       salvarPromises.push(
         supabase
           .from('pedidos')
@@ -662,14 +684,19 @@ Deno.serve(async (req) => {
             onConflict: 'numero',
             ignoreDuplicates: false 
           })
-          .then(({ error }) => {
-            if (error) throw new Error(`Erro ao salvar pedidos: ${error.message}`);
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('❌ ERRO ao salvar pedidos:', error);
+              throw new Error(`Erro ao salvar pedidos: ${error.message}`);
+            }
+            console.log(`✅ ${allPedidos.length} pedidos salvos com sucesso no Supabase`);
             return allPedidos.length;
           })
       );
     }
 
     if (allItens.length > 0) {
+      console.log(`💾 Iniciando salvamento de ${allItens.length} itens...`);
       salvarPromises.push(
         supabase
           .from('itens_pedidos')
@@ -677,8 +704,12 @@ Deno.serve(async (req) => {
             onConflict: 'numero_pedido,sku',
             ignoreDuplicates: false 
           })
-          .then(({ error }) => {
-            if (error) throw new Error(`Erro ao salvar itens: ${error.message}`);
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('❌ ERRO ao salvar itens:', error);
+              throw new Error(`Erro ao salvar itens: ${error.message}`);
+            }
+            console.log(`✅ ${allItens.length} itens salvos com sucesso no Supabase`);
             return allItens.length;
           })
       );
@@ -689,12 +720,21 @@ Deno.serve(async (req) => {
       const resultados = await Promise.all(salvarPromises);
       pedidosSalvos = allPedidos.length > 0 ? resultados[0] : 0;
       itensSalvos = allItens.length > 0 ? resultados[allPedidos.length > 0 ? 1 : 0] : 0;
+      
+      console.log('📊 LOGS FINAIS DE INSERÇÃO:', {
+        pedidos_salvos: pedidosSalvos,
+        itens_salvos: itensSalvos,
+        timestamp_insercao: new Date().toISOString()
+      });
     }
 
     const tempoExecucao = Date.now() - startTime;
     
     console.log(`✅ Sincronização concluída em ${tempoExecucao}ms`);
 
+    // ✅ SOLUÇÃO 4: OTIMIZAÇÃO DA ARQUITETURA - Retornar dados diretamente
+    console.log('🚀 Preparando resposta otimizada com dados processados...');
+    
     const resultado = {
       success: true,
       dados: {
@@ -705,11 +745,16 @@ Deno.serve(async (req) => {
         tempo_execucao_ms: tempoExecucao,
         paginas_processadas: paginaAtual - 1,
         total_paginas: totalPaginas,
-        registros_por_pagina: 100, // ✅ NOVO: Confirma que está usando 100 registros
-        cache_utilizado: false // ✅ NOVO: Indica se usou cache
+        registros_por_pagina: 100,
+        cache_utilizado: false
       },
+      // ✅ NOVO: Retornar os dados processados diretamente (elimina consulta local)
+      pedidos: allPedidos,
+      itens: allItens,
       message: `Sincronização concluída: ${pedidosSalvos} pedidos e ${itensSalvos} itens processados`
     };
+    
+    console.log(`🎯 Resposta otimizada preparada: ${allPedidos.length} pedidos + ${allItens.length} itens retornados diretamente`);
 
     // ✅ NOVO: Salvar no cache para próximas consultas
     setCache(cacheKey, resultado);
