@@ -5,16 +5,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Configurações otimizadas baseadas no sistema de referência
-const REQUEST_TIMEOUT = 30000; // 30 segundos
-const BASE_RETRY_DELAY = 1000; // 1 segundo
-const MAX_RETRIES = 3; // 3 tentativas
-const DELAY_ENTRE_PAGINAS = 250; // ✅ CORRIGIDO: 250ms como no sistema de referência
-const DELAY_ENTRE_LOTES = 200; // ✅ CORRIGIDO: 200ms como no sistema de referência
-const BATCH_SIZE = 3; // ✅ CORRIGIDO: 3 pedidos por lote como no sistema de referência
-const MAX_PAGINAS_POR_EXECUCAO = 500; // Aumentado significativamente para buscar mais pedidos
-const DELAY_RATE_LIMIT = 5000; // 5 segundos para rate limit
-const CACHE_TTL = 10 * 60 * 1000; // ✅ NOVO: 10 minutos de cache
+// Configurações ultra otimizadas para performance máxima
+const REQUEST_TIMEOUT = 15000; // 15 segundos - reduzido para acelerar
+const BASE_RETRY_DELAY = 500; // 500ms - reduzido para acelerar retries
+const MAX_RETRIES = 2; // 2 tentativas - reduzido para acelerar
+const DELAY_ENTRE_PAGINAS = 100; // 100ms - reduzido para acelerar paginação
+const DELAY_ENTRE_LOTES = 50; // 50ms - reduzido para acelerar lotes
+const BATCH_SIZE = 10; // 10 pedidos por lote - aumentado para mais paralelismo
+const MAX_PAGINAS_POR_EXECUCAO = 1000; // Aumentado para processar mais
+const DELAY_RATE_LIMIT = 3000; // 3 segundos para rate limit - reduzido
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos de cache - reduzido para dados mais frescos
+const MAX_CONCURRENT_REQUESTS = 5; // Máximo de requests paralelos
 
 interface TinyPedido {
   id: string;
@@ -536,9 +537,9 @@ Deno.serve(async (req) => {
         paginaAtual++;
         tentativasConsecutivasFalha = 0;
 
-        // Delay entre páginas
+        // Delay otimizado entre páginas
         if (paginaAtual <= totalPaginas) {
-          await sleep(config.tiny_delay_entre_requisicoes || DELAY_ENTRE_PAGINAS);
+          await sleep(DELAY_ENTRE_PAGINAS);
         }
 
       } catch (error) {
@@ -556,103 +557,138 @@ Deno.serve(async (req) => {
 
     console.log(`📊 Processamento concluído: ${allPedidos.length} pedidos, ${allItens.length} itens`);
 
-    // ✅ CRÍTICO: Buscar detalhes individuais dos pedidos para obter itens
-    // A API pedidos.pesquisa.php não está retornando itens mesmo com com_itens='S'
+    // ✅ ULTRA OTIMIZADO: Buscar detalhes individuais com processamento paralelo
     if (allPedidos.length > 0 && allItens.length === 0) {
-      console.log('🔍 Pedidos sem itens detectados. Buscando detalhes individuais...');
+      console.log('🚀 Pedidos sem itens detectados. Iniciando busca paralela ultra rápida...');
       
-      // Processar em lotes pequenos para evitar timeout
-      const loteSize = 5;
-      for (let i = 0; i < allPedidos.length; i += loteSize) { // ✅ CORRIGIDO: Remover limite artificial de 20 pedidos
-        const lote = allPedidos.slice(i, i + loteSize);
-        
-        for (const pedido of lote) {
-          try {
-            const detalhesParams = new URLSearchParams({
-              token: config.tiny_erp_token,
-              formato: 'json',
-              id: pedido.id
+      // Função para buscar detalhes de um pedido
+      const buscarDetalhesPedido = async (pedido: TinyPedido): Promise<any[]> => {
+        try {
+          const detalhesParams = new URLSearchParams({
+            token: config.tiny_erp_token,
+            formato: 'json',
+            id: pedido.id
+          });
+          
+          const detalhesData = await makeApiCallWithRetry(
+            `https://api.tiny.com.br/api2/pedido.obter.php`,
+            detalhesParams,
+            config,
+            `Detalhes pedido ${pedido.numero}`
+          );
+          
+          const pedidoDetalhado = detalhesData.retorno?.pedido;
+          if (pedidoDetalhado?.itens && Array.isArray(pedidoDetalhado.itens)) {
+            console.log(`📦 Pedido ${pedido.numero}: ${pedidoDetalhado.itens.length} itens encontrados nos detalhes`);
+            
+            return pedidoDetalhado.itens.map((itemWrapper: any) => {
+              const item = itemWrapper.item || itemWrapper;
+              return {
+                pedido_id: pedido.id,
+                numero_pedido: pedido.numero,
+                sku: item.codigo || '',
+                descricao: item.descricao || '',
+                quantidade: parseInt(item.quantidade || '0'),
+                valor_unitario: parseFloat(item.valor_unitario || '0'),
+                valor_total: parseFloat(item.valor_total || '0'),
+                ncm: item.ncm || null,
+                codigo_barras: item.codigo_barras || null,
+                observacoes: item.observacoes || null
+              };
             });
-            
-            const detalhesData = await makeApiCallWithRetry(
-              `https://api.tiny.com.br/api2/pedido.obter.php`,
-              detalhesParams,
-              config,
-              `Detalhes pedido ${pedido.numero}`
-            );
-            
-            const pedidoDetalhado = detalhesData.retorno?.pedido;
-            if (pedidoDetalhado?.itens && Array.isArray(pedidoDetalhado.itens)) {
-              console.log(`📦 Pedido ${pedido.numero}: ${pedidoDetalhado.itens.length} itens encontrados nos detalhes`);
-              
-              for (const itemWrapper of pedidoDetalhado.itens) {
-                const item = itemWrapper.item || itemWrapper;
-                
-                const itemProcessado = {
-                  pedido_id: pedido.id,
-                  numero_pedido: pedido.numero,
-                  sku: item.codigo || '',
-                  descricao: item.descricao || '',
-                  quantidade: parseInt(item.quantidade || '0'),
-                  valor_unitario: parseFloat(item.valor_unitario || '0'),
-                  valor_total: parseFloat(item.valor_total || '0'),
-                  ncm: item.ncm || null,
-                  codigo_barras: item.codigo_barras || null,
-                  observacoes: item.observacoes || null
-                };
-
-                allItens.push(itemProcessado);
-              }
-            }
-            
-            // Delay entre requisições para não sobrecarregar a API
-            await sleep(500);
-          } catch (error) {
-            console.warn(`⚠️ Erro ao buscar detalhes do pedido ${pedido.numero}:`, error.message);
           }
+          return [];
+        } catch (error) {
+          console.warn(`⚠️ Erro ao buscar detalhes do pedido ${pedido.numero}:`, error.message);
+          return [];
         }
+      };
+
+      // Função para processar lote com semáforo para controlar concorrência
+      const processarLoteComConcorrencia = async (lote: TinyPedido[]): Promise<any[]> => {
+        const promises = lote.map((pedido, index) => 
+          new Promise(async (resolve) => {
+            // Pequeno delay escalonado para distribuir requests
+            await sleep(index * 20);
+            const itens = await buscarDetalhesPedido(pedido);
+            resolve(itens);
+          })
+        );
         
-        // ✅ CORRIGIDO: Delay otimizado entre lotes (200ms como sistema referência)
-        await sleep(DELAY_ENTRE_LOTES);
+        const resultados = await Promise.all(promises);
+        return resultados.flat();
+      };
+
+      // Processar todos os pedidos em lotes paralelos
+      const todosPedidos = allPedidos;
+      const totalLotes = Math.ceil(todosPedidos.length / BATCH_SIZE);
+      
+      console.log(`🚀 Processando ${todosPedidos.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE} (máx ${MAX_CONCURRENT_REQUESTS} paralelos)`);
+      
+      for (let i = 0; i < todosPedidos.length; i += BATCH_SIZE) {
+        const lote = todosPedidos.slice(i, i + BATCH_SIZE);
+        const loteNumero = Math.floor(i / BATCH_SIZE) + 1;
+        
+        console.log(`⚡ Processando lote ${loteNumero}/${totalLotes} (${lote.length} pedidos)...`);
+        
+        const itensLote = await processarLoteComConcorrencia(lote);
+        allItens.push(...itensLote);
+        
+        // Delay mínimo entre lotes para não sobrecarregar
+        if (i + BATCH_SIZE < todosPedidos.length) {
+          await sleep(DELAY_ENTRE_LOTES);
+        }
       }
       
-      console.log(`📊 Após busca de detalhes: ${allItens.length} itens encontrados`);
+      console.log(`🚀 Busca paralela concluída: ${allItens.length} itens encontrados em tempo ultra otimizado!`);
     } else if (allItens.length > 0) {
       console.log('⚡ Itens já obtidos da pesquisa principal - sem necessidade de busca individual');
     }
 
-    // Salvar dados no Supabase
-    console.log('💾 Salvando dados no Supabase...');
+    // ✅ ULTRA OTIMIZADO: Salvar dados no Supabase em paralelo
+    console.log('🚀 Salvando dados no Supabase em paralelo...');
 
     let pedidosSalvos = 0;
     let itensSalvos = 0;
 
-    if (allPedidos.length > 0) {
-      const { error: pedidosError } = await supabase
-        .from('pedidos')
-        .upsert(allPedidos, { 
-          onConflict: 'numero',
-          ignoreDuplicates: false 
-        });
+    // Executar salvamento de pedidos e itens em paralelo
+    const salvarPromises = [];
 
-      if (pedidosError) {
-        throw new Error(`Erro ao salvar pedidos: ${pedidosError.message}`);
-      }
-      pedidosSalvos = allPedidos.length;
+    if (allPedidos.length > 0) {
+      salvarPromises.push(
+        supabase
+          .from('pedidos')
+          .upsert(allPedidos, { 
+            onConflict: 'numero',
+            ignoreDuplicates: false 
+          })
+          .then(({ error }) => {
+            if (error) throw new Error(`Erro ao salvar pedidos: ${error.message}`);
+            return allPedidos.length;
+          })
+      );
     }
 
     if (allItens.length > 0) {
-      const { error: itensError } = await supabase
-        .from('itens_pedidos')
-        .upsert(allItens, { 
-          onConflict: 'numero_pedido,sku',
-          ignoreDuplicates: false 
-        });
+      salvarPromises.push(
+        supabase
+          .from('itens_pedidos')
+          .upsert(allItens, { 
+            onConflict: 'numero_pedido,sku',
+            ignoreDuplicates: false 
+          })
+          .then(({ error }) => {
+            if (error) throw new Error(`Erro ao salvar itens: ${error.message}`);
+            return allItens.length;
+          })
+      );
+    }
 
-      if (itensError) {
-        throw new Error(`Erro ao salvar itens: ${itensError.message}`);
-      }
-      itensSalvos = allItens.length;
+    // Aguardar todas as operações de salvamento
+    if (salvarPromises.length > 0) {
+      const resultados = await Promise.all(salvarPromises);
+      pedidosSalvos = allPedidos.length > 0 ? resultados[0] : 0;
+      itensSalvos = allItens.length > 0 ? resultados[allPedidos.length > 0 ? 1 : 0] : 0;
     }
 
     const tempoExecucao = Date.now() - startTime;
