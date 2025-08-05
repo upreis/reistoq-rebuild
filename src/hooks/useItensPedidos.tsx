@@ -163,7 +163,7 @@ export function useItensPedidos() {
         body: {
           filtros: {
             dataInicio: formatarDataParaTiny(filtros.dataInicio),
-            dataFim: formatarDataParaTiny(filtros.dataFinal),
+            dataFinal: formatarDataParaTiny(filtros.dataFinal),
             // ✅ CORRIGIDO: Enviar todas as situações selecionadas
             situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
           }
