@@ -375,17 +375,26 @@ export function PedidosTabelaAvancada({
                     onCheckedChange={toggleSelecionarTodos}
                   />
                 </TableHead>
-                <TableHead>ID Único</TableHead>
-                <TableHead>Pedido</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>SKU Pedido</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Qtd</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Numero da Venda</TableHead>
-                <TableHead>SKU Estoque</TableHead>
-                <TableHead>SKU KIT</TableHead>
-                <TableHead>QTD KIT</TableHead>
+                <TableHead className="min-w-32">ID Único</TableHead>
+                <TableHead className="min-w-20">Pedido</TableHead>
+                <TableHead className="min-w-32">Cliente</TableHead>
+                <TableHead className="min-w-28">SKU Pedido</TableHead>
+                <TableHead className="min-w-40">Descrição</TableHead>
+                <TableHead className="min-w-12">Qtd</TableHead>
+                <TableHead className="min-w-24">Valor</TableHead>
+                <TableHead className="min-w-32">Numero da Venda</TableHead>
+                <TableHead className="min-w-28 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <span className="text-blue-700 dark:text-blue-300 font-medium">SKU Estoque</span>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Mapeado</div>
+                </TableHead>
+                <TableHead className="min-w-24 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <span className="text-blue-700 dark:text-blue-300 font-medium">SKU KIT</span>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Mapeado</div>
+                </TableHead>
+                <TableHead className="min-w-20 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <span className="text-blue-700 dark:text-blue-300 font-medium">QTD KIT</span>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Mapeado</div>
+                </TableHead>
                 <TableHead>Situação</TableHead>
                 <TableHead>Tempo</TableHead>
                 <TableHead>Prioridade</TableHead>
@@ -459,20 +468,20 @@ export function PedidosTabelaAvancada({
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <div className="font-mono text-xs">
+                    <TableCell className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="font-mono text-xs text-blue-700 dark:text-blue-300">
                         {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <div className="font-mono text-xs">
+                    <TableCell className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="font-mono text-xs text-blue-700 dark:text-blue-300">
                         {item.mapeamento_aplicado?.sku_simples || '-'}
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-center">
-                      <div className="font-medium">
+                    <TableCell className="text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="font-medium text-blue-700 dark:text-blue-300">
                         {item.mapeamento_aplicado?.quantidade || '-'}
                       </div>
                     </TableCell>
@@ -537,20 +546,6 @@ export function PedidosTabelaAvancada({
                           </Tooltip>
                         </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => abrirTinyERP(item.numero_pedido)}
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Abrir no Tiny ERP</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
 
 
                         <DropdownMenu>
