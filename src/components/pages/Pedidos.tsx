@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useItensPedidos, type ItemPedido } from "@/hooks/useItensPedidos";
@@ -38,9 +38,60 @@ export function Pedidos() {
   const [modalProcessamento, setModalProcessamento] = useState(false);
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedido | null>(null);
   const [processandoBaixaEstoque, setProcessandoBaixaEstoque] = useState(false);
+  const [estoqueDisponivel, setEstoqueDisponivel] = useState<Record<string, number>>({});
 
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(itens);
+
+  // Função para verificar estoque disponível
+  const verificarEstoqueDisponivel = async () => {
+    if (itensEnriquecidos.length === 0) return;
+    
+    try {
+      const skusParaVerificar = itensEnriquecidos
+        .map(item => item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples)
+        .filter(Boolean);
+      
+      if (skusParaVerificar.length > 0) {
+        const { data: produtos } = await supabase
+          .from('produtos')
+          .select('sku_interno, quantidade_atual')
+          .in('sku_interno', skusParaVerificar);
+        
+        if (produtos) {
+          const estoqueMap: Record<string, number> = {};
+          produtos.forEach(produto => {
+            estoqueMap[produto.sku_interno] = produto.quantidade_atual || 0;
+          });
+          setEstoqueDisponivel(estoqueMap);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar estoque:', error);
+    }
+  };
+
+  // Função para obter status do estoque de um item
+  const obterStatusEstoque = (item: any) => {
+    if (item.ja_processado) return 'processado';
+    if (processandoBaixaEstoque) return 'processando';
+    
+    const skuProduto = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+    if (!skuProduto) return 'sem-mapeamento';
+    
+    const estoqueAtual = estoqueDisponivel[skuProduto] || 0;
+    const quantidadeNecessaria = item.mapeamento_aplicado?.quantidade || item.quantidade;
+    
+    if (estoqueAtual < quantidadeNecessaria) return 'sem-estoque';
+    return 'disponivel';
+  };
+
+  // useEffect para verificar estoque quando itens mudarem
+  useEffect(() => {
+    if (itensEnriquecidos.length > 0) {
+      verificarEstoqueDisponivel();
+    }
+  }, [itensEnriquecidos.length]);
 
   const {
     pedidosPaginados,
@@ -112,8 +163,8 @@ export function Pedidos() {
         description: "Processando itens...",
       });
 
-      // Filtrar apenas itens que têm mapeamento e estão em situação de baixar estoque
-      const itensComMapeamento = itensEnriquecidos.filter(item => {
+      // Filtrar apenas itens que têm mapeamento, estoque disponível e estão em situação de baixar estoque
+      const itensComEstoque = itensEnriquecidos.filter(item => {
         const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
         const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
         
@@ -131,14 +182,27 @@ export function Pedidos() {
         // Não processar se já foi baixado
         const jaProcessado = item.ja_processado;
         
+        // Verificar se tem estoque suficiente
+        const skuProduto = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+        const estoqueAtual = estoqueDisponivel[skuProduto || ''] || 0;
+        const quantidadeNecessaria = item.mapeamento_aplicado?.quantidade || item.quantidade;
+        const temEstoque = estoqueAtual >= quantidadeNecessaria;
+        
         return temMapeamento && (temQuantidade || item.quantidade > 0) && 
-               situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado;
+               situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado && temEstoque;
       });
 
-      if (itensComMapeamento.length === 0) {
+      if (itensComEstoque.length === 0) {
+        const itensSemEstoque = itensEnriquecidos.filter(item => {
+          const statusEstoque = obterStatusEstoque(item);
+          return statusEstoque === 'sem-estoque';
+        }).length;
+        
         toast({
           title: "Aviso",
-          description: "Nenhum item com mapeamento encontrado para processar.",
+          description: itensSemEstoque > 0 
+            ? `${itensSemEstoque} itens sem estoque suficiente. Verifique os produtos em vermelho.`
+            : "Nenhum item disponível para processar.",
           variant: "destructive",
         });
         return;
@@ -147,7 +211,7 @@ export function Pedidos() {
       // Processar baixa de estoque
       const { data, error } = await supabase.functions.invoke('processar-baixa-estoque', {
         body: { 
-          itens: itensComMapeamento.map(item => ({
+          itens: itensComEstoque.map(item => ({
             id: item.id,
             numero_pedido: item.numero_pedido,
             sku_pedido: item.sku,
@@ -168,11 +232,14 @@ export function Pedidos() {
 
       toast({
         title: "Baixa de estoque realizada",
-        description: `${itensComMapeamento.length} itens processados com sucesso.`,
+        description: `${itensComEstoque.length} itens processados com sucesso.`,
       });
 
       // Recarregar dados para mostrar status atualizado
       await recarregarDados();
+      
+      // Atualizar estoque disponível
+      await verificarEstoqueDisponivel();
 
     } catch (err) {
       console.error('Erro ao processar baixa de estoque:', err);
@@ -217,45 +284,10 @@ export function Pedidos() {
 
       {/* Botão Baixar Estoque - só aparece quando há itens carregados */}
       {itens.length > 0 && (() => {
-        const itensComMapeamento = itensEnriquecidos.filter(item => {
-          const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
-          const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
-          
-          // Verificar se está em situação de baixar estoque
-          const situacaoLower = item.situacao?.toLowerCase() || '';
-          const situacoesBaixarEstoque = [
-            'aprovado', 
-            'preparando envio', 
-            'faturado', 
-            'pronto para envio',
-            'em separacao',
-            'entregue'  // Adicionado para permitir teste com pedidos entregues
-          ];
-          
-          const jaProcessado = item.ja_processado;
-          
-          const passouFiltro = temMapeamento && (temQuantidade || item.quantidade > 0) && 
-                 situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado;
-          
-          // Debug detalhado
-          console.log(`[DEBUG BOTÃO] Item ${item.sku}:`, {
-            temMapeamento: !!temMapeamento,
-            skuCorresp: item.mapeamento_aplicado?.sku_correspondente,
-            skuSimples: item.mapeamento_aplicado?.sku_simples,
-            temQuantidade: !!temQuantidade,
-            quantidadeMapeamento: item.mapeamento_aplicado?.quantidade,
-            quantidadeItem: item.quantidade,
-            situacao: item.situacao,
-            situacaoLower,
-            situacaoValida: situacoesBaixarEstoque.includes(situacaoLower),
-            jaProcessado,
-            passouFiltro
-          });
-          
-          return passouFiltro;
+        const itensDisponiveis = itensEnriquecidos.filter(item => {
+          const statusEstoque = obterStatusEstoque(item);
+          return statusEstoque === 'disponivel';
         });
-        
-        console.log(`[DEBUG BOTÃO] Total itens: ${itens.length}, Enriquecidos: ${itensEnriquecidos.length}, Com mapeamento: ${itensComMapeamento.length}`);
         
         return (
           <div className="flex justify-end">
@@ -263,7 +295,7 @@ export function Pedidos() {
               onClick={handleBaixarEstoque}
               variant="default"
               className="gap-2"
-              disabled={loading || itensComMapeamento.length === 0 || processandoBaixaEstoque}
+              disabled={loading || itensDisponiveis.length === 0 || processandoBaixaEstoque}
             >
               {processandoBaixaEstoque ? (
                 <>
@@ -273,7 +305,7 @@ export function Pedidos() {
               ) : (
                 <>
                   <TrendingDown className="h-4 w-4" />
-                  Baixar Estoque ({itensComMapeamento.length})
+                  Baixar Estoque ({itensDisponiveis.length})
                 </>
               )}
             </Button>
@@ -295,6 +327,8 @@ export function Pedidos() {
         onVerDetalhes={handleVerDetalhes}
         onEditarPedido={handleEditarPedido}
         onProcessarPedido={handleProcessarPedido}
+        obterStatusEstoque={obterStatusEstoque}
+        processandoBaixaEstoque={processandoBaixaEstoque}
       />
 
       {/* Modais */}

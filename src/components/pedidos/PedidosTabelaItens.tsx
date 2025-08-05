@@ -31,6 +31,8 @@ interface PedidosTabelaItensProps {
   onVerDetalhes: (item: ItemPedidoEnriquecido) => void;
   onEditarPedido: (item: ItemPedidoEnriquecido) => void;
   onProcessarPedido: (item: ItemPedidoEnriquecido) => void;
+  obterStatusEstoque?: (item: ItemPedidoEnriquecido) => string;
+  processandoBaixaEstoque?: boolean;
 }
 
 export function PedidosTabelaItens({
@@ -46,7 +48,9 @@ export function PedidosTabelaItens({
   onPaginaAnterior,
   onVerDetalhes,
   onEditarPedido,
-  onProcessarPedido
+  onProcessarPedido,
+  obterStatusEstoque,
+  processandoBaixaEstoque
 }: PedidosTabelaItensProps) {
   
   const formatarMoeda = (valor: number) => {
@@ -95,6 +99,31 @@ export function PedidosTabelaItens({
     return `${item.numero_pedido}-${item.sku}`;
   };
 
+  const getStatusProcessamentoComEstoque = (item: ItemPedidoEnriquecido) => {
+    // Se a função obterStatusEstoque foi passada, usar a nova lógica
+    if (obterStatusEstoque) {
+      const status = obterStatusEstoque(item);
+      
+      switch (status) {
+        case 'processado':
+          return <Badge className="bg-green-600 text-white">✓ Estoque baixado</Badge>;
+        case 'processando':
+          return <Badge className="bg-yellow-500 text-white animate-pulse">⏳ Baixando estoque</Badge>;
+        case 'sem-estoque':
+          return <Badge className="bg-red-600 text-white">⚠️ Sem estoque</Badge>;
+        case 'sem-mapeamento':
+          return <Badge variant="destructive">📋 Sem mapear</Badge>;
+        case 'disponivel':
+          return <Badge className="bg-blue-600 text-white">📦 Pronto p/ baixar</Badge>;
+        default:
+          return <Badge variant="outline">❓ Aguardando</Badge>;
+      }
+    }
+    
+    // Lógica antiga (fallback)
+    return getStatusProcessamento(item);
+  };
+
   const getStatusProcessamento = (item: ItemPedidoEnriquecido) => {
     // Verifica se tem mapeamento
     const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
@@ -117,12 +146,12 @@ export function PedidosTabelaItens({
       'preparando envio', 
       'faturado', 
       'pronto para envio',
-      'em separacao'
+      'em separacao',
+      'entregue'  // Incluído para teste
     ];
     
     const situacoesEstoqueBaixado = [
       'enviado',
-      'entregue', 
       'processado', 
       'estoque baixado', 
       'atendido'
@@ -282,9 +311,9 @@ export function PedidosTabelaItens({
                    <TableCell className="text-center">
                      {item.mapeamento_aplicado?.quantidade || '-'}
                    </TableCell>
-                    <TableCell>
-                      {getStatusProcessamento(item)}
-                    </TableCell>
+                     <TableCell>
+                       {getStatusProcessamentoComEstoque(item)}
+                     </TableCell>
                    <TableCell>
                      <DropdownMenu>
                       <DropdownMenuTrigger asChild>
