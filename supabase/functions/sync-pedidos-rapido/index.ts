@@ -12,7 +12,7 @@ const MAX_RETRIES = 3; // 3 tentativas
 const DELAY_ENTRE_PAGINAS = 500; // 500ms entre páginas
 const DELAY_ENTRE_LOTES = 1000; // 1 segundo entre lotes
 const BATCH_SIZE = 5; // 5 pedidos por lote (otimizado)
-const MAX_PAGINAS_POR_EXECUCAO = 50; // Aumentado para buscar mais páginas automaticamente
+const MAX_PAGINAS_POR_EXECUCAO = 500; // Aumentado significativamente para buscar mais pedidos
 const DELAY_RATE_LIMIT = 5000; // 5 segundos para rate limit
 
 interface TinyPedido {
