@@ -113,7 +113,8 @@ export function Pedidos() {
           'preparando envio', 
           'faturado', 
           'pronto para envio',
-          'em separacao'
+          'em separacao',
+          'entregue'  // Adicionado para permitir teste com pedidos entregues
         ];
         
         // Não processar se já foi baixado
@@ -214,7 +215,8 @@ export function Pedidos() {
             'preparando envio', 
             'faturado', 
             'pronto para envio',
-            'em separacao'
+            'em separacao',
+            'entregue'  // Adicionado para permitir teste com pedidos entregues
           ];
           
           const jaProcessado = item.ja_processado;
