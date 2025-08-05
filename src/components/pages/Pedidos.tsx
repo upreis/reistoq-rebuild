@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { useItensPedidos, type ItemPedido } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { useDeParaIntegration } from "@/hooks/useDeParaIntegration";
@@ -10,6 +11,8 @@ import { PedidosControleSincronizacao } from "@/components/pedidos/PedidosContro
 import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
+import { Button } from "@/components/ui/button";
+import { Download, TrendingDown } from "lucide-react";
 
 export function Pedidos() {
   const {
@@ -96,6 +99,64 @@ export function Pedidos() {
     setItemSelecionado(null);
   };
 
+  const handleBaixarEstoque = async () => {
+    try {
+      // Filtrar apenas itens que têm mapeamento (sku_kit e quantidade_kit)
+      const itensComMapeamento = itensEnriquecidos.filter(item => {
+        const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+        const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
+        return temMapeamento && (temQuantidade || item.quantidade > 0);
+      });
+
+      if (itensComMapeamento.length === 0) {
+        toast({
+          title: "Aviso",
+          description: "Nenhum item com mapeamento encontrado para processar.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Processar baixa de estoque
+      const { data, error } = await supabase.functions.invoke('processar-baixa-estoque', {
+        body: { 
+          itens: itensComMapeamento.map(item => ({
+            id: item.id,
+            numero_pedido: item.numero_pedido,
+            sku_pedido: item.sku,
+            sku_kit: item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples,
+            quantidade_kit: item.mapeamento_aplicado?.quantidade || item.quantidade,
+            quantidade_pedido: item.quantidade,
+            descricao: item.descricao,
+            nome_cliente: item.nome_cliente,
+            data_pedido: item.data_pedido,
+            valor_total: item.valor_total
+          }))
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Baixa de estoque realizada",
+        description: `${itensComMapeamento.length} itens processados com sucesso.`,
+      });
+
+      // Recarregar dados para mostrar status atualizado
+      await recarregarDados();
+
+    } catch (err) {
+      console.error('Erro ao processar baixa de estoque:', err);
+      toast({
+        title: "Erro",
+        description: "Erro ao processar baixa de estoque. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,6 +185,29 @@ export function Pedidos() {
         onBuscarPedidos={handleBuscarPedidos}
         loading={loading}
       />
+
+      {/* Botão Baixar Estoque - só aparece quando há itens carregados */}
+      {itens.length > 0 && (() => {
+        const itensComMapeamento = itensEnriquecidos.filter(item => {
+          const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+          const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
+          return temMapeamento && (temQuantidade || item.quantidade > 0);
+        });
+        
+        return (
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleBaixarEstoque}
+              variant="default"
+              className="gap-2"
+              disabled={loading || itensComMapeamento.length === 0}
+            >
+              <TrendingDown className="h-4 w-4" />
+              Baixar Estoque ({itensComMapeamento.length})
+            </Button>
+          </div>
+        );
+      })()}
 
       <PedidosTabelaItens
         itens={itensEnriquecidos.slice((paginaAtual - 1) * 20, paginaAtual * 20)}

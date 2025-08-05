@@ -95,6 +95,25 @@ export function PedidosTabelaItens({
     return `${item.numero_pedido}-${item.sku}`;
   };
 
+  const getStatusProcessamento = (item: ItemPedidoEnriquecido) => {
+    // Verifica se tem mapeamento
+    const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+    
+    if (!temMapeamento) {
+      return <Badge variant="destructive">Sem mapear</Badge>;
+    }
+    
+    // Se tem mapeamento, verificar se já foi processado
+    // Por enquanto, consideramos baseado na situação do pedido
+    const situacaoLower = item.situacao.toLowerCase();
+    
+    if (['processado', 'estoque baixado', 'atendido'].includes(situacaoLower)) {
+      return <Badge className="bg-green-600">Estoque baixado</Badge>;
+    } else {
+      return <Badge variant="secondary">A baixar estoque</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -240,9 +259,9 @@ export function PedidosTabelaItens({
                    <TableCell className="text-center">
                      {item.mapeamento_aplicado?.quantidade || '-'}
                    </TableCell>
-                   <TableCell>
-                     <Badge variant="outline">-</Badge>
-                   </TableCell>
+                    <TableCell>
+                      {getStatusProcessamento(item)}
+                    </TableCell>
                    <TableCell>
                      <DropdownMenu>
                       <DropdownMenuTrigger asChild>

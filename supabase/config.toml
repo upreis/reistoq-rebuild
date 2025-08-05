@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.obter-pedido-tiny]
 verify_jwt = false
+
+[functions.processar-baixa-estoque]
+verify_jwt = false
