@@ -297,8 +297,8 @@ Deno.serve(async (req) => {
       token: config.tiny_erp_token,
       formato: 'json',
       com_itens: 'S', // FUNDAMENTAL para obter itens
-      pagina: '1',
-      limite: '100' // ✅ CORRIGIDO: Máximo permitido pelo plano Evoluir = 100 registros
+      pagina: '1'
+      // ✅ REMOVIDO: limite não é parâmetro válido da API Tiny
     });
 
     // ✅ CORRIGIDO: Aplicar filtros de data

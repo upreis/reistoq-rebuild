@@ -113,11 +113,11 @@ export function useItensPedidos() {
         console.warn('Erro ao carregar filtros salvos:', error);
       }
     }
-    // ✅ CORRIGIDO: Definir período correto para 2024 (onde estão os dados reais)
+    // ✅ CORRIGIDO: Usar 2024 (onde estão os dados reais) - hoje é 05/08/2025
     return {
       busca: '',
-      dataInicio: '2024-07-07',  // Data correta em 2024
-      dataFinal: '2024-07-11',   // Data correta em 2024  
+      dataInicio: '07/07/2024',  // Formato DD/MM/AAAA para Tiny ERP  
+      dataFinal: '11/07/2024',   // Formato DD/MM/AAAA para Tiny ERP
       situacoes: ['cancelado', 'Entregue']  // Situações que existem no Tiny ERP
     };
   });
