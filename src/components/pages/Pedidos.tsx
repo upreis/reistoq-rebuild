@@ -15,6 +15,7 @@ import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamen
 import { Button } from "@/components/ui/button";
 import { Download, TrendingDown, Loader2 } from "lucide-react";
 
+// Force rebuild to clear cache
 export function Pedidos() {
   const {
     itens,
