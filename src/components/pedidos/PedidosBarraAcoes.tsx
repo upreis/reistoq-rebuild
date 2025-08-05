@@ -7,6 +7,7 @@ import type { ItemPedidoEnriquecido } from "@/hooks/useDeParaIntegration";
 
 interface PedidosBarraAcoesProps {
   itens: ItemPedidoEnriquecido[];
+  itensSelecionados: ItemPedidoEnriquecido[];
   obterStatusEstoque?: (item: ItemPedidoEnriquecido) => string;
   processandoBaixaEstoque?: boolean;
   onBaixarEstoqueLote?: (itens: ItemPedidoEnriquecido[]) => void;
@@ -14,6 +15,7 @@ interface PedidosBarraAcoesProps {
 
 export function PedidosBarraAcoes({
   itens,
+  itensSelecionados,
   obterStatusEstoque,
   processandoBaixaEstoque,
   onBaixarEstoqueLote
@@ -23,14 +25,16 @@ export function PedidosBarraAcoes({
     return new Date(data).toLocaleDateString('pt-BR');
   };
 
-  // Filtrar itens elegíveis para baixa de estoque
-  const itensElegiveis = itens.filter(item => {
+  // Filtrar itens selecionados e elegíveis para baixa de estoque
+  const itensElegiveis = itensSelecionados.filter(item => {
     const status = obterStatusEstoque?.(item);
     return status === 'disponivel';
   });
 
   const exportarTodos = () => {
-    if (itens.length === 0) {
+    const itensParaExportar = itensSelecionados.length > 0 ? itensSelecionados : itens;
+    
+    if (itensParaExportar.length === 0) {
       toast({
         title: "Aviso",
         description: "Não há itens para exportar.",
@@ -43,7 +47,7 @@ export function PedidosBarraAcoes({
     const headers = ['Pedido', 'Cliente', 'SKU Pedido', 'Descrição', 'Qtd', 'Valor Unit.', 'Total', 'Numero da Venda', 'SKU Estoque', 'SKU KIT', 'QTD KIT', 'Situação', 'Data'];
     const csvContent = [
       headers.join(','),
-      ...itens.map(item => [
+      ...itensParaExportar.map(item => [
         item.numero_pedido,
         `"${item.nome_cliente}"`,
         item.sku,
@@ -73,7 +77,7 @@ export function PedidosBarraAcoes({
 
     toast({
       title: "Exportação concluída",
-      description: `${itens.length} itens exportados para CSV.`,
+      description: `${itensParaExportar.length} itens exportados para CSV.`,
     });
   };
 
@@ -108,10 +112,19 @@ export function PedidosBarraAcoes({
               </Badge>
             </div>
             
+            {itensSelecionados.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Selecionados:</span>
+                <Badge variant="secondary" className="px-3 py-1">
+                  {itensSelecionados.length} {itensSelecionados.length === 1 ? 'item' : 'itens'}
+                </Badge>
+              </div>
+            )}
+            
             {itensElegiveis.length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Prontos para baixar:</span>
-                <Badge variant="default" className="px-3 py-1 bg-blue-600">
+                <Badge variant="default" className="px-3 py-1 bg-blue-600 text-white">
                   {itensElegiveis.length} {itensElegiveis.length === 1 ? 'item' : 'itens'}
                 </Badge>
               </div>
@@ -132,7 +145,7 @@ export function PedidosBarraAcoes({
                 variant="default" 
                 onClick={processarBaixaEstoque}
                 disabled={processandoBaixaEstoque}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <TrendingDown className="mr-2 h-4 w-4" />
                 Baixar Estoque ({itensElegiveis.length})

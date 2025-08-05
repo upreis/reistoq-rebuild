@@ -66,6 +66,7 @@ export function Pedidos() {
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedido | null>(null);
   const [processandoBaixaEstoque, setProcessandoBaixaEstoque] = useState(false);
   const [estoqueDisponivel, setEstoqueDisponivel] = useState<Record<string, number>>({});
+  const [itensSelecionados, setItensSelecionados] = useState<any[]>([]);
 
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(itens);
@@ -117,6 +118,13 @@ export function Pedidos() {
   useEffect(() => {
     if (itensEnriquecidos.length > 0) {
       verificarEstoqueDisponivel();
+      
+      // Auto-selecionar itens elegíveis quando carregar novos dados
+      const itensElegiveis = itensEnriquecidos.filter(item => {
+        const status = obterStatusEstoque(item);
+        return status === 'disponivel';
+      });
+      setItensSelecionados(itensElegiveis);
     }
   }, [itensEnriquecidos.length]);
 
@@ -318,6 +326,7 @@ export function Pedidos() {
       {/* Barra de Ações Automática */}
       <PedidosBarraAcoes
         itens={itensEnriquecidos}
+        itensSelecionados={itensSelecionados}
         obterStatusEstoque={obterStatusEstoque}
         processandoBaixaEstoque={processandoBaixaEstoque}
         onBaixarEstoqueLote={async (itens) => {
@@ -351,6 +360,8 @@ export function Pedidos() {
       {/* Tabela de Pedidos */}
       <PedidosTabelaAvancada
         itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
+        itensSelecionados={itensSelecionados}
+        onSelecaoChange={setItensSelecionados}
         loading={loading}
         paginaAtual={paginaAtual}
         totalPaginas={totalPaginas}

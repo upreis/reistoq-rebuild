@@ -27,6 +27,8 @@ import type { ItemPedidoEnriquecido } from "@/hooks/useDeParaIntegration";
 
 interface PedidosTabelaAvancadaProps {
   itens: ItemPedidoEnriquecido[];
+  itensSelecionados: ItemPedidoEnriquecido[];
+  onSelecaoChange: (itens: ItemPedidoEnriquecido[]) => void;
   loading: boolean;
   paginaAtual: number;
   totalPaginas: number;
@@ -44,6 +46,8 @@ interface PedidosTabelaAvancadaProps {
 
 export function PedidosTabelaAvancada({
   itens,
+  itensSelecionados,
+  onSelecaoChange,
   loading,
   paginaAtual,
   totalPaginas,
@@ -188,6 +192,38 @@ export function PedidosTabelaAvancada({
     window.open(url, '_blank');
   };
 
+  // Função para verificar se item está selecionado
+  const isItemSelecionado = (item: ItemPedidoEnriquecido) => {
+    return itensSelecionados.some(itemSel => itemSel.id === item.id);
+  };
+
+  // Função para alternar seleção de um item
+  const toggleSelecaoItem = (item: ItemPedidoEnriquecido) => {
+    if (isItemSelecionado(item)) {
+      onSelecaoChange(itensSelecionados.filter(itemSel => itemSel.id !== item.id));
+    } else {
+      onSelecaoChange([...itensSelecionados, item]);
+    }
+  };
+
+  // Função para selecionar/deselecionar todos
+  const toggleSelecaoTodos = () => {
+    if (itensSelecionados.length === itens.length) {
+      onSelecaoChange([]); // Deselecionar todos
+    } else {
+      onSelecaoChange([...itens]); // Selecionar todos
+    }
+  };
+
+  // Função para auto-selecionar itens elegíveis quando página carrega
+  const autoSelecionarElegiveis = () => {
+    const itensElegiveis = itens.filter(item => {
+      const status = obterStatusEstoque?.(item);
+      return status === 'disponivel';
+    });
+    onSelecaoChange(itensElegiveis);
+  };
+
 
   if (loading) {
     return (
@@ -240,6 +276,13 @@ export function PedidosTabelaAvancada({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="px-2 w-12">
+                  <Checkbox
+                    checked={itensSelecionados.length === itens.length && itens.length > 0}
+                    onCheckedChange={toggleSelecaoTodos}
+                    aria-label="Selecionar todos"
+                  />
+                </TableHead>
                 <TableHead className="px-2">ID Único</TableHead>
                 <TableHead className="px-2">Pedido</TableHead>
                 <TableHead className="px-2">Cliente</TableHead>
@@ -272,9 +315,20 @@ export function PedidosTabelaAvancada({
               {itens.map((item) => {
                 const prioridade = obterPrioridade(item);
                 const margemLucro = calcularMargemLucro(item);
+                const statusEstoque = obterStatusEstoque?.(item);
+                const isElegivel = statusEstoque === 'disponivel';
                 
                 return (
                   <TableRow key={item.id}>
+                    
+                    <TableCell className="px-2 w-12">
+                      <Checkbox
+                        checked={isItemSelecionado(item)}
+                        onCheckedChange={() => toggleSelecaoItem(item)}
+                        disabled={!isElegivel}
+                        aria-label={`Selecionar item ${item.sku}`}
+                      />
+                    </TableCell>
                     
                     <TableCell className="font-mono text-xs">
                       {gerarIdUnico(item)}
