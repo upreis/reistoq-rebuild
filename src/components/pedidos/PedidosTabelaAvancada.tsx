@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { 
-  Eye, Edit, Play, MoreHorizontal, ExternalLink, Copy, MessageSquare, 
+  Eye, Edit, Play, MoreHorizontal, ExternalLink, Copy, 
   Clock, TrendingUp, TrendingDown, AlertTriangle, Download, CheckSquare, Square 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -215,7 +215,7 @@ export function PedidosTabelaAvancada({
     const itensSelecionadosData = itens.filter(item => itensSelecionados.includes(item.id));
     
     // Create CSV content
-    const headers = ['Pedido', 'Cliente', 'SKU', 'Descrição', 'Qtd', 'Valor Unit.', 'Total', 'Situação', 'Data'];
+    const headers = ['Pedido', 'Cliente', 'SKU Pedido', 'Descrição', 'Qtd', 'Valor Unit.', 'Total', 'Numero da Venda', 'SKU Estoque', 'SKU KIT', 'QTD KIT', 'Situação', 'Data'];
     const csvContent = [
       headers.join(','),
       ...itensSelecionadosData.map(item => [
@@ -226,6 +226,10 @@ export function PedidosTabelaAvancada({
         item.quantidade,
         item.valor_unitario,
         item.valor_total,
+        `"${item.numero_ecommerce || ''}"`,
+        `"${item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || ''}"`,
+        `"${item.mapeamento_aplicado?.sku_simples || ''}"`,
+        item.mapeamento_aplicado?.quantidade || '',
         `"${item.situacao}"`,
         formatarData(item.data_pedido)
       ].join(','))
@@ -374,10 +378,14 @@ export function PedidosTabelaAvancada({
                 <TableHead>ID Único</TableHead>
                 <TableHead>Pedido</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>SKU</TableHead>
+                <TableHead>SKU Pedido</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Qtd</TableHead>
                 <TableHead>Valor</TableHead>
+                <TableHead>Numero da Venda</TableHead>
+                <TableHead>SKU Estoque</TableHead>
+                <TableHead>SKU KIT</TableHead>
+                <TableHead>QTD KIT</TableHead>
                 <TableHead>Situação</TableHead>
                 <TableHead>Tempo</TableHead>
                 <TableHead>Prioridade</TableHead>
@@ -442,6 +450,30 @@ export function PedidosTabelaAvancada({
                         <div className="text-xs text-muted-foreground">
                           {formatarMoeda(item.valor_unitario)} un.
                         </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="font-mono text-xs">
+                        {item.numero_ecommerce || '-'}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="font-mono text-xs">
+                        {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="font-mono text-xs">
+                        {item.mapeamento_aplicado?.sku_simples || '-'}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-center">
+                      <div className="font-medium">
+                        {item.mapeamento_aplicado?.quantidade || '-'}
                       </div>
                     </TableCell>
                     
@@ -520,20 +552,6 @@ export function PedidosTabelaAvancada({
                           </Tooltip>
                         </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => abrirWhatsApp(item.nome_cliente)}
-                              >
-                                <MessageSquare className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>WhatsApp Cliente</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
