@@ -80,7 +80,7 @@
   visibility: visible;
 }
 
-  .dark {
+.dark {
     /* REISTOQ Corporate Brand Colors - Dark Theme */
     --background: 215 28% 17%;         /* Sophisticated dark gray #1f2937 */
     --foreground: 0 0% 100%;           /* Pure white text */
