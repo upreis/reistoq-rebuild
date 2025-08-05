@@ -113,11 +113,15 @@ export function useItensPedidos() {
         console.warn('Erro ao carregar filtros salvos:', error);
       }
     }
-    // ✅ Filtros padrão com período específico onde há dados (formato DD/MM/AAAA)
+    // ✅ Filtros padrão com período atual (formato YYYY-MM-DD para Supabase)
+    const hoje = new Date();
+    const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    
     return {
       busca: '',
-      dataInicio: '08/07/2025',  // Data específica onde há dados confirmados (formato correto)
-      dataFim: '08/07/2025',     // Mesmo dia para garantir resultados
+      dataInicio: primeiroDiaDoMes.toISOString().split('T')[0],  // Formato YYYY-MM-DD
+      dataFim: ultimoDiaDoMes.toISOString().split('T')[0],       // Formato YYYY-MM-DD
       situacoes: []              // Sem filtro de situação para buscar todas
     };
   });
@@ -148,11 +152,18 @@ export function useItensPedidos() {
       // Sincronização INCREMENTAL rápida com Tiny ERP
       console.log('Sincronizando pedidos com Tiny ERP (modo incremental)...');
       
+      // ✅ CORRIGIDO: Converter datas para formato DD/MM/AAAA que o Tiny API espera
+      const formatarDataParaTiny = (dataYYYYMMDD: string): string => {
+        if (!dataYYYYMMDD) return '';
+        const [ano, mes, dia] = dataYYYYMMDD.split('-');
+        return `${dia}/${mes}/${ano}`;
+      };
+
       const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-incremental', {
         body: {
           filtros: {
-            dataInicio: filtros.dataInicio,
-            dataFim: filtros.dataFim,
+            dataInicio: formatarDataParaTiny(filtros.dataInicio),
+            dataFim: formatarDataParaTiny(filtros.dataFim),
             // ✅ CORRIGIDO: Enviar todas as situações selecionadas
             situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
           }
@@ -398,10 +409,14 @@ export function useItensPedidos() {
   };
 
   const limparFiltros = () => {
+    const hoje = new Date();
+    const primeiroDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    
     const filtrosLimpos = {
       busca: '',
-      dataInicio: '08/07/2025',     // ✅ Data específica onde há dados (formato DD/MM/AAAA)
-      dataFim: '08/07/2025',        // ✅ Mesmo dia para garantir resultados
+      dataInicio: primeiroDiaDoMes.toISOString().split('T')[0],  // Formato YYYY-MM-DD
+      dataFim: ultimoDiaDoMes.toISOString().split('T')[0],       // Formato YYYY-MM-DD
       situacoes: []                 // ✅ Sem filtro para buscar todas
     };
     setFiltros(filtrosLimpos);
