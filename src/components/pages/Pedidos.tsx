@@ -9,7 +9,6 @@ import { FiltrosAvancadosPedidos, type FiltrosAvancados } from "@/components/ped
 import { DashboardMiniPedidos } from "@/components/pedidos/DashboardMiniPedidos";
 import { PedidosTabelaAvancada } from "@/components/pedidos/PedidosTabelaAvancada";
 import { PedidosControleSincronizacao } from "@/components/pedidos/PedidosControleSincronizacao";
-import { PedidosBarraAcoes } from "@/components/pedidos/PedidosBarraAcoes";
 import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
@@ -315,9 +314,21 @@ export function Pedidos() {
         loading={loading}
       />
 
-      {/* Barra de Ações Automática */}
-      <PedidosBarraAcoes
-        itens={itensEnriquecidos}
+      {/* Tabela Avançada com Ações em Lote */}
+      <PedidosTabelaAvancada
+        itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
+        loading={loading}
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        totalItens={totalItens}
+        itemInicial={itemInicial}
+        itemFinal={itemFinal}
+        onPaginaChange={irParaPagina}
+        onProximaPagina={proximaPagina}
+        onPaginaAnterior={paginaAnterior}
+        onVerDetalhes={handleVerDetalhes}
+        onEditarPedido={handleEditarPedido}
+        onProcessarPedido={handleProcessarPedido}
         obterStatusEstoque={obterStatusEstoque}
         processandoBaixaEstoque={processandoBaixaEstoque}
         onBaixarEstoqueLote={async (itens) => {
@@ -346,24 +357,6 @@ export function Pedidos() {
             setProcessandoBaixaEstoque(false);
           }
         }}
-      />
-
-      {/* Tabela de Pedidos */}
-      <PedidosTabelaAvancada
-        itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
-        loading={loading}
-        paginaAtual={paginaAtual}
-        totalPaginas={totalPaginas}
-        totalItens={totalItens}
-        itemInicial={itemInicial}
-        itemFinal={itemFinal}
-        onPaginaChange={irParaPagina}
-        onProximaPagina={proximaPagina}
-        onPaginaAnterior={paginaAnterior}
-        onVerDetalhes={handleVerDetalhes}
-        onEditarPedido={handleEditarPedido}
-        onProcessarPedido={handleProcessarPedido}
-        obterStatusEstoque={obterStatusEstoque}
       />
 
       {/* Modais */}

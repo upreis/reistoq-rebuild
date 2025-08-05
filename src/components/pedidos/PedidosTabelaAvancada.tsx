@@ -40,6 +40,8 @@ interface PedidosTabelaAvancadaProps {
   onEditarPedido: (item: ItemPedidoEnriquecido) => void;
   onProcessarPedido: (item: ItemPedidoEnriquecido) => void;
   obterStatusEstoque?: (item: ItemPedidoEnriquecido) => string;
+  processandoBaixaEstoque?: boolean;
+  onBaixarEstoqueLote?: (itens: ItemPedidoEnriquecido[]) => void;
 }
 
 export function PedidosTabelaAvancada({
@@ -56,8 +58,13 @@ export function PedidosTabelaAvancada({
   onVerDetalhes,
   onEditarPedido,
   onProcessarPedido,
-  obterStatusEstoque
+  obterStatusEstoque,
+  processandoBaixaEstoque,
+  onBaixarEstoqueLote
 }: PedidosTabelaAvancadaProps) {
+  
+  const [itensSelecionados, setItensSelecionados] = useState<string[]>([]);
+  const [statusLoteChange, setStatusLoteChange] = useState("");
 
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -188,6 +195,84 @@ export function PedidosTabelaAvancada({
     window.open(url, '_blank');
   };
 
+  const toggleSelecionarItem = (itemId: string) => {
+    setItensSelecionados(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const toggleSelecionarTodos = () => {
+    if (itensSelecionados.length === itens.length) {
+      setItensSelecionados([]);
+    } else {
+      setItensSelecionados(itens.map(item => item.id));
+    }
+  };
+
+  const exportarSelecionados = () => {
+    const itensSelecionadosData = itens.filter(item => itensSelecionados.includes(item.id));
+    
+    // Create CSV content
+    const headers = ['Pedido', 'Cliente', 'SKU Pedido', 'Descrição', 'Qtd', 'Valor Unit.', 'Total', 'Numero da Venda', 'SKU Estoque', 'SKU KIT', 'QTD KIT', 'Situação', 'Data'];
+    const csvContent = [
+      headers.join(','),
+      ...itensSelecionadosData.map(item => [
+        item.numero_pedido,
+        `"${item.nome_cliente}"`,
+        item.sku,
+        `"${item.descricao}"`,
+        item.quantidade,
+        item.valor_unitario,
+        item.valor_total,
+        `"${item.numero_ecommerce || ''}"`,
+        `"${item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || ''}"`,
+        `"${item.mapeamento_aplicado?.sku_simples || ''}"`,
+        item.mapeamento_aplicado?.quantidade || '',
+        `"${item.situacao}"`,
+        formatarData(item.data_pedido)
+      ].join(','))
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pedidos_selecionados_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Exportação concluída",
+      description: `${itensSelecionados.length} itens exportados para CSV.`,
+    });
+  };
+
+  const processarLoteEstoque = () => {
+    if (!onBaixarEstoqueLote) return;
+    
+    const itensSelecionadosData = itens.filter(item => itensSelecionados.includes(item.id));
+    const itensElegiveis = itensSelecionadosData.filter(item => {
+      const status = obterStatusEstoque?.(item);
+      return status === 'disponivel';
+    });
+
+    if (itensElegiveis.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Nenhum item selecionado está elegível para baixa de estoque.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onBaixarEstoqueLote(itensElegiveis);
+    setItensSelecionados([]);
+  };
 
   if (loading) {
     return (
@@ -230,9 +315,53 @@ export function PedidosTabelaAvancada({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Itens de Pedidos ({totalItens} {totalItens === 1 ? 'item' : 'itens'})
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>
+            Itens de Pedidos ({totalItens} {totalItens === 1 ? 'item' : 'itens'})
+          </CardTitle>
+          
+          {/* Ações em Lote */}
+          {itensSelecionados.length > 0 && (
+            <div className="flex gap-2">
+              <Badge variant="outline" className="mr-2">
+                {itensSelecionados.length} selecionado{itensSelecionados.length > 1 ? 's' : ''}
+              </Badge>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={exportarSelecionados}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+              
+              {onBaixarEstoqueLote && (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={processarLoteEstoque}
+                  disabled={processandoBaixaEstoque}
+                >
+                  <TrendingDown className="mr-2 h-4 w-4" />
+                  Baixar Estoque
+                </Button>
+              )}
+              
+              <Select value={statusLoteChange} onValueChange={setStatusLoteChange}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Mudar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aprovado">Aprovado</SelectItem>
+                  <SelectItem value="faturado">Faturado</SelectItem>
+                  <SelectItem value="enviado">Enviado</SelectItem>
+                  <SelectItem value="entregue">Entregue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
       </CardHeader>
       
       <CardContent>
@@ -240,6 +369,12 @@ export function PedidosTabelaAvancada({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={itensSelecionados.length === itens.length}
+                    onCheckedChange={toggleSelecionarTodos}
+                  />
+                </TableHead>
                 <TableHead className="px-2">ID Único</TableHead>
                 <TableHead className="px-2">Pedido</TableHead>
                 <TableHead className="px-2">Cliente</TableHead>
@@ -274,7 +409,13 @@ export function PedidosTabelaAvancada({
                 const margemLucro = calcularMargemLucro(item);
                 
                 return (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id} className={itensSelecionados.includes(item.id) ? "bg-muted/50" : ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={itensSelecionados.includes(item.id)}
+                        onCheckedChange={() => toggleSelecionarItem(item.id)}
+                      />
+                    </TableCell>
                     
                     <TableCell className="font-mono text-xs">
                       {gerarIdUnico(item)}
@@ -389,6 +530,30 @@ export function PedidosTabelaAvancada({
                     
                     <TableCell>
                       <div className="flex gap-1">
+                        {/* Botão de Baixar Estoque - Visível quando disponível */}
+                        {obterStatusEstoque && obterStatusEstoque(item) === 'disponivel' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => onBaixarEstoqueLote && onBaixarEstoqueLote([item])}
+                                  disabled={processandoBaixaEstoque}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <TrendingDown className="h-3 w-3 mr-1" />
+                                  <span className="text-xs">
+                                    Baixar ({item.mapeamento_aplicado?.quantidade || item.quantidade})
+                                  </span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Baixar {item.mapeamento_aplicado?.quantidade || item.quantidade} unidades do estoque
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         
                         {/* Quick Actions */}
                         <TooltipProvider>
@@ -442,6 +607,11 @@ export function PedidosTabelaAvancada({
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="text-sm text-muted-foreground">
             Mostrando {itemInicial} a {itemFinal} de {totalItens} item(ns)
+            {itensSelecionados.length > 0 && (
+              <span className="ml-2 font-medium">
+                • {itensSelecionados.length} selecionado{itensSelecionados.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
           
           {totalPaginas > 1 && (
