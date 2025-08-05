@@ -103,14 +103,37 @@ export function PedidosTabelaItens({
       return <Badge variant="destructive">Sem mapear</Badge>;
     }
     
-    // Se tem mapeamento, verificar se já foi processado
-    // Por enquanto, consideramos baseado na situação do pedido
-    const situacaoLower = item.situacao.toLowerCase();
-    
-    if (['processado', 'estoque baixado', 'atendido'].includes(situacaoLower)) {
+    // Se já foi processado (baseado no histórico)
+    if (item.ja_processado) {
       return <Badge className="bg-green-600">Estoque baixado</Badge>;
-    } else {
+    }
+    
+    // Se tem mapeamento, verificar status baseado na situação do pedido
+    const situacaoLower = item.situacao?.toLowerCase() || '';
+    
+    // Só deve baixar estoque se estiver em situações que permitem baixa
+    const situacoesBaixarEstoque = [
+      'aprovado', 
+      'preparando envio', 
+      'faturado', 
+      'pronto para envio',
+      'em separacao'
+    ];
+    
+    const situacoesEstoqueBaixado = [
+      'enviado',
+      'entregue', 
+      'processado', 
+      'estoque baixado', 
+      'atendido'
+    ];
+    
+    if (situacoesEstoqueBaixado.includes(situacaoLower)) {
+      return <Badge className="bg-green-600">Estoque baixado</Badge>;
+    } else if (situacoesBaixarEstoque.includes(situacaoLower)) {
       return <Badge variant="secondary">A baixar estoque</Badge>;
+    } else {
+      return <Badge variant="outline">Não processar</Badge>;
     }
   };
 

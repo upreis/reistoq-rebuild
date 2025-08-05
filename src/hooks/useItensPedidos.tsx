@@ -37,6 +37,7 @@ export interface ItemPedido {
   produto_nome?: string;
   produto_categoria?: string;
   estoque_atual?: number;
+  ja_processado?: boolean;
 }
 
 interface MetricasPedidos {
@@ -268,6 +269,14 @@ export function useItensPedidos() {
         .from('produtos')
         .select('sku_interno, nome, categoria, quantidade_atual');
 
+      // Buscar histórico de vendas para verificar itens já processados
+      const { data: historicoVendas } = await supabase
+        .from('historico_vendas')
+        .select('id_unico, status')
+        .eq('status', 'estoque_baixado');
+
+      console.log(`Aplicando mapeamentos: ${mapeamentos?.length || 0} mapeamentos, ${produtos?.length || 0} produtos, ${historicoVendas?.length || 0} histórico`);
+
       return itensRaw.map(item => {
         const pedidoData = item.pedidos;
         
@@ -278,6 +287,12 @@ export function useItensPedidos() {
         
         // Buscar dados do produto no estoque
         const produto = produtos?.find(p => p.sku_interno === skuCorrespondente);
+
+        // Verificar se já foi processado no histórico
+        const idUnico = `${item.numero_pedido}-${item.sku}`;
+        const jaProcessado = historicoVendas?.some(h => h.id_unico === idUnico);
+
+        console.log(`Item ${item.sku}: mapeamento=${!!mapeamento}, produto=${!!produto}, jaProcessado=${jaProcessado}`);
 
         return {
           id: item.id,
@@ -311,7 +326,9 @@ export function useItensPedidos() {
           sku_simples: skuSimples,
           produto_nome: produto?.nome,
           produto_categoria: produto?.categoria,
-          estoque_atual: produto?.quantidade_atual
+          estoque_atual: produto?.quantidade_atual,
+          // Status de processamento
+          ja_processado: jaProcessado
         };
       });
     } catch (error) {

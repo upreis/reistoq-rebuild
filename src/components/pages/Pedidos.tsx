@@ -101,11 +101,26 @@ export function Pedidos() {
 
   const handleBaixarEstoque = async () => {
     try {
-      // Filtrar apenas itens que têm mapeamento (sku_kit e quantidade_kit)
+      // Filtrar apenas itens que têm mapeamento e estão em situação de baixar estoque
       const itensComMapeamento = itensEnriquecidos.filter(item => {
         const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
         const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
-        return temMapeamento && (temQuantidade || item.quantidade > 0);
+        
+        // Verificar se está em situação de baixar estoque
+        const situacaoLower = item.situacao?.toLowerCase() || '';
+        const situacoesBaixarEstoque = [
+          'aprovado', 
+          'preparando envio', 
+          'faturado', 
+          'pronto para envio',
+          'em separacao'
+        ];
+        
+        // Não processar se já foi baixado
+        const jaProcessado = item.ja_processado;
+        
+        return temMapeamento && (temQuantidade || item.quantidade > 0) && 
+               situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado;
       });
 
       if (itensComMapeamento.length === 0) {
@@ -191,7 +206,21 @@ export function Pedidos() {
         const itensComMapeamento = itensEnriquecidos.filter(item => {
           const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
           const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
-          return temMapeamento && (temQuantidade || item.quantidade > 0);
+          
+          // Verificar se está em situação de baixar estoque
+          const situacaoLower = item.situacao?.toLowerCase() || '';
+          const situacoesBaixarEstoque = [
+            'aprovado', 
+            'preparando envio', 
+            'faturado', 
+            'pronto para envio',
+            'em separacao'
+          ];
+          
+          const jaProcessado = item.ja_processado;
+          
+          return temMapeamento && (temQuantidade || item.quantidade > 0) && 
+                 situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado;
         });
         
         return (

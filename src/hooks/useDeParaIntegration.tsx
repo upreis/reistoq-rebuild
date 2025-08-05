@@ -45,6 +45,7 @@ export interface ItemPedidoEnriquecido {
   // Campos do estoque
   produto_nome?: string;
   estoque_atual?: number;
+  ja_processado?: boolean;
 }
 
 export function useDeParaIntegration() {
