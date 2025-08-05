@@ -22,7 +22,7 @@ import { ProdutoEditModal } from "@/components/estoque/ProdutoEditModal";
 import { ProdutoImageUpload } from "@/components/estoque/ProdutoImageUpload";
 import { EstoqueHeader } from "@/components/estoque/EstoqueHeader";
 import { EstoqueFiltros } from "@/components/estoque/EstoqueFiltros";
-import { EstoqueMetricas } from "@/components/estoque/EstoqueMetricas";
+import { EstoqueBarraStatus } from "@/components/estoque/EstoqueBarraStatus";
 import EstoqueTabela from "@/components/estoque/EstoqueTabela";
 import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
@@ -213,8 +213,8 @@ export function Estoque() {
         <EstoqueFileManager onUploadSuccess={recarregarDados} />
       </div>
 
-      {/* Summary Cards */}
-      <EstoqueMetricas metricas={metricas} loading={loading} />
+      {/* Status Bar */}
+      <EstoqueBarraStatus metricas={metricas} />
 
       {/* Stock Table */}
       <EstoqueTabela 
