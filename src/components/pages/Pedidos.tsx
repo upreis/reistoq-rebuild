@@ -12,7 +12,7 @@ import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
 import { Button } from "@/components/ui/button";
-import { Download, TrendingDown } from "lucide-react";
+import { Download, TrendingDown, Loader2 } from "lucide-react";
 
 export function Pedidos() {
   const {
@@ -37,6 +37,7 @@ export function Pedidos() {
   const [modalEdicao, setModalEdicao] = useState(false);
   const [modalProcessamento, setModalProcessamento] = useState(false);
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedido | null>(null);
+  const [processandoBaixaEstoque, setProcessandoBaixaEstoque] = useState(false);
 
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(itens);
@@ -100,7 +101,17 @@ export function Pedidos() {
   };
 
   const handleBaixarEstoque = async () => {
+    if (processandoBaixaEstoque) return; // Evitar cliques múltiplos
+    
     try {
+      setProcessandoBaixaEstoque(true);
+      
+      // Toast de início do processo
+      toast({
+        title: "Iniciando baixa de estoque",
+        description: "Processando itens...",
+      });
+
       // Filtrar apenas itens que têm mapeamento e estão em situação de baixar estoque
       const itensComMapeamento = itensEnriquecidos.filter(item => {
         const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
@@ -170,6 +181,8 @@ export function Pedidos() {
         description: "Erro ao processar baixa de estoque. Tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      setProcessandoBaixaEstoque(false);
     }
   };
 
@@ -250,10 +263,19 @@ export function Pedidos() {
               onClick={handleBaixarEstoque}
               variant="default"
               className="gap-2"
-              disabled={loading || itensComMapeamento.length === 0}
+              disabled={loading || itensComMapeamento.length === 0 || processandoBaixaEstoque}
             >
-              <TrendingDown className="h-4 w-4" />
-              Baixar Estoque ({itensComMapeamento.length})
+              {processandoBaixaEstoque ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="h-4 w-4" />
+                  Baixar Estoque ({itensComMapeamento.length})
+                </>
+              )}
             </Button>
           </div>
         );
