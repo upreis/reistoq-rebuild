@@ -94,9 +94,9 @@ function determinarNomeEcommerce(pedido: any): string {
 
 // ✅ CORRIGIDO: Função para mapear situações conforme tabela auxiliar do Tiny ERP
 function mapearSituacoes(situacao: string | string[]): string {
-  // Mapeamento correto conforme imagem da documentação oficial da API Tiny
+  // Mapeamento correto conforme documentação oficial da API Tiny
   const mapeamento: { [key: string]: string } = {
-    // Formatos do frontend para códigos corretos da API Tiny conforme imagem
+    // Formatos exatos do frontend para códigos corretos da API Tiny
     'Em Aberto': 'aberto',
     'em aberto': 'aberto',
     'Em aberto': 'aberto', 
@@ -107,7 +107,7 @@ function mapearSituacoes(situacao: string | string[]): string {
     'Preparando envio': 'preparando_envio',
     'faturado': 'faturado',
     'Faturado': 'faturado',
-    'atendido': 'faturado', // Faturado = Atendido conforme tabela
+    'atendido': 'faturado', 
     'Atendido': 'faturado',
     'Pronto para Envio': 'pronto_envio',
     'pronto para envio': 'pronto_envio',
@@ -122,7 +122,9 @@ function mapearSituacoes(situacao: string | string[]): string {
     'Não entregue': 'nao_entregue',
     'Não Entregue': 'nao_entregue',
     'cancelado': 'cancelado',
-    'Cancelado': 'cancelado'
+    'Cancelado': 'cancelado',
+    // ✅ CRITICO: Situações que vêm do filtro de busca do frontend
+    'cancelado,Entregue': 'cancelado,entregue'
   };
   
   if (typeof situacao === 'string') {
@@ -281,11 +283,13 @@ Deno.serve(async (req) => {
     let filtros: any = {};
     try {
       const body = await req.text();
+      console.log('📝 [DEBUG] Body recebido:', body);
       if (body) {
         filtros = JSON.parse(body);
+        console.log('✅ [DEBUG] Filtros parseados:', JSON.stringify(filtros, null, 2));
       }
     } catch (e) {
-      console.log('Sem filtros ou erro no parsing, usando padrão');
+      console.log('⚠️ Sem filtros ou erro no parsing, usando padrão:', e.message);
     }
 
     // Construir parâmetros da API
@@ -297,7 +301,7 @@ Deno.serve(async (req) => {
       limite: '100' // ✅ NOVO: Tentar aumentar limite de registros por página
     });
 
-    // Aplicar filtros de data
+    // ✅ CORRIGIDO: Aplicar filtros de data
     if (filtros.filtros?.dataInicial || filtros.filtros?.dataInicio) {
       const dataInicial = filtros.filtros.dataInicial || filtros.filtros.dataInicio;
       const dataFormatada = formatDateForTinyAPI(dataInicial);
@@ -311,9 +315,12 @@ Deno.serve(async (req) => {
       console.log(`📅 Data final aplicada: ${dataFinal} → ${dataFormatada}`);
     }
     
-    // ✅ FILTRO DE SITUAÇÃO: Aplicar filtros de situação se fornecidos
-    if (filtros.filtros?.situacao || filtros.filtros?.situacoes) {
-      const situacoes = filtros.filtros.situacoes || (filtros.filtros.situacao ? [filtros.filtros.situacao] : []);
+    // ✅ CORRIGIDO: Aplicar filtros de situação apenas se fornecidos e válidos
+    if (filtros.filtros?.situacao) {
+      const situacoes = Array.isArray(filtros.filtros.situacao) 
+        ? filtros.filtros.situacao 
+        : [filtros.filtros.situacao];
+      
       if (situacoes && situacoes.length > 0) {
         const situacaoMapeada = mapearSituacoes(situacoes);
         if (situacaoMapeada) {
@@ -325,6 +332,9 @@ Deno.serve(async (req) => {
 
     console.log('📡 Parâmetros finais para API Tiny:', Object.fromEntries(params.entries()));
 
+    // ✅ DIAGNÓSTICO CRÍTICO: Teste sem filtros se houver erro de "sem registros"
+    const paramsBackup = new URLSearchParams(params);
+    
     console.log('📡 Buscando pedidos na API Tiny ERP...');
     
     const allPedidos: TinyPedido[] = [];
@@ -351,9 +361,42 @@ Deno.serve(async (req) => {
           `Página ${paginaAtual}`
         );
 
-        // ✅ CRÍTICO: Verificar se não há registros e parar a paginação
+        // ✅ CRÍTICO: Verificar se não há registros e tentar sem filtros
         if (jsonData.sem_registros) {
-          console.log(`📄 Página ${paginaAtual}: Sem registros encontrados - finalizando busca`);
+          console.log(`📄 Página ${paginaAtual}: Sem registros encontrados com filtros aplicados`);
+          
+          // Se for a primeira página e não há registros, testar sem filtros
+          if (paginaAtual === 1 && (params.has('dataInicial') || params.has('situacao'))) {
+            console.log('🔍 DIAGNÓSTICO: Testando busca sem filtros para verificar se existem pedidos...');
+            
+            const paramsMinimos = new URLSearchParams({
+              token: config.tiny_erp_token,
+              formato: 'json',
+              com_itens: 'S',
+              pagina: '1',
+              limite: '10' // Apenas alguns para teste
+            });
+            
+            try {
+              const testeData = await makeApiCallWithRetry(
+                `https://api.tiny.com.br/api2/pedidos.pesquisa.php`,
+                paramsMinimos,
+                config,
+                'Teste sem filtros'
+              );
+              
+              if (!testeData.sem_registros) {
+                const pedidosTeste = testeData.retorno?.pedidos || [];
+                console.log(`🔍 RESULTADO TESTE: Encontrados ${pedidosTeste.length} pedidos SEM filtros. O problema são os filtros aplicados!`);
+                console.log('🎯 Filtros problemáticos:', Object.fromEntries(params.entries()));
+              } else {
+                console.log('🔍 RESULTADO TESTE: Sem pedidos mesmo sem filtros. API pode estar indisponível.');
+              }
+            } catch (testError) {
+              console.warn('⚠️ Erro no teste sem filtros:', testError.message);
+            }
+          }
+          
           break;
         }
 
