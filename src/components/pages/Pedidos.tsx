@@ -316,7 +316,7 @@ export function Pedidos() {
 
       {/* Tabela Avançada com Ações em Lote */}
       <PedidosTabelaAvancada
-        itens={itensEnriquecidos.slice((paginaAtual - 1) * 20, paginaAtual * 20)}
+        itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
         loading={loading}
         paginaAtual={paginaAtual}
         totalPaginas={totalPaginas}

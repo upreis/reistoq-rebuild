@@ -6,7 +6,7 @@ interface UsePedidosPaginadoProps {
   itensPorPagina?: number;
 }
 
-export function usePedidosPaginado({ pedidos, itensPorPagina = 20 }: UsePedidosPaginadoProps) {
+export function usePedidosPaginado({ pedidos, itensPorPagina = 100 }: UsePedidosPaginadoProps) {
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   const totalPaginas = Math.ceil(pedidos.length / itensPorPagina);

@@ -375,32 +375,32 @@ export function PedidosTabelaAvancada({
                     onCheckedChange={toggleSelecionarTodos}
                   />
                 </TableHead>
-                <TableHead className="min-w-32">ID Único</TableHead>
-                <TableHead className="min-w-20">Pedido</TableHead>
-                <TableHead className="min-w-32">Cliente</TableHead>
-                <TableHead className="min-w-28">SKU Pedido</TableHead>
-                <TableHead className="min-w-40">Descrição</TableHead>
-                <TableHead className="min-w-12">Qtd</TableHead>
-                <TableHead className="min-w-24">Valor</TableHead>
-                <TableHead className="min-w-32">Numero da Venda</TableHead>
-                <TableHead className="min-w-28 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <span className="text-blue-700 dark:text-blue-300 font-medium">SKU Estoque</span>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Mapeado</div>
+                <TableHead className="px-2">ID Único</TableHead>
+                <TableHead className="px-2">Pedido</TableHead>
+                <TableHead className="px-2">Cliente</TableHead>
+                <TableHead className="px-2">SKU Pedido</TableHead>
+                <TableHead className="px-2">Descrição</TableHead>
+                <TableHead className="px-2">Qtd</TableHead>
+                <TableHead className="px-2">Valor</TableHead>
+                <TableHead className="px-2">Numero da Venda</TableHead>
+                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <span className="text-white font-medium">SKU Estoque</span>
+                  <div className="text-xs text-white/80">Mapeado</div>
                 </TableHead>
-                <TableHead className="min-w-24 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <span className="text-blue-700 dark:text-blue-300 font-medium">SKU KIT</span>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Mapeado</div>
+                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <span className="text-white font-medium">SKU KIT</span>
+                  <div className="text-xs text-white/80">Mapeado</div>
                 </TableHead>
-                <TableHead className="min-w-20 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <span className="text-blue-700 dark:text-blue-300 font-medium">QTD KIT</span>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Mapeado</div>
+                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <span className="text-white font-medium">QTD KIT</span>
+                  <div className="text-xs text-white/80">Mapeado</div>
                 </TableHead>
-                <TableHead>Situação</TableHead>
-                <TableHead>Tempo</TableHead>
-                <TableHead>Prioridade</TableHead>
-                <TableHead>Margem</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead className="px-2">Situação</TableHead>
+                <TableHead className="px-2">Tempo</TableHead>
+                <TableHead className="px-2">Prioridade</TableHead>
+                <TableHead className="px-2">Margem</TableHead>
+                <TableHead className="px-2">Status</TableHead>
+                <TableHead className="px-2">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -468,20 +468,20 @@ export function PedidosTabelaAvancada({
                       </div>
                     </TableCell>
 
-                    <TableCell className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-mono text-xs text-blue-700 dark:text-blue-300">
+                    <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="font-mono text-xs text-white">
                         {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
                       </div>
                     </TableCell>
 
-                    <TableCell className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-mono text-xs text-blue-700 dark:text-blue-300">
+                    <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="font-mono text-xs text-white">
                         {item.mapeamento_aplicado?.sku_simples || '-'}
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-medium text-blue-700 dark:text-blue-300">
+                    <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="font-medium text-white">
                         {item.mapeamento_aplicado?.quantidade || '-'}
                       </div>
                     </TableCell>
@@ -530,6 +530,31 @@ export function PedidosTabelaAvancada({
                     
                     <TableCell>
                       <div className="flex gap-1">
+                        {/* Botão de Baixar Estoque - Visível quando disponível */}
+                        {obterStatusEstoque && obterStatusEstoque(item) === 'disponivel' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => onBaixarEstoqueLote && onBaixarEstoqueLote([item])}
+                                  disabled={processandoBaixaEstoque}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <TrendingDown className="h-3 w-3 mr-1" />
+                                  <span className="text-xs">
+                                    Baixar ({item.mapeamento_aplicado?.quantidade || item.quantidade})
+                                  </span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Baixar {item.mapeamento_aplicado?.quantidade || item.quantidade} unidades do estoque
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        
                         {/* Quick Actions */}
                         <TooltipProvider>
                           <Tooltip>
@@ -545,8 +570,6 @@ export function PedidosTabelaAvancada({
                             <TooltipContent>Copiar SKU</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-
-
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
