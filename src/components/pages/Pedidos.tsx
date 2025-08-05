@@ -5,8 +5,9 @@ import { useItensPedidos, type ItemPedido } from "@/hooks/useItensPedidos";
 import { usePedidosPaginado } from "@/hooks/usePedidosPaginado";
 import { useDeParaIntegration } from "@/hooks/useDeParaIntegration";
 import { PedidosMetricas } from "@/components/pedidos/PedidosMetricas";
-import { PedidosFiltrosCompactos } from "@/components/pedidos/PedidosFiltrosCompactos";
-import { PedidosTabelaItens } from "@/components/pedidos/PedidosTabelaItens";
+import { FiltrosAvancadosPedidos, type FiltrosAvancados } from "@/components/pedidos/FiltrosAvancadosPedidos";
+import { DashboardMiniPedidos } from "@/components/pedidos/DashboardMiniPedidos";
+import { PedidosTabelaAvancada } from "@/components/pedidos/PedidosTabelaAvancada";
 import { PedidosControleSincronizacao } from "@/components/pedidos/PedidosControleSincronizacao";
 import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
@@ -20,8 +21,8 @@ export function Pedidos() {
     metricas,
     loading,
     error,
-    filtros,
-    atualizarFiltros,
+    filtros: filtrosBase,
+    atualizarFiltros: atualizarFiltrosBase,
     limparFiltros,
     buscarComFiltros,
     recarregarDados,
@@ -29,6 +30,30 @@ export function Pedidos() {
     editarItem,
     processarItem
   } = useItensPedidos();
+
+  // Converter filtros para o novo formato
+  const filtros: FiltrosAvancados = {
+    busca: filtrosBase.busca,
+    dataInicio: filtrosBase.dataInicio,
+    dataFinal: filtrosBase.dataFinal,
+    situacoes: filtrosBase.situacoes,
+    statusEstoque: [],
+    valorMinimo: 0,
+    valorMaximo: 0,
+    urgencia: [],
+    clienteVip: false
+  };
+
+  const atualizarFiltros = (novosFiltros: Partial<FiltrosAvancados>) => {
+    // Converter de volta para o formato original
+    const filtrosOriginais = {
+      busca: novosFiltros.busca || filtros.busca,
+      dataInicio: novosFiltros.dataInicio || filtros.dataInicio,
+      dataFinal: novosFiltros.dataFinal || filtros.dataFinal,
+      situacoes: novosFiltros.situacoes || filtros.situacoes
+    };
+    atualizarFiltrosBase(filtrosOriginais);
+  };
 
   const { enriquecerItensPedidos } = useDeParaIntegration();
   
@@ -270,11 +295,17 @@ export function Pedidos() {
         </div>
       </div>
 
+      {/* Dashboard Mini */}
+      <DashboardMiniPedidos 
+        itens={itensEnriquecidos}
+        obterStatusEstoque={obterStatusEstoque}
+      />
+
       {/* Métricas */}
       <PedidosMetricas metricas={metricas} />
 
-      {/* Filtros */}
-      <PedidosFiltrosCompactos
+      {/* Filtros Avançados */}
+      <FiltrosAvancadosPedidos
         filtros={filtros}
         onFiltroChange={atualizarFiltros}
         onLimparFiltros={limparFiltros}
@@ -282,38 +313,8 @@ export function Pedidos() {
         loading={loading}
       />
 
-      {/* Botão Baixar Estoque - só aparece quando há itens carregados */}
-      {itens.length > 0 && (() => {
-        const itensDisponiveis = itensEnriquecidos.filter(item => {
-          const statusEstoque = obterStatusEstoque(item);
-          return statusEstoque === 'disponivel';
-        });
-        
-        return (
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleBaixarEstoque}
-              variant="default"
-              className="gap-2"
-              disabled={loading || itensDisponiveis.length === 0 || processandoBaixaEstoque}
-            >
-              {processandoBaixaEstoque ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <TrendingDown className="h-4 w-4" />
-                  Baixar Estoque ({itensDisponiveis.length})
-                </>
-              )}
-            </Button>
-          </div>
-        );
-      })()}
-
-      <PedidosTabelaItens
+      {/* Tabela Avançada com Ações em Lote */}
+      <PedidosTabelaAvancada
         itens={itensEnriquecidos.slice((paginaAtual - 1) * 20, paginaAtual * 20)}
         loading={loading}
         paginaAtual={paginaAtual}
@@ -329,6 +330,32 @@ export function Pedidos() {
         onProcessarPedido={handleProcessarPedido}
         obterStatusEstoque={obterStatusEstoque}
         processandoBaixaEstoque={processandoBaixaEstoque}
+        onBaixarEstoqueLote={async (itens) => {
+          setProcessandoBaixaEstoque(true);
+          try {
+            await supabase.functions.invoke('processar-baixa-estoque', {
+              body: { itens: itens.map(item => ({
+                id: item.id,
+                numero_pedido: item.numero_pedido,
+                sku_pedido: item.sku,
+                sku_kit: item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples,
+                quantidade_kit: item.mapeamento_aplicado?.quantidade || item.quantidade,
+                quantidade_pedido: item.quantidade,
+                descricao: item.descricao,
+                nome_cliente: item.nome_cliente,
+                data_pedido: item.data_pedido,
+                valor_total: item.valor_total
+              }))},
+            });
+            await recarregarDados();
+            await verificarEstoqueDisponivel();
+            toast({ title: "Baixa em lote realizada", description: `${itens.length} itens processados.` });
+          } catch (error) {
+            toast({ title: "Erro", description: "Erro ao processar lote.", variant: "destructive" });
+          } finally {
+            setProcessandoBaixaEstoque(false);
+          }
+        }}
       />
 
       {/* Modais */}
