@@ -35,13 +35,18 @@ export function useBarcodeScanner() {
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
   const [loading, setLoading] = useState(false);
+  
   const { toast } = useToast();
-
   const isNative = Capacitor.isNativePlatform();
+  
+  console.log('🔧 useBarcodeScanner: Hook inicializado', { isNative });
 
   // Verificar e solicitar permissões
   const checkPermissions = async (): Promise<boolean> => {
+    console.log('🔍 useBarcodeScanner: Verificando plataforma...', { isNative });
+    
     if (!isNative) {
+      console.log('❌ useBarcodeScanner: Não é plataforma nativa');
       toast({
         title: "Scanner não disponível",
         description: "O scanner de código de barras só funciona em dispositivos móveis",
@@ -51,7 +56,9 @@ export function useBarcodeScanner() {
     }
 
     try {
+      console.log('🔍 useBarcodeScanner: Verificando permissões...');
       const status = await BarcodeScanner.checkPermission({ force: true });
+      console.log('✅ useBarcodeScanner: Status das permissões:', status);
       
       if (status.granted) {
         return true;
@@ -68,7 +75,7 @@ export function useBarcodeScanner() {
         return newStatus.granted;
       }
     } catch (error) {
-      console.error('Erro ao verificar permissões:', error);
+      console.error('❌ useBarcodeScanner: Erro ao verificar permissões:', error);
       toast({
         title: "Erro de permissão",
         description: "Não foi possível verificar as permissões da câmera",
@@ -163,29 +170,38 @@ export function useBarcodeScanner() {
 
   // Iniciar scanner
   const startScan = async () => {
+    console.log('🚀 useBarcodeScanner: Iniciando scanner...');
+    
     const hasPermission = await checkPermissions();
-    if (!hasPermission) return;
+    if (!hasPermission) {
+      console.log('❌ useBarcodeScanner: Sem permissões, cancelando...');
+      return;
+    }
 
     try {
+      console.log('📱 useBarcodeScanner: Configurando scanner...');
       setIsScanning(true);
       
       // Ocultar o conteúdo da página
       document.body.classList.add('scanner-active');
       await BarcodeScanner.hideBackground();
+      console.log('📷 useBarcodeScanner: Iniciando captura...');
 
       const result: ScanResult = await BarcodeScanner.startScan();
+      console.log('📊 useBarcodeScanner: Resultado do scan:', result);
       
       if (result.hasContent && result.content) {
         await processarScan(result.content);
       }
     } catch (error) {
-      console.error('Erro no scanner:', error);
+      console.error('❌ useBarcodeScanner: Erro no scanner:', error);
       toast({
         title: "Erro no scanner",
-        description: "Ocorreu um erro ao usar o scanner",
+        description: `Ocorreu um erro ao usar o scanner: ${error}`,
         variant: "destructive"
       });
     } finally {
+      console.log('🔄 useBarcodeScanner: Finalizando scanner...');
       await stopScan();
     }
   };
