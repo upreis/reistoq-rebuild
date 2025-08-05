@@ -133,7 +133,6 @@
     --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 46%));
     --gradient-subtle: linear-gradient(180deg, hsl(215 28% 17%), hsl(215 25% 20%));
   }
-}
 
 @layer base {
   * {
