@@ -293,7 +293,8 @@ Deno.serve(async (req) => {
       token: config.tiny_erp_token,
       formato: 'json',
       com_itens: 'S', // FUNDAMENTAL para obter itens
-      pagina: '1'
+      pagina: '1',
+      limite: '100' // ✅ NOVO: Tentar aumentar limite de registros por página
     });
 
     // Aplicar filtros de data
@@ -359,7 +360,13 @@ Deno.serve(async (req) => {
         totalPaginas = parseInt(jsonData.retorno?.numero_paginas || '1');
         const pedidos = jsonData.retorno?.pedidos || [];
 
-        console.log(`📄 Página ${paginaAtual}/${totalPaginas}: ${pedidos.length} pedidos`);
+        console.log(`📄 Página ${paginaAtual}/${totalPaginas}: ${pedidos.length} pedidos (Total acumulado: ${allPedidos.length + pedidos.length})`);
+        
+        // ✅ DIAGNÓSTICO: Log detalhado sobre limites da API
+        if (paginaAtual === 1) {
+          console.log(`🔍 DIAGNÓSTICO: API retornou ${pedidos.length} pedidos na primeira página. Total de páginas: ${totalPaginas}`);
+          console.log(`📊 Isso significa que há ${pedidos.length * totalPaginas} pedidos estimados no total`);
+        }
 
         // Processar pedidos da página
         for (const pedidoWrapper of pedidos) {
