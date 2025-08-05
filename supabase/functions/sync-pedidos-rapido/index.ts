@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
       formato: 'json',
       com_itens: 'S', // FUNDAMENTAL para obter itens
       pagina: '1',
-      limite: '100' // ✅ NOVO: Tentar aumentar limite de registros por página
+      limite: '200' // ✅ AUMENTADO: Tentar buscar 200 pedidos por página (máximo da API)
     });
 
     // ✅ CORRIGIDO: Aplicar filtros de data
@@ -315,6 +315,10 @@ Deno.serve(async (req) => {
       console.log(`📅 Data final aplicada: ${dataFinal} → ${dataFormatada}`);
     }
     
+    // ✅ TESTE CRÍTICO: Remover filtros de situação temporariamente para diagnóstico
+    console.log('🔍 TESTE: Removendo filtros de situação para contar total de pedidos disponíveis');
+    
+    /*
     // ✅ CORRIGIDO: Aplicar filtros de situação apenas se fornecidos e válidos
     if (filtros.filtros?.situacao) {
       const situacoes = Array.isArray(filtros.filtros.situacao) 
@@ -329,6 +333,7 @@ Deno.serve(async (req) => {
         }
       }
     }
+    */
 
     console.log('📡 Parâmetros finais para API Tiny:', Object.fromEntries(params.entries()));
 
