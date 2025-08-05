@@ -238,7 +238,9 @@ export function useItensPedidos() {
         query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(10000); // ✅ CORRIGIDO: Aumentar limite para buscar até 10.000 itens de pedidos
 
       if (error) {
         throw error;
