@@ -188,7 +188,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
               </div>
             )}
 
-            {previsao && (
+            {previsao && previsao.analise && previsao.previsao && previsao.ia_insights && (
               <div className="space-y-6">
                 {/* Métricas de Análise */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -197,7 +197,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-lg font-semibold">
-                            {previsao.analise.consumo_medio_diario.toFixed(1)}
+                            {previsao.analise?.consumo_medio_diario?.toFixed(1) || '0.0'}
                           </div>
                           <div className="text-sm text-muted-foreground">Consumo Diário</div>
                         </div>
@@ -211,8 +211,8 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-lg font-semibold flex items-center gap-2">
-                            {getTendenciaIcon(previsao.analise.tendencia)}
-                            {previsao.analise.tendencia}
+                            {getTendenciaIcon(previsao.analise?.tendencia || 'estavel')}
+                            {previsao.analise?.tendencia || 'estável'}
                           </div>
                           <div className="text-sm text-muted-foreground">Tendência</div>
                         </div>
@@ -225,7 +225,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-lg font-semibold">
-                            {(previsao.analise.variabilidade * 100).toFixed(1)}%
+                            {((previsao.analise?.variabilidade || 0) * 100).toFixed(1)}%
                           </div>
                           <div className="text-sm text-muted-foreground">Variabilidade</div>
                         </div>
@@ -237,8 +237,8 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <Badge variant={previsao.analise.sazonalidade ? "default" : "secondary"}>
-                            {previsao.analise.sazonalidade ? "Com Sazonalidade" : "Sem Sazonalidade"}
+                          <Badge variant={previsao.analise?.sazonalidade ? "default" : "secondary"}>
+                            {previsao.analise?.sazonalidade ? "Com Sazonalidade" : "Sem Sazonalidade"}
                           </Badge>
                           <div className="text-sm text-muted-foreground mt-1">Padrão Sazonal</div>
                         </div>
@@ -259,16 +259,16 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
                         <div className="text-2xl font-bold text-red-600">
-                          {previsao.previsao.dias_para_zeramento || 'N/A'}
+                          {previsao.previsao?.dias_para_zeramento || 'N/A'}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {previsao.previsao.dias_para_zeramento ? 'Dias para zerar' : 'Estoque estável'}
+                          {previsao.previsao?.dias_para_zeramento ? 'Dias para zerar' : 'Estoque estável'}
                         </div>
                       </div>
 
                       <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
                         <div className="text-lg font-bold text-yellow-600">
-                          {previsao.previsao.data_sugerida_pedido 
+                          {previsao.previsao?.data_sugerida_pedido 
                             ? formatarData(previsao.previsao.data_sugerida_pedido)
                             : 'N/A'
                           }
@@ -278,7 +278,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
 
                       <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
                         <div className="text-2xl font-bold text-green-600">
-                          {previsao.previsao.quantidade_sugerida}
+                          {previsao.previsao?.quantidade_sugerida || 0}
                         </div>
                         <div className="text-sm text-muted-foreground">Quantidade Sugerida</div>
                       </div>
@@ -292,7 +292,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                         Recomendações do Sistema
                       </h4>
                       <div className="space-y-2">
-                        {previsao.recomendacoes.map((recomendacao, index) => (
+                        {(previsao.recomendacoes || []).map((recomendacao, index) => (
                           <div key={index} className="flex items-start gap-2 text-sm">
                             <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                             <span>{recomendacao}</span>
@@ -311,9 +311,9 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                       Insights da Inteligência Artificial
                       <Badge 
                         variant="outline" 
-                        className={getConfiancaColor(previsao.ia_insights.confianca_previsao)}
+                        className={getConfiancaColor(previsao.ia_insights?.confianca_previsao || 0)}
                       >
-                        Confiança: {previsao.ia_insights.confianca_previsao}%
+                        Confiança: {previsao.ia_insights?.confianca_previsao || 0}%
                       </Badge>
                     </CardTitle>
                   </CardHeader>
@@ -321,7 +321,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                     <div>
                       <h4 className="font-medium mb-2">Análise do Comportamento</h4>
                       <p className="text-sm text-muted-foreground">
-                        {previsao.ia_insights.analise_comportamento}
+                        {previsao.ia_insights?.analise_comportamento || 'Análise não disponível'}
                       </p>
                     </div>
 
@@ -330,7 +330,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                     <div>
                       <h4 className="font-medium mb-2">Fatores de Influência</h4>
                       <div className="flex flex-wrap gap-2">
-                        {previsao.ia_insights.fatores_influencia.map((fator, index) => (
+                        {(previsao.ia_insights?.fatores_influencia || []).map((fator, index) => (
                           <Badge key={index} variant="secondary" className="text-xs">
                             {fator}
                           </Badge>
@@ -343,7 +343,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                     <div>
                       <h4 className="font-medium mb-2">Sugestões de Otimização</h4>
                       <div className="space-y-2">
-                        {previsao.ia_insights.sugestoes_otimizacao.map((sugestao, index) => (
+                        {(previsao.ia_insights?.sugestoes_otimizacao || []).map((sugestao, index) => (
                           <div key={index} className="flex items-start gap-2 text-sm">
                             <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
                             <span>{sugestao}</span>
@@ -354,6 +354,22 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                   </CardContent>
                 </Card>
               </div>
+            )}
+
+            {previsao && (!previsao.analise || !previsao.previsao || !previsao.ia_insights) && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Dados de Previsão Incompletos</h3>
+                  <p className="text-muted-foreground mb-4">
+                    A previsão foi gerada, mas alguns dados estão faltando. Tente gerar novamente.
+                  </p>
+                  <Button onClick={gerarPrevisao} variant="outline" className="gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Tentar Novamente
+                  </Button>
+                </CardContent>
+              </Card>
             )}
 
             {!loading && !previsao && (
