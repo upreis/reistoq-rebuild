@@ -28,6 +28,9 @@ export function Configuracoes() {
   const [alertasPedidosParados, setAlertasPedidosParados] = useState(false);
   const [alertasSyncFalhas, setAlertasSyncFalhas] = useState(false);
   
+  // Configuração de sincronização de estoque
+  const [syncEstoqueAutomatico, setSyncEstoqueAutomatico] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -50,7 +53,8 @@ export function Configuracoes() {
             'alertas_estoque_baixo',
             'alertas_skus_pendentes',
             'alertas_pedidos_parados',
-            'alertas_sync_falhas'
+            'alertas_sync_falhas',
+            'sync_estoque_automatico'
           ]);
 
         if (error) throw error;
@@ -92,6 +96,9 @@ export function Configuracoes() {
               break;
             case 'alertas_sync_falhas':
               setAlertasSyncFalhas(config.valor === 'true');
+              break;
+            case 'sync_estoque_automatico':
+              setSyncEstoqueAutomatico(config.valor === 'true');
               break;
           }
         });
@@ -221,6 +228,16 @@ export function Configuracoes() {
           .from('configuracoes')
           .upsert(
             { chave: 'alertas_sync_falhas', valor: alertasSyncFalhas.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      // Salvar configuração de sincronização de estoque
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'sync_estoque_automatico', valor: syncEstoqueAutomatico.toString(), tipo: 'boolean' },
             { onConflict: 'chave' }
           )
       );
@@ -786,6 +803,18 @@ export function Configuracoes() {
                 <p className="text-sm text-muted-foreground">Buscar pedidos automaticamente a cada 15 minutos</p>
               </div>
               <Switch id="auto-sync" defaultChecked />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="sync-estoque">Sincronização Automática de Estoque</Label>
+                <p className="text-sm text-muted-foreground">Sincronizar movimentações de estoque automaticamente com Tiny ERP</p>
+              </div>
+              <Switch 
+                id="sync-estoque" 
+                checked={syncEstoqueAutomatico}
+                onCheckedChange={setSyncEstoqueAutomatico}
+              />
             </div>
             
             <div className="flex items-center justify-between">
