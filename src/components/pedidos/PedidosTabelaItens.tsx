@@ -275,10 +275,16 @@ export function PedidosTabelaItens({
                     {item.quantidade}
                   </TableCell>
                   <TableCell>
-                    {formatarMoeda(item.valor_unitario)}
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground">Unit:</div>
+                      <div>{formatarMoeda(item.valor_unitario)}</div>
+                    </div>
                   </TableCell>
                   <TableCell className="font-semibold">
-                    {formatarMoeda(item.valor_total)}
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground">Pedido:</div>
+                      <div className="text-lg">{formatarMoeda(item.valor_total_pedido || item.valor_total || 0)}</div>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(item.situacao)}

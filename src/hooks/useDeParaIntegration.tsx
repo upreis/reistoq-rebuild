@@ -40,6 +40,10 @@ export interface ItemPedidoEnriquecido {
   url_rastreamento?: string;
   valor_frete?: number;
   valor_desconto?: number;
+  // ✅ VALOR TOTAL DO PEDIDO COMPLETO
+  valor_total_pedido?: number;
+  valor_frete_pedido?: number;
+  valor_desconto_pedido?: number;
   obs?: string;
   obs_interna?: string;
   // ✅ NOVAS COLUNAS SOLICITADAS

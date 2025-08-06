@@ -34,6 +34,12 @@ export interface ItemPedido {
   // ✅ NOVAS COLUNAS SOLICITADAS
   canal_venda?: string;
   nome_ecommerce?: string;
+  // Dados enriquecidos do pedido
+  valor_total_pedido?: number;
+  valor_frete_pedido?: number;
+  valor_desconto_pedido?: number;
+  obs_pedido?: string;
+  obs_interna_pedido?: string;
   // Dados do mapeamento DE/PARA (aplicado na exibição)
   sku_correspondente?: string;
   sku_simples?: string;
@@ -204,6 +210,8 @@ export function useItensPedidos() {
               obs_interna: pedido.obs_interna,
               valor_frete: pedido.valor_frete,
               valor_desconto: pedido.valor_desconto,
+              // ✅ VALOR TOTAL DO PEDIDO COMPLETO
+              valor_total: pedido.valor_total,
               // ✅ NOVAS COLUNAS SOLICITADAS
               canal_venda: pedido.canal_venda,
               nome_ecommerce: pedido.nome_ecommerce
