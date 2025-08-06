@@ -152,11 +152,23 @@ export function FiltrosAvancadosPedidos({
 
   const contarFiltrosAtivos = () => {
     let count = 0;
-    if (filtros.busca) count++;
+    if (filtros.busca && filtros.busca.trim()) count++;
     if (filtros.dataInicio || filtros.dataFinal) count++;
-    if (filtros.situacoes.length > 0) count++;
-    if (filtros.valorMinimo > 0 || filtros.valorMaximo > 0) count++;
+    if (filtros.situacoes && filtros.situacoes.length > 0) count++;
+    if ((filtros.valorMinimo && filtros.valorMinimo > 0) || (filtros.valorMaximo && filtros.valorMaximo > 0)) count++;
     if (filtros.clienteVip) count++;
+    
+    console.log('Contando filtros ativos:', {
+      busca: filtros.busca,
+      dataInicio: filtros.dataInicio,
+      dataFinal: filtros.dataFinal,
+      situacoes: filtros.situacoes,
+      valorMinimo: filtros.valorMinimo,
+      valorMaximo: filtros.valorMaximo,
+      clienteVip: filtros.clienteVip,
+      totalAtivos: count
+    });
+    
     return count;
   };
 
