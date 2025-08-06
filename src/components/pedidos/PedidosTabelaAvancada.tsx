@@ -320,6 +320,16 @@ export function PedidosTabelaAvancada({
             </TableHeader>
             <TableBody>
               {itens.map((item) => {
+                console.log('🎨 Renderizando item na tabela:', {
+                  sku: item.sku,
+                  cidade: item.cidade,
+                  uf: item.uf,
+                  valor_total_pedido: item.valor_total_pedido,
+                  total_itens: item.total_itens,
+                  valor_produtos: item.valor_produtos,
+                  estrutura_completa: Object.keys(item)
+                });
+                
                 const prioridade = obterPrioridade(item);
                 const margemLucro = calcularMargemLucro(item);
                 const statusEstoque = obterStatusEstoque?.(item);
