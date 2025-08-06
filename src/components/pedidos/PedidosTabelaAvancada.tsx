@@ -358,8 +358,8 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                     <TableCell className="px-2">
-                      <div className="max-w-[180px] text-sm leading-tight" title={item.nome_cliente}>
-                        {item.nome_cliente}
+                      <div className="max-w-[180px] truncate" title={item.nome_cliente}>
+                        {item.nome_cliente?.substring(0, 25)}{item.nome_cliente?.length > 25 ? '...' : ''}
                         {item.valor_total > 500 && (
                           <Badge variant="outline" className="ml-1 text-xs">VIP</Badge>
                         )}
@@ -378,8 +378,8 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                     <TableCell className="px-2">
-                      <div className="max-w-[200px] text-sm leading-tight" title={item.descricao}>
-                        {item.descricao}
+                      <div className="max-w-[200px] truncate" title={item.descricao}>
+                        {item.descricao?.substring(0, 25)}{item.descricao?.length > 25 ? '...' : ''}
                       </div>
                     </TableCell>
                     
