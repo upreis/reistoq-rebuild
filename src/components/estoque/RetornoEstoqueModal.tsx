@@ -130,6 +130,51 @@ export function RetornoEstoqueModal({ isOpen, onClose, onSuccess }: RetornoEstoq
 
       if (updateError) throw updateError;
 
+      // Sincronizar com o Tiny ERP
+      try {
+        // Buscar o produto para obter informações necessárias
+        const { data: produto, error: produtoError } = await supabase
+          .from('produtos')
+          .select('sku_interno')
+          .eq('id', movimentacao.produto_id)
+          .single();
+
+        if (produtoError) {
+          console.error('Erro ao buscar produto:', produtoError);
+        } else if (produto?.sku_interno) {
+          // Buscar o ID do produto no Tiny através do mapeamento ou histórico
+          const { data: historicoVenda } = await supabase
+            .from('historico_vendas')
+            .select('pedido_id')
+            .eq('sku_estoque', produto.sku_interno)
+            .limit(1);
+
+          if (historicoVenda && historicoVenda.length > 0) {
+            const { error: tinyError } = await supabase.functions.invoke('atualizar-estoque-tiny', {
+              body: {
+                idProduto: historicoVenda[0].pedido_id,
+                quantidade: novaQuantidade,
+                observacoes: `Retorno de estoque - ${motivoRetorno} via REISTOQ`,
+                tipo: 'E' // Entrada
+              }
+            });
+
+            if (tinyError) {
+              console.error('Erro ao sincronizar com Tiny ERP:', tinyError);
+              toast({
+                title: "Aviso",
+                description: "Estoque atualizado localmente, mas houve erro na sincronização com Tiny ERP.",
+                variant: "default",
+              });
+            } else {
+              console.log('Estoque sincronizado com Tiny ERP com sucesso');
+            }
+          }
+        }
+      } catch (syncError) {
+        console.error('Erro na sincronização com Tiny ERP:', syncError);
+      }
+
       toast({
         title: "Estoque retornado",
         description: `${movimentacao.quantidade_movimentada} unidades retornadas ao estoque de ${produtoAtual.nome}.`,
