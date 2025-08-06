@@ -387,14 +387,14 @@ export function PedidosTabelaAvancada({
                       {item.quantidade}
                     </TableCell>
                     
-                    <TableCell className="px-2">
-                      <div className="text-right min-w-[120px]">
-                        <div className="font-semibold">{formatarMoeda(item.valor_total)}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatarMoeda(item.valor_unitario)} un.
-                        </div>
-                      </div>
-                    </TableCell>
+                     <TableCell className="px-2">
+                       <div className="text-right min-w-[120px]">
+                         <div className="font-semibold">{formatarMoeda(item.valor_unitario * item.quantidade)}</div>
+                         <div className="text-xs text-muted-foreground">
+                           {formatarMoeda(item.valor_unitario)} un.
+                         </div>
+                       </div>
+                     </TableCell>
                     
                     <TableCell className="px-2">
                       <div className="min-w-[100px] text-sm">
