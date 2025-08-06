@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   Eye, Edit, Play, MoreHorizontal, ExternalLink, Copy, 
-  Clock, TrendingUp, TrendingDown, AlertTriangle, Download, CheckSquare, Square 
+  Clock, TrendingUp, TrendingDown, AlertTriangle, Download, CheckSquare, Square, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +62,14 @@ export function PedidosTabelaAvancada({
   onProcessarPedido,
   obterStatusEstoque
 }: PedidosTabelaAvancadaProps) {
+  const [colunasVisiveis, setColunasVisiveis] = useState({
+    tempoDecorrido: false,
+    prioridade: false,
+    margem: false,
+    numeroVenda: true,
+    cidade: true,
+    uf: true
+  });
 
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -278,15 +286,68 @@ export function PedidosTabelaAvancada({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>
           Itens de Pedidos ({totalItens} {totalItens === 1 ? 'item' : 'itens'})
         </CardTitle>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Colunas
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, tempoDecorrido: !prev.tempoDecorrido }))}>
+              <Checkbox 
+                checked={colunasVisiveis.tempoDecorrido} 
+                className="mr-2" 
+              />
+              Tempo Decorrido
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, prioridade: !prev.prioridade }))}>
+              <Checkbox 
+                checked={colunasVisiveis.prioridade} 
+                className="mr-2" 
+              />
+              Prioridade
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, margem: !prev.margem }))}>
+              <Checkbox 
+                checked={colunasVisiveis.margem} 
+                className="mr-2" 
+              />
+              Margem
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, numeroVenda: !prev.numeroVenda }))}>
+              <Checkbox 
+                checked={colunasVisiveis.numeroVenda} 
+                className="mr-2" 
+              />
+              Número da Venda
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, cidade: !prev.cidade }))}>
+              <Checkbox 
+                checked={colunasVisiveis.cidade} 
+                className="mr-2" 
+              />
+              Cidade
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, uf: !prev.uf }))}>
+              <Checkbox 
+                checked={colunasVisiveis.uf} 
+                className="mr-2" 
+              />
+              UF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
       
       <CardContent>
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
+        <div className="max-w-full overflow-x-auto">
+          <div className="min-w-[1800px]">
+            <Table>
             <TableHeader>
               <TableRow>
                  <TableHead className="px-2">
@@ -311,11 +372,11 @@ export function PedidosTabelaAvancada({
                 <TableHead className="px-2 min-w-[120px]">SKU Pedido</TableHead>
                 <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>
                 <TableHead className="px-2 w-16">Qtd</TableHead>
-                <TableHead className="px-2 min-w-[120px]">Valor</TableHead>
-                 <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>
-                 <TableHead className="px-2 min-w-[60px]">UF</TableHead>
+                 <TableHead className="px-2 min-w-[120px]">Valor</TableHead>
+                 {colunasVisiveis.cidade && <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>}
+                 {colunasVisiveis.uf && <TableHead className="px-2 min-w-[60px]">UF</TableHead>}
                  <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
-                 <TableHead className="px-2 min-w-[140px]">Número da Venda</TableHead>
+                 {colunasVisiveis.numeroVenda && <TableHead className="px-2 min-w-[140px]">Número da Venda</TableHead>}
                  <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
                    <span className="text-blue-900 dark:text-blue-100 font-medium">SKU Estoque</span>
                    <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
@@ -328,9 +389,9 @@ export function PedidosTabelaAvancada({
                    <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
                    <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
                  </TableHead>
-                 <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>
-                 <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>
-                 <TableHead className="px-2 min-w-[80px]">Margem</TableHead>
+                 {colunasVisiveis.tempoDecorrido && <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>}
+                 {colunasVisiveis.prioridade && <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>}
+                 {colunasVisiveis.margem && <TableHead className="px-2 min-w-[80px]">Margem</TableHead>}
                  <TableHead className="px-2 min-w-[120px]">Status</TableHead>
                  <TableHead className="px-2 min-w-[100px]">Ações</TableHead>
               </TableRow>
@@ -411,85 +472,97 @@ export function PedidosTabelaAvancada({
                        </div>
                      </TableCell>
                     
-                    <TableCell className="px-2">
-                      <div className="min-w-[100px] text-sm">
-                        {item.cidade || '-'}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <div className="min-w-[60px] text-sm font-medium">
-                        {item.uf || '-'}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <div className="min-w-[100px]">
-                        {getStatusBadge(item.situacao)}
-                      </div>
-                    </TableCell>
-
+                     {colunasVisiveis.cidade && (
+                       <TableCell className="px-2">
+                         <div className="min-w-[100px] text-sm">
+                           {item.cidade || '-'}
+                         </div>
+                       </TableCell>
+                     )}
+                     
+                     {colunasVisiveis.uf && (
+                       <TableCell className="px-2">
+                         <div className="min-w-[60px] text-sm font-medium">
+                           {item.uf || '-'}
+                         </div>
+                       </TableCell>
+                     )}
+                     
                      <TableCell className="px-2">
-                       <div className="font-mono text-xs min-w-[140px] truncate" title={item.numero_ecommerce}>
-                         {item.numero_ecommerce || '-'}
+                       <div className="min-w-[100px]">
+                         {getStatusBadge(item.situacao)}
                        </div>
                      </TableCell>
 
-                    <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque}>
-                        {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
-                      </div>
-                    </TableCell>
+                     {colunasVisiveis.numeroVenda && (
+                       <TableCell className="px-2">
+                         <div className="font-mono text-xs min-w-[140px] truncate" title={item.numero_ecommerce}>
+                           {item.numero_ecommerce || '-'}
+                         </div>
+                       </TableCell>
+                     )}
 
-                    <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_simples}>
-                        {item.mapeamento_aplicado?.sku_simples || '-'}
-                      </div>
-                    </TableCell>
+                     <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                       <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque}>
+                         {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
+                       </div>
+                     </TableCell>
 
-                    <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
-                      <div className="font-medium text-blue-900 dark:text-blue-100">
-                        {item.mapeamento_aplicado?.quantidade || '-'}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <div className={`text-sm ${obterCorTempoDecorrido(item.data_pedido)} min-w-[80px]`}>
-                        {calcularTempoDecorrido(item.data_pedido)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatarData(item.data_pedido)}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className={`flex items-center ${prioridade.cor} min-w-[100px]`}>
-                              <prioridade.icon className="h-4 w-4 mr-1" />
-                              <span className="text-xs capitalize">{prioridade.nivel}</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Valor: {formatarMoeda(item.valor_total)}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className={`text-right font-semibold ${
-                        margemLucro > 40 ? 'text-green-600' : 
-                        margemLucro > 20 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {margemLucro.toFixed(1)}%
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      {getStatusProcessamentoComEstoque(item)}
-                    </TableCell>
+                     <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                       <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_simples}>
+                         {item.mapeamento_aplicado?.sku_simples || '-'}
+                       </div>
+                     </TableCell>
+
+                     <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
+                       <div className="font-medium text-blue-900 dark:text-blue-100">
+                         {item.mapeamento_aplicado?.quantidade || '-'}
+                       </div>
+                     </TableCell>
+                     
+                     {colunasVisiveis.tempoDecorrido && (
+                       <TableCell className="px-2">
+                         <div className={`text-sm ${obterCorTempoDecorrido(item.data_pedido)} min-w-[80px]`}>
+                           {calcularTempoDecorrido(item.data_pedido)}
+                         </div>
+                         <div className="text-xs text-muted-foreground">
+                           {formatarData(item.data_pedido)}
+                         </div>
+                       </TableCell>
+                     )}
+                     
+                     {colunasVisiveis.prioridade && (
+                       <TableCell className="px-2">
+                         <TooltipProvider>
+                           <Tooltip>
+                             <TooltipTrigger>
+                               <div className={`flex items-center ${prioridade.cor} min-w-[100px]`}>
+                                 <prioridade.icon className="h-4 w-4 mr-1" />
+                                 <span className="text-xs capitalize">{prioridade.nivel}</span>
+                               </div>
+                             </TooltipTrigger>
+                             <TooltipContent>
+                               <p>Valor: {formatarMoeda(item.valor_total)}</p>
+                             </TooltipContent>
+                           </Tooltip>
+                         </TooltipProvider>
+                       </TableCell>
+                     )}
+                     
+                     {colunasVisiveis.margem && (
+                       <TableCell>
+                         <div className={`text-right font-semibold ${
+                           margemLucro > 40 ? 'text-green-600' : 
+                           margemLucro > 20 ? 'text-yellow-600' : 'text-red-600'
+                         }`}>
+                           {margemLucro.toFixed(1)}%
+                         </div>
+                       </TableCell>
+                     )}
+                     
+                     <TableCell>
+                       {getStatusProcessamentoComEstoque(item)}
+                     </TableCell>
                     
                     <TableCell>
                       <div className="flex gap-1">
@@ -540,6 +613,7 @@ export function PedidosTabelaAvancada({
               })}
             </TableBody>
           </Table>
+          </div>
         </div>
 
         {/* Informações da paginação */}
