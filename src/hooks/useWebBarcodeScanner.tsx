@@ -35,6 +35,8 @@ export function useWebBarcodeScanner() {
   const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [showProdutoModal, setShowProdutoModal] = useState(false);
   const [codigoParaModal, setCodigoParaModal] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<ScannedProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -161,6 +163,39 @@ export function useWebBarcodeScanner() {
     } catch (error) {
       console.error('Erro ao buscar produto:', error);
       return null;
+    }
+  };
+
+  // Buscar produto por múltiplos campos (SKU, nome, código de barras)
+  const buscarProdutoMultiplo = async (termo: string): Promise<ScannedProduct[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('produtos')
+        .select(`
+          id,
+          nome,
+          sku_interno,
+          codigo_barras,
+          quantidade_atual,
+          estoque_minimo,
+          status,
+          categoria,
+          preco_venda,
+          ultima_movimentacao,
+          url_imagem
+        `)
+        .eq('ativo', true)
+        .or(`sku_interno.ilike.%${termo}%,nome.ilike.%${termo}%,codigo_barras.eq.${termo}`)
+        .limit(10);
+
+      if (error) {
+        throw error;
+      }
+
+      return (data as ScannedProduct[]) || [];
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      return [];
     }
   };
 
@@ -293,24 +328,60 @@ export function useWebBarcodeScanner() {
     }
   }, []);
 
-  // Busca manual por código
-  const buscarManualmente = async (codigo: string) => {
-    if (!codigo.trim()) {
+  // Busca manual por múltiplos campos
+  const buscarManualmente = async (termo: string) => {
+    if (!termo.trim()) {
       toast({
-        title: "Código inválido",
-        description: "Digite um código válido para buscar",
+        title: "Termo inválido",
+        description: "Digite um termo válido para buscar",
         variant: "destructive"
       });
+      setSearchResults([]);
       return;
     }
 
-    await processarScan(codigo.trim());
+    setIsSearching(true);
+    try {
+      const produtos = await buscarProdutoMultiplo(termo.trim());
+      setSearchResults(produtos);
+      
+      if (produtos.length === 0) {
+        toast({
+          title: "Nenhum produto encontrado",
+          description: "Tente buscar por SKU, nome ou código de barras",
+          variant: "default"
+        });
+      } else if (produtos.length === 1) {
+        // Se encontrou apenas um produto, selecionar automaticamente
+        setScannedProduct(produtos[0]);
+        setLastScanResult(termo);
+        adicionarAoHistorico(termo, produtos[0].nome, true);
+      }
+    } catch (error) {
+      console.error('Erro na busca:', error);
+      toast({
+        title: "Erro na busca",
+        description: "Ocorreu um erro ao buscar produtos",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Selecionar produto da lista de resultados
+  const selecionarProduto = (produto: ScannedProduct) => {
+    setScannedProduct(produto);
+    setLastScanResult(produto.sku_interno);
+    setSearchResults([]);
+    adicionarAoHistorico(produto.sku_interno, produto.nome, true);
   };
 
   // Limpar resultado
   const limparResultado = useCallback(() => {
     setScannedProduct(null);
     setLastScanResult('');
+    setSearchResults([]);
   }, []);
 
   // Cleanup ao desmontar
@@ -325,9 +396,11 @@ export function useWebBarcodeScanner() {
     isSupported,
     hasPermission,
     loading,
+    isSearching,
     lastScanResult,
     scannedProduct,
     scanHistory,
+    searchResults,
     availableCameras,
     selectedCamera,
     videoRef,
@@ -338,8 +411,10 @@ export function useWebBarcodeScanner() {
     startScan,
     stopScan,
     buscarManualmente,
+    selecionarProduto,
     limparResultado,
     processarScan,
-    onProdutoSalvo
+    onProdutoSalvo,
+    buscarProdutoMultiplo
   };
 }

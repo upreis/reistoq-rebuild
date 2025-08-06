@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWebBarcodeScanner } from "@/hooks/useWebBarcodeScanner";
 import { ProdutoScannerModal } from "@/components/scanner/ProdutoScannerModal";
+import { MovimentacaoRapida } from "@/components/scanner/MovimentacaoRapida";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,9 +18,11 @@ export function Scanner() {
     isSupported,
     hasPermission,
     loading,
+    isSearching,
     lastScanResult,
     scannedProduct,
     scanHistory,
+    searchResults,
     availableCameras,
     selectedCamera,
     videoRef,
@@ -30,11 +33,23 @@ export function Scanner() {
     startScan,
     stopScan,
     buscarManualmente,
+    selecionarProduto,
     limparResultado,
-    onProdutoSalvo
+    onProdutoSalvo,
+    buscarProdutoMultiplo
   } = useWebBarcodeScanner();
 
   const [manualCode, setManualCode] = useState('');
+
+  // Função para recarregar dados do produto após movimentação
+  const recarregarProduto = async () => {
+    if (scannedProduct) {
+      const produtosAtualizados = await buscarProdutoMultiplo(scannedProduct.sku_interno);
+      if (produtosAtualizados.length > 0) {
+        selecionarProduto(produtosAtualizados[0]);
+      }
+    }
+  };
   
   // Debug - vamos ver o que está acontecendo
   console.log('🔍 Scanner Web Debug:', { 
@@ -42,7 +57,9 @@ export function Scanner() {
     hasPermission,
     loading, 
     isScanning, 
-    availableCameras: availableCameras.length 
+    availableCameras: availableCameras.length,
+    searchResults: searchResults.length,
+    scannedProduct: !!scannedProduct
   });
   return (
     <div className="space-y-6">
@@ -199,10 +216,13 @@ export function Scanner() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Código de Barras</label>
+              <label className="text-sm font-medium text-foreground">Buscar Produto</label>
+              <p className="text-xs text-muted-foreground">
+                Digite SKU, nome ou código de barras para buscar
+              </p>
               <Input 
-                placeholder="Digite ou cole o código aqui..."
-                className="text-center font-mono"
+                placeholder="Ex: SKU-001, Produto XYZ ou 789012345..."
+                className="text-center"
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
                 onKeyDown={(e) => {
@@ -217,11 +237,40 @@ export function Scanner() {
               className="w-full" 
               variant="secondary"
               onClick={() => buscarManualmente(manualCode)}
-              disabled={loading || !manualCode.trim()}
+              disabled={isSearching || !manualCode.trim()}
             >
               <Search className="mr-2 h-4 w-4" />
-              {loading ? "Buscando..." : "Buscar Produto"}
+              {isSearching ? "Buscando..." : "Buscar Produto"}
             </Button>
+
+            {/* Resultados da busca múltipla */}
+            {searchResults.length > 1 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-foreground">Produtos encontrados:</h4>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {searchResults.map((produto, index) => (
+                    <div 
+                      key={produto.id}
+                      className="p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                      onClick={() => selecionarProduto(produto)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{produto.nome}</p>
+                          <p className="text-xs text-muted-foreground">SKU: {produto.sku_interno}</p>
+                          {produto.codigo_barras && (
+                            <p className="text-xs text-muted-foreground">Código: {produto.codigo_barras}</p>
+                          )}
+                        </div>
+                        <Badge variant={produto.quantidade_atual <= produto.estoque_minimo ? 'destructive' : 'default'}>
+                          {produto.quantidade_atual} un.
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {lastScanResult && (
               <div className="border rounded-lg p-4">
@@ -272,46 +321,74 @@ export function Scanner() {
               </div>
             </div>
           ) : scannedProduct ? (
-            <div className="border rounded-lg p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-medium text-foreground">{scannedProduct.nome}</h3>
-                  <p className="text-muted-foreground">SKU: {scannedProduct.sku_interno}</p>
-                  <p className="text-sm text-muted-foreground">Código: {scannedProduct.codigo_barras}</p>
+            <div className="space-y-6">
+              {/* Informações do Produto */}
+              <div className="border rounded-lg p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-3">
+                    {scannedProduct.url_imagem && (
+                      <img 
+                        src={scannedProduct.url_imagem} 
+                        alt={scannedProduct.nome}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">{scannedProduct.nome}</h3>
+                      <p className="text-muted-foreground">SKU: {scannedProduct.sku_interno}</p>
+                      {scannedProduct.codigo_barras && (
+                        <p className="text-sm text-muted-foreground">Código: {scannedProduct.codigo_barras}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant={scannedProduct.status === 'ativo' ? 'default' : 'secondary'}>
+                    {scannedProduct.status === 'ativo' ? 'Em Estoque' : scannedProduct.status}
+                  </Badge>
                 </div>
-                <Badge variant={scannedProduct.status === 'ativo' ? 'default' : 'secondary'}>
-                  {scannedProduct.status === 'ativo' ? 'Em Estoque' : scannedProduct.status}
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Quantidade Atual</p>
-                  <p className="text-xl font-bold text-foreground">{scannedProduct.quantidade_atual} unidades</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Quantidade Atual</p>
+                    <p className="text-xl font-bold text-foreground">{scannedProduct.quantidade_atual} unidades</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Estoque Mínimo</p>
+                    <p className="text-xl font-bold text-foreground">{scannedProduct.estoque_minimo} unidades</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Última Movimentação</p>
+                    <p className="text-xl font-bold text-foreground">
+                      {scannedProduct.ultima_movimentacao 
+                        ? formatDistanceToNow(new Date(scannedProduct.ultima_movimentacao), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })
+                        : 'Nunca'
+                      }
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Estoque Mínimo</p>
-                  <p className="text-xl font-bold text-foreground">{scannedProduct.estoque_minimo} unidades</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Última Movimentação</p>
-                  <p className="text-xl font-bold text-foreground">
-                    {scannedProduct.ultima_movimentacao 
-                      ? formatDistanceToNow(new Date(scannedProduct.ultima_movimentacao), { 
-                          addSuffix: true, 
-                          locale: ptBR 
-                        })
-                      : 'Nunca'
-                    }
-                  </p>
+
+                <div className="flex gap-3 mt-6">
+                  <Button 
+                    variant="secondary"
+                    onClick={() => {
+                      setShowProdutoModal(true);
+                    }}
+                  >
+                    Ver/Editar Detalhes
+                  </Button>
+                  <Button variant="outline" onClick={limparResultado}>
+                    Limpar Resultado
+                  </Button>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
-                <Button variant="secondary">Ver Detalhes</Button>
-                <Button variant="outline">Movimentar Estoque</Button>
-                <Button variant="outline">Histórico</Button>
-              </div>
+              {/* Movimentação Rápida */}
+              <MovimentacaoRapida 
+                produto={scannedProduct}
+                onMovimentacao={recarregarProduto}
+              />
             </div>
           ) : lastScanResult ? (
             <div className="border rounded-lg p-6 text-center">
