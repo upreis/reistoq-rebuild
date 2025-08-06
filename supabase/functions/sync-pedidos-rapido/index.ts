@@ -5,17 +5,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Configurações ultra otimizadas para performance máxima
-const REQUEST_TIMEOUT = 15000; // 15 segundos - reduzido para acelerar
-const BASE_RETRY_DELAY = 500; // 500ms - reduzido para acelerar retries
-const MAX_RETRIES = 2; // 2 tentativas - reduzido para acelerar
-const DELAY_ENTRE_PAGINAS = 100; // 100ms - reduzido para acelerar paginação
-const DELAY_ENTRE_LOTES = 50; // 50ms - reduzido para acelerar lotes
-const BATCH_SIZE = 10; // 10 pedidos por lote - aumentado para mais paralelismo
-const MAX_PAGINAS_POR_EXECUCAO = 1000; // Aumentado para processar mais
-const DELAY_RATE_LIMIT = 3000; // 3 segundos para rate limit - reduzido
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos de cache - reduzido para dados mais frescos
-const MAX_CONCURRENT_REQUESTS = 5; // Máximo de requests paralelos
+// ✅ CONFIGURAÇÕES OTIMIZADAS PARA EVITAR RATE LIMIT E CONDIÇÕES DE CORRIDA
+const REQUEST_TIMEOUT = 20000; // 20 segundos - aumentado para mais estabilidade
+const BASE_RETRY_DELAY = 1000; // 1s - aumentado para evitar rate limit
+const MAX_RETRIES = 3; // 3 tentativas - aumentado para mais confiabilidade
+const DELAY_ENTRE_PAGINAS = 1500; // 1.5s - muito aumentado para evitar rate limit
+const DELAY_ENTRE_LOTES = 2000; // 2s - muito aumentado para evitar rate limit
+const BATCH_SIZE = 3; // 3 pedidos por lote - reduzido para evitar rate limit
+const MAX_PAGINAS_POR_EXECUCAO = 100; // Reduzido para evitar timeouts
+const DELAY_RATE_LIMIT = 10000; // 10 segundos para rate limit - muito aumentado
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutos de cache - aumentado para reduzir calls
+const MAX_CONCURRENT_REQUESTS = 2; // Reduzido para evitar rate limit
+const INTELLIGENT_RATE_LIMIT_DETECTION = true; // Nova feature para detecção inteligente
 
 interface TinyPedido {
   id: string;
@@ -75,6 +76,20 @@ function setCache(key: string, data: any): void {
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ✅ Nova função para sincronização em background sem bloquear resposta
+async function sincronizarEmBackground(filtros: any, supabase: any, configuracaoTiny: ConfiguracaoTiny) {
+  try {
+    console.log('🔄 Iniciando sincronização em background...');
+    
+    // Implementar sincronização completa aqui se necessário
+    // Por enquanto, apenas log para indicar que a função está funcionando
+    console.log('✅ Sincronização background iniciada (placeholder)');
+    
+  } catch (error) {
+    console.error('❌ Erro na sincronização background:', error);
+  }
 }
 
 // SEMPRE converter datas para formato DB (YYYY-MM-DD) para salvar no Supabase

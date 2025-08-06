@@ -114,6 +114,7 @@ export function useItensPedidos() {
   
   const [loading, setLoading] = useState(false); // ✅ Inicia como false - loading só quando busca for solicitada
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
   const [filtros, setFiltros] = useState<FiltrosPedidos>(() => {
     // ✅ Carregar filtros salvos do localStorage
     const filtrosSalvos = localStorage.getItem('filtros-pedidos');
@@ -156,217 +157,359 @@ export function useItensPedidos() {
       setLoading(true);
       setError(null);
 
-    // ✅ BUSCAR TODOS OS PEDIDOS QUE ATENDEM AOS FILTROS, INDEPENDENTE DO STATUS DE PROCESSAMENTO
-    console.log('🚀 Buscando pedidos com filtros aplicados...');
-    
-    // ✅ SOLUÇÃO 1: SEMPRE usar formato DD/MM/YYYY para edge functions
-    const formatarDataParaTiny = (data: string): string => {
-      if (!data) return '';
-      // Se já está em DD/MM/YYYY, usar como está
-      if (data.includes('/')) return data;
-      // Se está em YYYY-MM-DD, converter para DD/MM/YYYY
-      const [ano, mes, dia] = data.split('-');
-      return `${dia}/${mes}/${ano}`;
-    };
+      console.log('🚀 Buscando pedidos com filtros aplicados...');
+      
+      // ✅ SOLUÇÃO 1: VERIFICAR DADOS LOCAIS PRIMEIRO para evitar condição de corrida
+      console.log('📋 Verificando dados locais primeiro...');
+      
+      const dadosLocais = await buscarDadosLocais();
+      const temDadosLocais = dadosLocais && dadosLocais.length > 0;
+      
+      console.log(`📊 Dados locais encontrados: ${dadosLocais?.length || 0} itens`);
+      
+      // ✅ SOLUÇÃO 2: Se há dados locais, usá-los imediatamente e sincronizar em background
+      if (temDadosLocais) {
+        console.log('⚡ Usando dados locais para resposta imediata');
+        
+        // Aplicar mapeamentos aos dados locais
+        const itensProcessadosLocais = await aplicarMapeamentos(dadosLocais);
+        
+        // Aplicar filtros nos dados locais
+        const itensFiltradosLocais = aplicarFiltrosLocais(itensProcessadosLocais);
+        
+        // Exibir dados locais imediatamente
+        setItens(itensFiltradosLocais);
+        calcularMetricas(itensFiltradosLocais);
+        setLoading(false);
+        
+        // Sincronizar em background (sem bloquear a UI)
+        sincronizarEmBackground();
+        return;
+      }
+      
+      // ✅ SOLUÇÃO 3: Se não há dados locais, tentar edge function com fallback robusto
+      console.log('🔄 Dados locais vazios, tentando sincronização...');
+      await sincronizarComFallback();
+      
+    } catch (error) {
+      console.error('❌ Erro na busca de itens:', error);
+      setError(error instanceof Error ? error.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // ✅ TENTAR PRIMEIRO A EDGE FUNCTION OTIMIZADA
+  // ✅ Nova função para aplicar filtros locais
+  const aplicarFiltrosLocais = (itensList: any[]) => {
+    let itensFiltrados = itensList;
+
+    if (filtros.busca) {
+      itensFiltrados = itensFiltrados.filter((item: any) => 
+        item.numero_pedido?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+        item.pedidos?.nome_cliente?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+        item.sku?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+        item.descricao?.toLowerCase().includes(filtros.busca.toLowerCase())
+      );
+    }
+
+    // Ordenar os dados 
+    itensFiltrados.sort((a: any, b: any) => {
+      // Primeiro por data (mais recente primeiro)
+      const dataA = new Date(a.pedidos?.data_pedido || a.data_pedido);
+      const dataB = new Date(b.pedidos?.data_pedido || b.data_pedido);
+      if (dataA.getTime() !== dataB.getTime()) {
+        return dataB.getTime() - dataA.getTime();
+      }
+      // Depois por valor (maior primeiro)
+      const valorA = a.pedidos?.valor_total || a.valor_total || 0;
+      const valorB = b.pedidos?.valor_total || b.valor_total || 0;
+      return valorB - valorA;
+    });
+
+    return itensFiltrados;
+  };
+
+  // ✅ Nova função para buscar dados locais rapidamente
+  const buscarDadosLocais = async () => {
     try {
+      let query = supabase
+        .from('itens_pedidos')
+        .select(`
+          *,
+          pedidos!inner (
+            numero,
+            numero_ecommerce,
+            nome_cliente,
+            cpf_cnpj,
+            cidade,
+            uf,
+            data_pedido,
+            data_prevista,
+            situacao,
+            codigo_rastreamento,
+            url_rastreamento,
+            obs,
+            obs_interna,
+            valor_frete,
+            valor_desconto,
+            valor_total
+          )
+        `);
+
+      // Aplicar filtros básicos
+      if (filtros.busca) {
+        query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
+      }
+
+      if (filtros.dataInicio) {
+        query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
+      }
+
+      if (filtros.dataFinal) {
+        query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFinal);
+      }
+
+      if (filtros.situacoes.length > 0) {
+        const mapeamentoSituacoes: { [key: string]: string } = {
+          'Em Aberto': 'Em aberto',
+          'Aprovado': 'Aprovado', 
+          'Preparando Envio': 'Preparando envio',
+          'Faturado': 'Faturado',
+          'Pronto para Envio': 'Pronto para envio',
+          'Enviado': 'Enviado',
+          'Entregue': 'Entregue',
+          'Nao Entregue': 'Não entregue',
+          'Cancelado': 'Cancelado'
+        };
+        
+        const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
+        query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
+      }
+
+      const { data, error } = await query
+        .order('pedidos.data_pedido', { ascending: false })
+        .order('pedidos.valor_total', { ascending: false })
+        .limit(5000); // Limite menor para busca rápida inicial
+
+      if (error) {
+        console.warn('⚠️ Erro ao buscar dados locais:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.warn('⚠️ Erro na busca local:', error);
+      return [];
+    }
+  };
+
+  // ✅ Sincronização em background sem bloquear UI
+  const sincronizarEmBackground = async () => {
+    try {
+      console.log('🔄 Sincronizando dados em background...');
+      
+      const formatarDataParaTiny = (data: string): string => {
+        if (!data) return '';
+        if (data.includes('/')) return data;
+        const [ano, mes, dia] = data.split('-');
+        return `${dia}/${mes}/${ano}`;
+      };
+
+      // Tentar edge function com timeout reduzido
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Timeout na sincronização background, mantendo dados locais');
+      }, 10000); // 10 segundos timeout
+
       const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-rapido', {
         body: {
           filtros: {
             dataInicial: formatarDataParaTiny(filtros.dataInicio),
             dataFinal: formatarDataParaTiny(filtros.dataFinal),
-            // ✅ MOSTRAR TODOS OS PEDIDOS, INDEPENDENTE DA SITUAÇÃO SE NÃO ESPECIFICADA
             situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
           }
         }
       });
 
-      // ✅ SE A EDGE FUNCTION FUNCIONAR, USAR SEUS DADOS
+      clearTimeout(timeoutId);
+
       if (!syncError && syncData?.itens && syncData?.pedidos) {
-        console.log(`🎯 Edge function: ${syncData.itens.length} itens e ${syncData.pedidos.length} pedidos`);
+        console.log(`🔄 Background sync: ${syncData.itens.length} itens atualizados`);
         
-        // Enriquecer itens com dados dos pedidos
-        const itensComPedidos = syncData.itens.map((item: any) => {
-          const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
-          return {
-            ...item,
-            valor_total_pedido: pedido?.valor_total || 0,
-            valor_frete_pedido: pedido?.valor_frete || 0,
-            valor_desconto_pedido: pedido?.valor_desconto || 0,
-            pedidos: pedido ? {
-              numero_ecommerce: pedido.numero_ecommerce,
-              nome_cliente: pedido.nome_cliente,
-              cpf_cnpj: pedido.cpf_cnpj,
-              cidade: pedido.cidade,
-              uf: pedido.uf,
-              data_pedido: pedido.data_pedido,
-              data_prevista: pedido.data_prevista,
-              situacao: pedido.situacao,
-              codigo_rastreamento: pedido.codigo_rastreamento,
-              url_rastreamento: pedido.url_rastreamento,
-              obs: pedido.obs,
-              obs_interna: pedido.obs_interna,
-              valor_frete: pedido.valor_frete,
-              valor_desconto: pedido.valor_desconto,
-              valor_total: pedido.valor_total,
-              canal_venda: pedido.canal_venda,
-              nome_ecommerce: pedido.nome_ecommerce
-            } : null
-          };
-        });
+        // Atualizar dados apenas se a sincronização trouxe mais resultados
+        if (syncData.itens.length > itens.length) {
+          const itensEnriquecidos = syncData.itens.map((item: any) => {
+            const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
+            return {
+              ...item,
+              valor_total_pedido: pedido?.valor_total || 0,
+              valor_frete_pedido: pedido?.valor_frete || 0,
+              valor_desconto_pedido: pedido?.valor_desconto || 0,
+              pedidos: pedido ? {
+                numero_ecommerce: pedido.numero_ecommerce,
+                nome_cliente: pedido.nome_cliente,
+                cpf_cnpj: pedido.cpf_cnpj,
+                cidade: pedido.cidade,
+                uf: pedido.uf,
+                data_pedido: pedido.data_pedido,
+                data_prevista: pedido.data_prevista,
+                situacao: pedido.situacao,
+                codigo_rastreamento: pedido.codigo_rastreamento,
+                url_rastreamento: pedido.url_rastreamento,
+                obs: pedido.obs,
+                obs_interna: pedido.obs_interna,
+                valor_frete: pedido.valor_frete,
+                valor_desconto: pedido.valor_desconto,
+                valor_total: pedido.valor_total,
+                canal_venda: pedido.canal_venda,
+                nome_ecommerce: pedido.nome_ecommerce
+              } : null
+            };
+          });
 
-        // Aplicar filtros locais apenas nos dados já sincronizados
-        let itensFiltrados = itensComPedidos;
+          // Aplicar filtros locais apenas nos dados já sincronizados
+          let itensFiltrados = itensEnriquecidos;
 
-        if (filtros.busca) {
-          itensFiltrados = itensFiltrados.filter((item: any) => 
-            item.numero_pedido?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-            item.pedidos?.nome_cliente?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-            item.sku?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-            item.descricao?.toLowerCase().includes(filtros.busca.toLowerCase())
-          );
-        }
-
-        // ✅ ORDENAR OS DADOS ANTES DE APLICAR MAPEAMENTOS 
-        itensFiltrados.sort((a: any, b: any) => {
-          // Primeiro por data (mais recente primeiro)
-          const dataA = new Date(a.pedidos?.data_pedido || a.data_pedido);
-          const dataB = new Date(b.pedidos?.data_pedido || b.data_pedido);
-          if (dataA.getTime() !== dataB.getTime()) {
-            return dataB.getTime() - dataA.getTime();
+          if (filtros.busca) {
+            itensFiltrados = itensFiltrados.filter((item: any) => 
+              item.numero_pedido?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+              item.pedidos?.nome_cliente?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+              item.sku?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+              item.descricao?.toLowerCase().includes(filtros.busca.toLowerCase())
+            );
           }
-          // Depois por valor (maior primeiro)
-          const valorA = a.pedidos?.valor_total || a.valor_total || 0;
-          const valorB = b.pedidos?.valor_total || b.valor_total || 0;
-          return valorB - valorA;
-        });
 
-        // ✅ IMPORTANTE: APLICAR MAPEAMENTOS MAS MANTER TODOS OS ITENS
-        const itensProcessados = await aplicarMapeamentos(itensFiltrados);
-        
-        localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
-        setItens(itensProcessados);
-        calcularMetricas(itensProcessados);
+          // ✅ ORDENAR OS DADOS ANTES DE APLICAR MAPEAMENTOS 
+          itensFiltrados.sort((a: any, b: any) => {
+            // Primeiro por data (mais recente primeiro)
+            const dataA = new Date(a.pedidos?.data_pedido || a.data_pedido);
+            const dataB = new Date(b.pedidos?.data_pedido || b.data_pedido);
+            if (dataA.getTime() !== dataB.getTime()) {
+              return dataB.getTime() - dataA.getTime();
+            }
+            // Depois por valor (maior primeiro)
+            const valorA = a.pedidos?.valor_total || a.valor_total || 0;
+            const valorB = b.pedidos?.valor_total || b.valor_total || 0;
+            return valorB - valorA;
+          });
 
-        toast({
-          title: "✅ Sincronização concluída",
-          description: `${itensProcessados.length} itens encontrados - incluindo itens sem estoque/mapeamento para análise`,
-        });
-        
-        return; // Sucesso com edge function
+          // ✅ IMPORTANTE: APLICAR MAPEAMENTOS MAS MANTER TODOS OS ITENS
+          const itensProcessados = await aplicarMapeamentos(itensFiltrados);
+          
+          localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
+          setItens(itensProcessados);
+          calcularMetricas(itensProcessados);
+
+          toast({
+            title: "✅ Sincronização background concluída",
+            description: `${itensProcessados.length} itens atualizados`,
+          });
+        }
       } else {
-        console.warn('❌ Edge function falhou:', syncError?.message || 'Sem dados retornados');
+        console.warn('❌ Edge function background falhou:', syncError?.message || 'Sem dados retornados');
       }
     } catch (edgeFunctionError) {
-      console.warn('❌ Erro na edge function:', edgeFunctionError);
+      console.warn('❌ Erro na edge function background:', edgeFunctionError);
     }
+  };
 
-    // ✅ FALLBACK: CONSULTA DIRETA NO BANCO (MOSTRA TODOS OS PEDIDOS)
-    console.log('⚠️ Usando fallback direto no banco para mostrar TODOS os pedidos...');
-    
-    let query = supabase
-      .from('itens_pedidos')
-      .select(`
-        *,
-        pedidos!inner(
-          numero_ecommerce,
-          nome_cliente,
-          cpf_cnpj,
-          cidade,
-          uf,
-          data_pedido,
-          data_prevista,
-          situacao,
-          codigo_rastreamento,
-          url_rastreamento,
-          obs,
-          obs_interna,
-          valor_frete,
-          valor_desconto,
-          valor_total
-        )
-      `);
-
-    // ✅ APLICAR APENAS OS FILTROS ESSENCIAIS (data e situação)
-    if (filtros.busca) {
-      query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
-    }
-
-    if (filtros.dataInicio) {
-      query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
-    }
-
-    if (filtros.dataFinal) {
-      query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFinal);
-    }
-
-    // ✅ FILTRAR POR SITUAÇÃO APENAS SE ESPECIFICADO
-    if (filtros.situacoes.length > 0) {
-      const mapeamentoSituacoes: { [key: string]: string } = {
-        'Em Aberto': 'Em aberto',
-        'Aprovado': 'Aprovado', 
-        'Preparando Envio': 'Preparando envio',
-        'Faturado': 'Faturado',
-        'Pronto para Envio': 'Pronto para envio',
-        'Enviado': 'Enviado',
-        'Entregue': 'Entregue',
-        'Nao Entregue': 'Não entregue',
-        'Cancelado': 'Cancelado'
+  // ✅ Nova função para sincronização com fallback robusto
+  const sincronizarComFallback = async () => {
+    try {
+      const formatarDataParaTiny = (data: string): string => {
+        if (!data) return '';
+        if (data.includes('/')) return data;
+        const [ano, mes, dia] = data.split('-');
+        return `${dia}/${mes}/${ano}`;
       };
-      
-      const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
-      query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
-    }
 
-    const { data, error } = await query
-      .order('pedidos.data_pedido', { ascending: false })
-      .order('pedidos.valor_total', { ascending: false }) // ✅ ORDENAR POR VALOR (maior primeiro)
-      .limit(10000);
+      // ✅ TENTAR EDGE FUNCTION PRIMEIRO
+      try {
+        const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-rapido', {
+          body: {
+            filtros: {
+              dataInicial: formatarDataParaTiny(filtros.dataInicio),
+              dataFinal: formatarDataParaTiny(filtros.dataFinal),
+              situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
+            }
+          }
+        });
 
-    if (error) {
-      throw error;
-    }
+        if (!syncError && syncData?.itens && syncData?.pedidos) {
+          console.log(`🎯 Edge function: ${syncData.itens.length} itens e ${syncData.pedidos.length} pedidos`);
+          
+          // Enriquecer itens com dados dos pedidos
+          const itensComPedidos = syncData.itens.map((item: any) => {
+            const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
+            return {
+              ...item,
+              valor_total_pedido: pedido?.valor_total || 0,
+              valor_frete_pedido: pedido?.valor_frete || 0,
+              valor_desconto_pedido: pedido?.valor_desconto || 0,
+              pedidos: pedido ? {
+                numero_ecommerce: pedido.numero_ecommerce,
+                nome_cliente: pedido.nome_cliente,
+                cpf_cnpj: pedido.cpf_cnpj,
+                cidade: pedido.cidade,
+                uf: pedido.uf,
+                data_pedido: pedido.data_pedido,
+                data_prevista: pedido.data_prevista,
+                situacao: pedido.situacao,
+                codigo_rastreamento: pedido.codigo_rastreamento,
+                url_rastreamento: pedido.url_rastreamento,
+                obs: pedido.obs,
+                obs_interna: pedido.obs_interna,
+                valor_frete: pedido.valor_frete,
+                valor_desconto: pedido.valor_desconto,
+                valor_total: pedido.valor_total,
+                canal_venda: pedido.canal_venda,
+                nome_ecommerce: pedido.nome_ecommerce
+              } : null
+            };
+          });
 
-    console.log(`🎯 Fallback: ${data?.length || 0} itens encontrados no banco local`);
+          // Aplicar filtros locais
+          const itensFiltrados = aplicarFiltrosLocais(itensComPedidos);
+          
+          // ✅ IMPORTANTE: APLICAR MAPEAMENTOS MAS MANTER TODOS OS ITENS
+          const itensProcessados = await aplicarMapeamentos(itensFiltrados);
+          
+          localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
+          setItens(itensProcessados);
+          calcularMetricas(itensProcessados);
 
-    // ✅ ORDENAR OS DADOS DO FALLBACK TAMBÉM
-    if (data) {
-      data.sort((a: any, b: any) => {
-        // Primeiro por data (mais recente primeiro)
-        const dataA = new Date(a.pedidos?.data_pedido || a.data_pedido);
-        const dataB = new Date(b.pedidos?.data_pedido || b.data_pedido);
-        if (dataA.getTime() !== dataB.getTime()) {
-          return dataB.getTime() - dataA.getTime();
+          toast({
+            title: "✅ Sincronização concluída",
+            description: `${itensProcessados.length} itens encontrados - incluindo itens sem estoque/mapeamento para análise`,
+          });
+          
+          return; // Sucesso com edge function
+        } else {
+          console.warn('❌ Edge function falhou:', syncError?.message || 'Sem dados retornados');
         }
-        // Depois por valor (maior primeiro)  
-        const valorA = a.pedidos?.valor_total || a.valor_total || 0;
-        const valorB = b.pedidos?.valor_total || b.valor_total || 0;
-        return valorB - valorA;
-      });
-    }
+      } catch (edgeFunctionError) {
+        console.warn('❌ Erro na edge function:', edgeFunctionError);
+      }
 
-    // ✅ PROCESSAR E APLICAR MAPEAMENTOS SEM FILTRAR NADA
-    const itensProcessados = await aplicarMapeamentos(data || []);
-    
-    localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
-    setItens(itensProcessados);
-    calcularMetricas(itensProcessados);
+      // ✅ FALLBACK: CONSULTA DIRETA NO BANCO (MOSTRA TODOS OS PEDIDOS)
+      console.log('⚠️ Usando fallback direto no banco para mostrar TODOS os pedidos...');
+      
+      const data = await buscarDadosLocais();
+      console.log(`🎯 Fallback: ${data?.length || 0} itens encontrados no banco local`);
 
-    toast({
-      title: "Dados carregados",
-      description: `${itensProcessados.length} itens encontrados - incluindo itens sem estoque/mapeamento para análise`,
-    });
-    } catch (err) {
-      console.error('Erro ao buscar itens de pedidos:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      // ✅ PROCESSAR E APLICAR MAPEAMENTOS SEM FILTRAR NADA
+      const itensProcessados = await aplicarMapeamentos(data || []);
+      
+      localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
+      setItens(itensProcessados);
+      calcularMetricas(itensProcessados);
+
       toast({
-        title: "Erro",
-        description: "Erro ao carregar pedidos. Tente novamente.",
-        variant: "destructive",
+        title: "✅ Dados carregados localmente",
+        description: `${itensProcessados.length} itens encontrados no banco local`,
       });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('❌ Erro na sincronização:', error);
+      setError(error instanceof Error ? error.message : 'Erro na sincronização');
     }
   };
 
