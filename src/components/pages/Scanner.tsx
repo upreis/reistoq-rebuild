@@ -1,10 +1,11 @@
-import { ScanLine, Camera, Search, Package, X, Clock } from "lucide-react";
+import { ScanLine, Camera, Search, Package, X, Clock, Video, VideoOff, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useWebBarcodeScanner } from "@/hooks/useWebBarcodeScanner";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -12,25 +13,31 @@ import { ptBR } from "date-fns/locale";
 export function Scanner() {
   const {
     isScanning,
-    isNative,
+    isSupported,
+    hasPermission,
     loading,
     lastScanResult,
     scannedProduct,
     scanHistory,
+    availableCameras,
+    selectedCamera,
+    videoRef,
+    setSelectedCamera,
     startScan,
     stopScan,
     buscarManualmente,
     limparResultado
-  } = useBarcodeScanner();
+  } = useWebBarcodeScanner();
 
   const [manualCode, setManualCode] = useState('');
   
   // Debug - vamos ver o que está acontecendo
-  console.log('🔍 Scanner Debug:', { 
-    isNative, 
+  console.log('🔍 Scanner Web Debug:', { 
+    isSupported, 
+    hasPermission,
     loading, 
     isScanning, 
-    buttonDisabled: !isNative || loading 
+    availableCameras: availableCameras.length 
   });
   return (
     <div className="space-y-6">
@@ -55,43 +62,120 @@ export function Scanner() {
               Use a câmera do dispositivo para ler códigos de barras
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
-              <div className="text-center">
-                {isScanning ? (
-                  <>
-                    <ScanLine className="mx-auto h-12 w-12 text-primary mb-4 animate-pulse" />
-                    <p className="text-primary mb-4">Escaneando...</p>
-                    <Button variant="destructive" onClick={stopScan}>
-                      <X className="mr-2 h-4 w-4" />
-                      Cancelar
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <ScanLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      {isNative ? "Câmera pronta para usar" : "Scanner disponível apenas em dispositivos móveis"}
-                    </p>
-                    <Button 
-                      variant="premium" 
-                      onClick={startScan}
-                      disabled={!isNative || loading}
-                    >
-                      <Camera className="mr-2 h-4 w-4" />
-                      {loading ? "Carregando..." : "Ativar Câmera"}
-                    </Button>
-                  </>
-                )}
+          <CardContent className="space-y-4">
+            {!isSupported && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  <p className="font-medium">Navegador não suportado</p>
+                </div>
+                <p className="text-sm text-destructive/80 mt-1">
+                  Seu navegador não suporta acesso à câmera. Use um navegador moderno como Chrome, Firefox ou Safari.
+                </p>
               </div>
+            )}
+
+            {isSupported && availableCameras.length > 1 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Selecionar Câmera</label>
+                <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha uma câmera" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableCameras.map((camera) => (
+                      <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                        {camera.label || `Câmera ${camera.deviceId.slice(0, 8)}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="aspect-video bg-muted rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/30 relative">
+              {isSupported ? (
+                <>
+                  <video 
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{ display: isScanning ? 'block' : 'none' }}
+                  />
+                  
+                  {!isScanning && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground mb-4">
+                          {hasPermission === false 
+                            ? "Permissão de câmera necessária" 
+                            : "Toque para ativar a câmera"
+                          }
+                        </p>
+                        <Button 
+                          variant="default" 
+                          onClick={startScan}
+                          disabled={loading || hasPermission === false}
+                        >
+                          <Video className="mr-2 h-4 w-4" />
+                          {loading ? "Carregando..." : "Ativar Scanner"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isScanning && (
+                    <div className="absolute inset-0">
+                      {/* Overlay de scanning */}
+                      <div className="absolute inset-0 bg-black/20">
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                          <div className="w-48 h-48 border-2 border-primary rounded-lg relative">
+                            <div className="absolute top-0 left-0 w-6 h-6 border-l-4 border-t-4 border-primary"></div>
+                            <div className="absolute top-0 right-0 w-6 h-6 border-r-4 border-t-4 border-primary"></div>
+                            <div className="absolute bottom-0 left-0 w-6 h-6 border-l-4 border-b-4 border-primary"></div>
+                            <div className="absolute bottom-0 right-0 w-6 h-6 border-r-4 border-b-4 border-primary"></div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Botão de parar */}
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                        <Button variant="destructive" onClick={stopScan}>
+                          <VideoOff className="mr-2 h-4 w-4" />
+                          Parar Scanner
+                        </Button>
+                      </div>
+                      
+                      {/* Indicador de escaneamento */}
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+                          <ScanLine className="h-4 w-4 animate-pulse" />
+                          Escaneando...
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">Scanner não disponível</p>
+                  </div>
+                </div>
+              )}
             </div>
             
-            <div className="mt-4 p-4 bg-accent-light rounded-lg">
+            <div className="mt-4 p-4 bg-accent/10 rounded-lg">
               <h4 className="font-medium text-foreground mb-2">Como usar:</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Posicione o código de barras no centro da tela</li>
-                <li>• Mantenha o dispositivo estável</li>
-                <li>• Aguarde a leitura automática</li>
+                <li>• Posicione o código de barras no centro da área destacada</li>
+                <li>• Mantenha o dispositivo estável e bem iluminado</li>
+                <li>• A leitura é automática quando o código for detectado</li>
+                <li>• Funciona em qualquer navegador moderno</li>
               </ul>
             </div>
           </CardContent>
@@ -239,7 +323,7 @@ export function Scanner() {
             <div className="border rounded-lg p-6 text-center">
               <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                {isNative ? "Escaneie ou digite um código para ver os detalhes do produto" : "Digite um código para buscar o produto"}
+                {isSupported ? "Escaneie ou digite um código para ver os detalhes do produto" : "Digite um código para buscar o produto"}
               </p>
             </div>
           )}
