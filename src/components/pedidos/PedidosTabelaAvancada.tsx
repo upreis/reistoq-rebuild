@@ -78,7 +78,6 @@ export function PedidosTabelaAvancada({
       descricao: true,
       tempoDecorrido: false,
       prioridade: false,
-      margem: false,
       numeroVenda: true,
       cidade: true,
       uf: true
@@ -128,19 +127,11 @@ export function PedidosTabelaAvancada({
     return "text-red-600";
   };
 
-  const calcularMargemLucro = (item: ItemPedidoEnriquecido) => {
-    // Mock calculation - in real app, would get cost from product data
-    const custoProduto = item.valor_unitario * 0.6; // Assumindo 60% de custo
-    const margem = ((item.valor_unitario - custoProduto) / item.valor_unitario) * 100;
-    return margem;
-  };
-
   const obterPrioridade = (item: ItemPedidoEnriquecido) => {
     const valor = item.valor_total;
-    const margem = calcularMargemLucro(item);
     
-    if (valor > 500 || margem > 50) return { nivel: "alta", cor: "text-red-600", icon: AlertTriangle };
-    if (valor > 200 || margem > 30) return { nivel: "média", cor: "text-yellow-600", icon: Clock };
+    if (valor > 500) return { nivel: "alta", cor: "text-red-600", icon: AlertTriangle };
+    if (valor > 200) return { nivel: "média", cor: "text-yellow-600", icon: Clock };
     return { nivel: "baixa", cor: "text-green-600", icon: TrendingUp };
   };
 
@@ -352,13 +343,6 @@ export function PedidosTabelaAvancada({
               />
               Prioridade
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, margem: !prev.margem }))}>
-              <Checkbox 
-                checked={colunasVisiveis.margem} 
-                className="mr-2" 
-              />
-              Margem
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, numeroVenda: !prev.numeroVenda }))}>
               <Checkbox 
                 checked={colunasVisiveis.numeroVenda} 
@@ -431,7 +415,7 @@ export function PedidosTabelaAvancada({
                  </TableHead>
                  {colunasVisiveis.tempoDecorrido && <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>}
                  {colunasVisiveis.prioridade && <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>}
-                 {colunasVisiveis.margem && <TableHead className="px-2 min-w-[80px]">Margem</TableHead>}
+                 
                  <TableHead className="px-2 min-w-[120px]">Status</TableHead>
                  <TableHead className="px-2 min-w-[100px]">Ações</TableHead>
               </TableRow>
@@ -439,7 +423,6 @@ export function PedidosTabelaAvancada({
             <TableBody>
               {itens.map((item, index) => {
                 const prioridade = obterPrioridade(item);
-                const margemLucro = calcularMargemLucro(item);
                 const statusEstoque = obterStatusEstoque?.(item);
                 const isElegivel = statusEstoque === 'disponivel';
                 
@@ -595,16 +578,6 @@ export function PedidosTabelaAvancada({
                        </TableCell>
                      )}
                      
-                     {colunasVisiveis.margem && (
-                       <TableCell>
-                         <div className={`text-right font-semibold ${
-                           margemLucro > 40 ? 'text-green-600' : 
-                           margemLucro > 20 ? 'text-yellow-600' : 'text-red-600'
-                         }`}>
-                           {margemLucro.toFixed(1)}%
-                         </div>
-                       </TableCell>
-                     )}
                      
                      <TableCell>
                        {getStatusProcessamentoComEstoque(item)}
