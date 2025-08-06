@@ -61,7 +61,9 @@ export function PedidosTabelaItens({
   };
 
   const formatarData = (data: string) => {
-    return new Date(data).toLocaleDateString('pt-BR');
+    // Evitar problemas de timezone ao formatar datas
+    const [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
   };
 
   const getStatusBadge = (situacao: string) => {
