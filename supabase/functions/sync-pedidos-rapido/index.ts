@@ -35,9 +35,6 @@ interface TinyPedido {
   valor_total: number;
   obs?: string;
   obs_interna?: string;
-  // ✅ NOVAS COLUNAS ADICIONADAS
-  canal_venda?: string;
-  nome_ecommerce?: string;
   itens?: TinyItemPedido[];
 }
 
@@ -110,33 +107,6 @@ function formatDateForTinyAPI(dateStr: string): string {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
   return dateStr;
-}
-
-function determinarNomeEcommerce(pedido: any): string {
-  const numeroEcommerce = pedido.numero_ecommerce || '';
-  
-  // Padrão Shopee: números longos com sufixo alfanumérico
-  if (/^\d{6}[A-Z0-9]{6,}$/.test(numeroEcommerce)) return 'Shopee Comercial BR';
-  
-  // Padrão Mercado Livre
-  if (/^MLM?\d+/.test(numeroEcommerce)) return 'Mercado Livre';
-  
-  // Padrão Amazon
-  if (/^\d{3}-\d{7}-\d{7}$/.test(numeroEcommerce)) return 'Amazon';
-  
-  // Se tem número e-commerce mas não é padrão conhecido
-  if (numeroEcommerce) return 'E-commerce';
-  
-  // Sem número e-commerce = venda direta
-  return 'Venda Direta';
-}
-
-function determinarCanalVenda(pedido: any): string {
-  // Se tem campo canal_venda direto, usar ele
-  if (pedido.canal_venda) return pedido.canal_venda;
-  
-  // Senão, derivar do nome do e-commerce
-  return determinarNomeEcommerce(pedido);
 }
 
 // ✅ CORRIGIDO: Função para mapear situações conforme tabela auxiliar do Tiny ERP
@@ -556,9 +526,7 @@ Deno.serve(async (req) => {
             valor_desconto: parseFloat(pedidoDetalhado.valor_desconto || pedidoDetalhado.desconto || '0'),
             valor_total: parseFloat(pedidoDetalhado.total_pedido || pedidoDetalhado.valor_total || '0'),
             obs: pedidoDetalhado.obs,
-            obs_interna: pedidoDetalhado.obs_interna,
-            canal_venda: determinarCanalVenda(pedidoDetalhado),
-            nome_ecommerce: determinarNomeEcommerce(pedidoDetalhado)
+            obs_interna: pedidoDetalhado.obs_interna
           };
 
           // ✅ PROCESSAR ITENS com informações completas
