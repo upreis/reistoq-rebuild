@@ -213,14 +213,21 @@ export function Estoque() {
       />
 
       {/* Filters, File Management, and Sync Configuration */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <EstoqueFiltros 
-          filtros={filtros}
-          onAtualizarFiltros={atualizarFiltros}
-          onLimparFiltros={limparFiltros}
-        />
-        <EstoqueFileManager onUploadSuccess={recarregarDados} />
-        <EstoqueSyncConfig />
+      <div className="space-y-4">
+        {/* Primeira linha: Filtros e Importar/Exportar */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <EstoqueFiltros 
+            filtros={filtros}
+            onAtualizarFiltros={atualizarFiltros}
+            onLimparFiltros={limparFiltros}
+          />
+          <EstoqueFileManager onUploadSuccess={recarregarDados} />
+        </div>
+        
+        {/* Segunda linha: Configuração de Sincronização */}
+        <div className="max-w-md">
+          <EstoqueSyncConfig />
+        </div>
       </div>
 
       {/* Status Bar */}
