@@ -42,6 +42,12 @@ export interface ItemPedidoEnriquecido {
   valor_desconto?: number;
   obs?: string;
   obs_interna?: string;
+  // Novos campos solicitados
+  cidade?: string;
+  uf?: string;
+  valor_total_pedido?: number;
+  total_itens?: number;
+  valor_produtos?: number;
   // Campos do estoque
   produto_nome?: string;
   estoque_atual?: number;

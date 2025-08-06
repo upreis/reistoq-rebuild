@@ -31,6 +31,12 @@ export interface ItemPedido {
   valor_desconto: number;
   created_at?: string;
   updated_at?: string;
+  // Novos campos solicitados
+  cidade?: string;
+  uf?: string;
+  valor_total_pedido?: number;
+  total_itens?: number;
+  valor_produtos?: number;
   // Dados do mapeamento DE/PARA (aplicado na exibição)
   sku_correspondente?: string;
   sku_simples?: string;
@@ -182,10 +188,31 @@ export function useItensPedidos() {
       // ✅ SOLUÇÃO 4: USAR DADOS RETORNADOS DIRETAMENTE (eliminar consulta local duplicada)
       if (syncData?.itens && syncData?.pedidos) {
         console.log(`🎯 Recebidos ${syncData.itens.length} itens e ${syncData.pedidos.length} pedidos diretamente`);
+        console.log('📊 Exemplo de pedido completo:', syncData.pedidos[0]);
+        console.log('📦 Exemplo de item completo:', syncData.itens[0]);
         
         // Enriquecer itens com dados dos pedidos
         const itensComPedidos = syncData.itens.map((item: any) => {
           const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
+          // Calcular total de itens do pedido
+          const totalItensPedido = syncData.itens
+            .filter((i: any) => i.numero_pedido === item.numero_pedido)
+            .reduce((sum: number, i: any) => sum + (i.quantidade || 0), 0);
+          
+          // Calcular valor total dos produtos (sem frete e desconto)
+          const valorProdutosPedido = syncData.itens
+            .filter((i: any) => i.numero_pedido === item.numero_pedido)
+            .reduce((sum: number, i: any) => sum + (i.valor_total || 0), 0);
+          
+          console.log(`🔍 Processando item ${item.sku} do pedido ${item.numero_pedido}:`, {
+            pedido_encontrado: !!pedido,
+            cidade: pedido?.cidade,
+            uf: pedido?.uf,
+            valor_total_pedido: pedido?.valor_total,
+            total_itens: totalItensPedido,
+            valor_produtos: valorProdutosPedido
+          });
+          
           return {
             ...item,
             pedidos: pedido ? {
@@ -200,7 +227,13 @@ export function useItensPedidos() {
               obs: pedido.obs,
               obs_interna: pedido.obs_interna,
               valor_frete: pedido.valor_frete,
-              valor_desconto: pedido.valor_desconto
+              valor_desconto: pedido.valor_desconto,
+              // Novos campos calculados
+              cidade: pedido.cidade,
+              uf: pedido.uf,
+              valor_total_pedido: pedido.valor_total,
+              total_itens: totalItensPedido,
+              valor_produtos: valorProdutosPedido
             } : null
           };
         });
@@ -344,6 +377,26 @@ export function useItensPedidos() {
       return itensRaw.map(item => {
         const pedidoData = item.pedidos;
         
+        console.log(`🔧 Mapeando item ${item.sku}:`, {
+          numero_pedido: item.numero_pedido,
+          tem_objeto_pedidos: !!item.pedidos,
+          dados_pedido: pedidoData,
+          cidade_direta: item.cidade,
+          cidade_pedidos: item.pedidos?.cidade,
+          uf_direta: item.uf,
+          uf_pedidos: item.pedidos?.uf,
+          valor_total_direta: item.valor_total_pedido,
+          valor_total_pedidos: item.pedidos?.valor_total_pedido
+        });
+        
+        // Função auxiliar para obter dados com fallbacks múltiplos
+        const obterDado = (campo: string) => {
+          return item[campo] || 
+                 (item.pedidos && item.pedidos[campo]) || 
+                 (pedidoData && pedidoData[campo]) || 
+                 null;
+        };
+        
         // Aplicar mapeamento DE/PARA
         const mapeamento = mapeamentos?.find(m => m.sku_pedido === item.sku);
         const skuCorrespondente = mapeamento?.sku_correspondente || item.sku;
@@ -370,21 +423,27 @@ export function useItensPedidos() {
           ncm: item.ncm,
           codigo_barras: item.codigo_barras,
           observacoes: item.observacoes,
-          // Dados do pedido
-          numero_ecommerce: pedidoData.numero_ecommerce,
-          nome_cliente: pedidoData.nome_cliente,
-          cpf_cnpj: pedidoData.cpf_cnpj,
-          data_pedido: pedidoData.data_pedido,
-          data_prevista: pedidoData.data_prevista,
-          situacao: pedidoData.situacao,
-          codigo_rastreamento: pedidoData.codigo_rastreamento,
-          url_rastreamento: pedidoData.url_rastreamento,
-          obs: pedidoData.obs,
-          obs_interna: pedidoData.obs_interna,
-          valor_frete: pedidoData.valor_frete,
-          valor_desconto: pedidoData.valor_desconto,
+          // Dados do pedido - usar função auxiliar para obter com fallbacks
+          numero_ecommerce: obterDado('numero_ecommerce'),
+          nome_cliente: obterDado('nome_cliente'),
+          cpf_cnpj: obterDado('cpf_cnpj'),
+          data_pedido: obterDado('data_pedido'),
+          data_prevista: obterDado('data_prevista'),
+          situacao: obterDado('situacao'),
+          codigo_rastreamento: obterDado('codigo_rastreamento'),
+          url_rastreamento: obterDado('url_rastreamento'),
+          obs: obterDado('obs'),
+          obs_interna: obterDado('obs_interna'),
+          valor_frete: obterDado('valor_frete') || 0,
+          valor_desconto: obterDado('valor_desconto') || 0,
           created_at: item.created_at,
           updated_at: item.updated_at,
+          // CORRIGIDO: Novos campos solicitados - usar função auxiliar
+          cidade: obterDado('cidade'),
+          uf: obterDado('uf'),
+          valor_total_pedido: obterDado('valor_total_pedido') || obterDado('valor_total'),
+          total_itens: obterDado('total_itens'),
+          valor_produtos: obterDado('valor_produtos'),
           // Dados do mapeamento e produto
           sku_correspondente: skuCorrespondente !== item.sku ? skuCorrespondente : undefined,
           sku_simples: skuSimples,
