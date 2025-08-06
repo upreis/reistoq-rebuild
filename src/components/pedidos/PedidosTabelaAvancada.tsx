@@ -202,8 +202,10 @@ export function PedidosTabelaAvancada({
   // Função para alternar seleção de um item
   const toggleSelecaoItem = (item: ItemPedidoEnriquecido) => {
     if (isItemSelecionado(item)) {
+      // Remove apenas este item dos selecionados
       onSelecaoChange(itensSelecionados.filter(itemSel => itemSel.id !== item.id));
     } else {
+      // Adiciona este item aos já selecionados
       onSelecaoChange([...itensSelecionados, item]);
     }
   };

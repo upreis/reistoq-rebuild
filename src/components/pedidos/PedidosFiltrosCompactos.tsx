@@ -141,6 +141,7 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
                 mode="single"
                 selected={dataInicio}
                 onSelect={handleDataInicioChange}
+                defaultMonth={dataInicio}
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
@@ -164,6 +165,7 @@ export function PedidosFiltrosCompactos({ filtros, onFiltroChange, onLimparFiltr
                 mode="single"
                 selected={dataFim}
                 onSelect={handleDataFimChange}
+                defaultMonth={dataFim}
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>

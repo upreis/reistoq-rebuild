@@ -218,77 +218,71 @@ export function PedidosTabelaItens({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID Único</TableHead>
-                <TableHead>Pedido</TableHead>
-                <TableHead>Nome E-commerce</TableHead>
-                <TableHead>Canal de Venda</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Qtd</TableHead>
-                <TableHead>Valor Unit.</TableHead>
-                <TableHead>Total Item</TableHead>
-                <TableHead>Situação</TableHead>
-                <TableHead>Data Pedido</TableHead>
-                <TableHead>Estoque</TableHead>
-                <TableHead>SKU Estoque</TableHead>
-                <TableHead>SKU KIT</TableHead>
-                <TableHead>Qtd KIT</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead className="w-32">ID Único</TableHead>
+                <TableHead className="w-24">Pedido</TableHead>
+                <TableHead className="w-28">Data Pedido</TableHead>
+                <TableHead className="w-40">Cliente</TableHead>
+                <TableHead className="w-32">SKU</TableHead>
+                <TableHead className="w-48">Descrição</TableHead>
+                <TableHead className="w-16 text-center">Qtd</TableHead>
+                <TableHead className="w-28">Valor Unit.</TableHead>
+                <TableHead className="w-32">Total Item</TableHead>
+                <TableHead className="w-24">Situação</TableHead>
+                <TableHead className="w-20 text-center">Estoque</TableHead>
+                <TableHead className="w-32">SKU Estoque</TableHead>
+                <TableHead className="w-32">SKU KIT</TableHead>
+                <TableHead className="w-20 text-center">Qtd KIT</TableHead>
+                <TableHead className="w-36">Nome E-commerce</TableHead>
+                <TableHead className="w-32">Canal de Venda</TableHead>
+                <TableHead className="w-28">Status</TableHead>
+                <TableHead className="w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {itens.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono text-xs">
-                    {gerarIdUnico(item)}
+                  <TableCell className="font-mono text-xs w-32">
+                    <div className="truncate">{gerarIdUnico(item)}</div>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    #{item.numero_pedido}
+                  <TableCell className="font-medium w-24">
+                    <div className="truncate">#{item.numero_pedido}</div>
                   </TableCell>
-                  <TableCell>
-                    {item.numero_ecommerce || '-'}
+                  <TableCell className="w-28">
+                    <div className="text-sm">{formatarData(item.data_pedido)}</div>
                   </TableCell>
-                  <TableCell>
-                    {'-'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-48 truncate">
+                  <TableCell className="w-40">
+                    <div className="truncate">
                       {item.nome_cliente}
                     </div>
                   </TableCell>
-                   <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
-                     <div className="font-mono text-sm">{item.sku}</div>
+                   <TableCell className={`w-32 ${item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`}>
+                     <div className="font-mono text-sm truncate">{item.sku}</div>
                      {item.linha_destacada && (
                        <div className="text-xs text-orange-600 font-medium">
                          ⚠️ Sem mapeamento
                        </div>
                      )}
                    </TableCell>
-                   <TableCell>
-                     <div className="max-w-60 truncate">
+                   <TableCell className="w-48">
+                     <div className="truncate" title={item.descricao}>
                        {item.descricao}
                      </div>
                    </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center w-16">
                     {item.quantidade}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-28">
                     <div className="text-xs text-muted-foreground">Unit:</div>
-                    <div>{formatarMoeda(item.valor_unitario)}</div>
+                    <div className="text-sm">{formatarMoeda(item.valor_unitario)}</div>
                   </TableCell>
-                  <TableCell className="font-semibold">
-                    <div className="text-lg font-bold">{formatarMoeda(item.valor_total_pedido || 0)}</div>
-                    <div className="text-xs text-muted-foreground">Total do pedido</div>
+                  <TableCell className="font-semibold w-32">
+                    <div className="text-base font-bold">{formatarMoeda(item.valor_total_pedido || 0)}</div>
+                    <div className="text-xs text-muted-foreground">Total pedido</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-24">
                     {getStatusBadge(item.situacao)}
                   </TableCell>
-                  <TableCell>
-                    {formatarData(item.data_pedido)}
-                  </TableCell>
-                  <TableCell>
+                  <TableCell className="w-20">
                     {item.estoque_atual !== undefined ? (
                       <div className={`text-center ${
                         item.estoque_atual < item.quantidade 
@@ -306,16 +300,30 @@ export function PedidosTabelaItens({
                       <span className="text-muted-foreground text-sm">N/A</span>
                     )}
                    </TableCell>
-                   <TableCell className="font-mono text-sm">
-                     {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
+                   <TableCell className="font-mono text-sm w-32">
+                     <div className="truncate" title={item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque}>
+                       {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
+                     </div>
                    </TableCell>
-                   <TableCell className="font-mono text-sm">
-                     {item.mapeamento_aplicado?.sku_simples || '-'}
+                   <TableCell className="font-mono text-sm w-32">
+                     <div className="truncate" title={item.mapeamento_aplicado?.sku_simples}>
+                       {item.mapeamento_aplicado?.sku_simples || '-'}
+                     </div>
                    </TableCell>
-                   <TableCell className="text-center">
+                   <TableCell className="text-center w-20">
                      {item.mapeamento_aplicado?.quantidade || '-'}
                    </TableCell>
-                     <TableCell>
+                   <TableCell className="w-36">
+                     <div className="truncate text-sm" title={item.numero_ecommerce}>
+                       {item.numero_ecommerce || '-'}
+                     </div>
+                   </TableCell>
+                   <TableCell className="w-32">
+                     <div className="truncate text-sm">
+                       {'-'}
+                     </div>
+                   </TableCell>
+                     <TableCell className="w-28">
                        {getStatusProcessamentoComEstoque(item)}
                      </TableCell>
                    <TableCell>
