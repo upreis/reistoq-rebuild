@@ -145,8 +145,43 @@ export function useHistoricoMovimentacoes() {
     });
   };
 
-  const excluirMovimentacao = async (id: string) => {
+  const excluirMovimentacao = async (id: string, retornarAoEstoque: boolean = false) => {
     try {
+      if (retornarAoEstoque) {
+        // Buscar dados da movimentação para reverter o estoque
+        const { data: movimentacao, error: fetchError } = await supabase
+          .from('movimentacoes_estoque')
+          .select(`
+            *,
+            produtos (
+              id,
+              nome,
+              sku_interno,
+              quantidade_atual
+            )
+          `)
+          .eq('id', id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        if (movimentacao && movimentacao.produtos) {
+          // Calcular nova quantidade após reversão
+          const quantidadeAtual = movimentacao.produtos.quantidade_atual;
+          const novaQuantidade = movimentacao.tipo_movimentacao === 'entrada' 
+            ? quantidadeAtual - movimentacao.quantidade_movimentada
+            : quantidadeAtual + movimentacao.quantidade_movimentada;
+
+          // Atualizar estoque do produto
+          const { error: updateError } = await supabase
+            .from('produtos')
+            .update({ quantidade_atual: novaQuantidade })
+            .eq('id', movimentacao.produto_id);
+
+          if (updateError) throw updateError;
+        }
+      }
+
       const { error } = await supabase
         .from('movimentacoes_estoque')
         .delete()
@@ -156,7 +191,9 @@ export function useHistoricoMovimentacoes() {
 
       toast({
         title: "Movimentação excluída",
-        description: "A movimentação foi excluída com sucesso.",
+        description: retornarAoEstoque 
+          ? "A movimentação foi excluída e o estoque foi ajustado."
+          : "A movimentação foi excluída com sucesso.",
       });
 
       buscarMovimentacoes();

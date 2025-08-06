@@ -6,6 +6,7 @@ import { HistoricoMetricas } from '@/components/historico/HistoricoMetricas';
 import { HistoricoTabela } from '@/components/historico/HistoricoTabela';
 import { NovaMovimentacaoModal } from '@/components/historico/NovaMovimentacaoModal';
 import { MovimentacaoEditModal } from '@/components/historico/MovimentacaoEditModal';
+import { ExclusaoMovimentacaoModal } from '@/components/estoque/ExclusaoMovimentacaoModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Plus, Trash2 } from "lucide-react";
@@ -26,8 +27,9 @@ export function EstoqueHistoricoMovimentacoes() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteMultipleDialog, setShowDeleteMultipleDialog] = useState(false);
+  const [showExclusaoModal, setShowExclusaoModal] = useState(false);
   const [movimentacaoParaEditar, setMovimentacaoParaEditar] = useState<any>(null);
-  const [movimentacaoParaExcluir, setMovimentacaoParaExcluir] = useState<string | null>(null);
+  const [movimentacaoParaExcluir, setMovimentacaoParaExcluir] = useState<any>(null);
 
   const {
     movimentacoes,
@@ -77,14 +79,26 @@ export function EstoqueHistoricoMovimentacoes() {
     setShowEditModal(true);
   };
 
-  const abrirExclusao = (id: string) => {
-    setMovimentacaoParaExcluir(id);
-    setShowDeleteDialog(true);
+  const abrirExclusao = (movimentacao: any) => {
+    setMovimentacaoParaExcluir(movimentacao);
+    setShowExclusaoModal(true);
+  };
+
+  const confirmarExclusaoAvancada = async (movimentacaoId: string, retornarAoEstoque: boolean) => {
+    if (retornarAoEstoque) {
+      // Lógica para retornar ao estoque será implementada no hook
+      await excluirMovimentacao(movimentacaoId, true);
+    } else {
+      await excluirMovimentacao(movimentacaoId);
+    }
+    setMovimentacaoParaExcluir(null);
+    setShowExclusaoModal(false);
+    setMovimentacoesSelecionadas([]);
   };
 
   const confirmarExclusao = async () => {
     if (movimentacaoParaExcluir) {
-      await excluirMovimentacao(movimentacaoParaExcluir);
+      await excluirMovimentacao(movimentacaoParaExcluir.id);
       setMovimentacaoParaExcluir(null);
       setShowDeleteDialog(false);
       setMovimentacoesSelecionadas([]);
@@ -174,7 +188,7 @@ export function EstoqueHistoricoMovimentacoes() {
         onSelecionarMovimentacao={selecionarMovimentacao}
         onSelecionarTodas={selecionarTodas}
         onEditarMovimentacao={abrirEdicao}
-        onExcluirMovimentacao={abrirExclusao}
+        onExcluirMovimentacao={(movimentacao) => abrirExclusao(movimentacao)}
         onPaginar={irParaPagina}
         onPaginaAnterior={paginaAnterior}
         onProximaPagina={proximaPagina}
@@ -191,7 +205,17 @@ export function EstoqueHistoricoMovimentacoes() {
         open={showEditModal}
         onOpenChange={setShowEditModal}
         movimentacao={movimentacaoParaEditar}
-        onSuccess={handleModalSuccess}
+        onSuccess={recarregarDados}
+      />
+
+      <ExclusaoMovimentacaoModal
+        isOpen={showExclusaoModal}
+        onClose={() => {
+          setShowExclusaoModal(false);
+          setMovimentacaoParaExcluir(null);
+        }}
+        movimentacao={movimentacaoParaExcluir}
+        onConfirm={confirmarExclusaoAvancada}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

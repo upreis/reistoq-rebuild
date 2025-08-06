@@ -33,10 +33,11 @@ interface MovimentacaoHistorico {
   motivo: string | null;
   observacoes: string | null;
   created_at: string;
-  produto?: {
+  produtos?: {
     nome: string;
     sku_interno: string;
     codigo_barras: string | null;
+    quantidade_atual: number;
   };
 }
 
@@ -53,7 +54,7 @@ interface HistoricoTabelaProps {
   onSelecionarMovimentacao: (id: string) => void;
   onSelecionarTodas: () => void;
   onEditarMovimentacao: (movimentacao: MovimentacaoHistorico) => void;
-  onExcluirMovimentacao: (id: string) => void;
+  onExcluirMovimentacao: (movimentacao: MovimentacaoHistorico) => void;
   onPaginar: (pagina: number) => void;
   onPaginaAnterior: () => void;
   onProximaPagina: () => void;
@@ -188,9 +189,9 @@ export function HistoricoTabela({
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="font-medium">{movimentacao.produto?.nome || 'Produto não encontrado'}</div>
+                    <div className="font-medium">{movimentacao.produtos?.nome || 'Produto não encontrado'}</div>
                     <div className="text-sm text-muted-foreground">
-                      SKU: {movimentacao.produto?.sku_interno || 'N/A'}
+                      SKU: {movimentacao.produtos?.sku_interno || 'N/A'}
                     </div>
                   </div>
                 </TableCell>
@@ -235,7 +236,7 @@ export function HistoricoTabela({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onExcluirMovimentacao(movimentacao.id)}
+                      onClick={() => onExcluirMovimentacao(movimentacao)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
