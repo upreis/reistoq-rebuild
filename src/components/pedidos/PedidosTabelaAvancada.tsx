@@ -290,9 +290,9 @@ export function PedidosTabelaAvancada({
                 <TableHead className="px-2 min-w-[120px]">ID Único</TableHead>
                 <TableHead className="px-2 min-w-[100px]">Pedido</TableHead>
                 <TableHead className="px-2 min-w-[120px]">Data do Pedido</TableHead>
-                <TableHead className="px-2 min-w-[180px]">Cliente</TableHead>
+                <TableHead className="px-2 max-w-[180px]">Cliente</TableHead>
                 <TableHead className="px-2 min-w-[120px]">SKU Pedido</TableHead>
-                <TableHead className="px-2 min-w-[200px]">Descrição</TableHead>
+                <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>
                 <TableHead className="px-2 w-16">Qtd</TableHead>
                 <TableHead className="px-2 min-w-[100px]">Valor</TableHead>
                 <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
@@ -356,7 +356,7 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                     <TableCell className="px-2">
-                      <div className="min-w-[180px] truncate" title={item.nome_cliente}>
+                      <div className="max-w-[180px] text-sm leading-tight" title={item.nome_cliente}>
                         {item.nome_cliente}
                         {item.valor_total > 500 && (
                           <Badge variant="outline" className="ml-1 text-xs">VIP</Badge>
@@ -376,7 +376,7 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                     <TableCell className="px-2">
-                      <div className="min-w-[200px] truncate" title={item.descricao}>
+                      <div className="max-w-[200px] text-sm leading-tight" title={item.descricao}>
                         {item.descricao}
                       </div>
                     </TableCell>
