@@ -347,12 +347,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Construir parâmetros da API
+    // Construir parâmetros da API - APENAS para IDs e filtros
     const params = new URLSearchParams({
       token: config.tiny_erp_token,
       formato: 'json',
-      com_itens: 'S', // FUNDAMENTAL para obter itens
-      limite: '100', // ✅ CORRIGIDO: Usar 100 registros por página (máximo da API)
+      // ✅ REMOVIDO: com_itens - pedidos.pesquisa só para IDs e filtros
+      limite: '100', // Máximo da API para eficiência
       pagina: '1'
     });
 
@@ -466,117 +466,23 @@ Deno.serve(async (req) => {
           console.log(`📊 Isso significa que há ${pedidos.length * totalPaginas} pedidos estimados no total`);
         }
 
-        // Processar pedidos da página
+        // ✅ NOVA ESTRATÉGIA: Coletar apenas IDs dos pedidos para busca detalhada
+        const pedidosIds: Array<{id: string, numero: string}> = [];
+        
         for (const pedidoWrapper of pedidos) {
           const pedido = pedidoWrapper.pedido;
           
-          const pedidoProcessado: TinyPedido = {
+          // Coletar apenas ID e número para busca detalhada posterior
+          pedidosIds.push({
             id: pedido.id,
-            numero: pedido.numero,
-            numero_ecommerce: pedido.numero_ecommerce,
-            data_pedido: convertDateFormat(pedido.data_pedido),
-            data_prevista: pedido.data_prevista ? convertDateFormat(pedido.data_prevista) : null,
-            nome_cliente: pedido.nome || pedido.cliente?.nome || 'Cliente não informado',
-            cpf_cnpj: pedido.cpf_cnpj || pedido.cliente?.cpf_cnpj,
-            situacao: pedido.situacao,
-            codigo_rastreamento: pedido.codigo_rastreamento,
-            url_rastreamento: pedido.url_rastreamento,
-            valor_frete: parseFloat(pedido.valor_frete || '0'),
-            valor_desconto: parseFloat(pedido.valor_desconto || '0'),
-            valor_total: parseFloat(pedido.valor_total || '0'),
-            obs: pedido.obs,
-            obs_interna: pedido.obs_interna,
-            // ✅ NOVAS COLUNAS SOLICITADAS
-            canal_venda: determinarCanalVenda(pedido),
-            nome_ecommerce: determinarNomeEcommerce(pedido)
-          };
-
-          allPedidos.push(pedidoProcessado);
-
-          // ✅ CORRIGIDO: Processar itens - API pode retornar itens diretamente no pedido ou em wrapper
-          let itensEncontrados = 0;
+            numero: pedido.numero
+          });
           
-          // Verificar se os itens estão em pedido.itens diretamente
-          if (pedido.itens && Array.isArray(pedido.itens)) {
-            console.log(`📦 Pedido ${pedido.numero}: ${pedido.itens.length} itens encontrados (formato direto)`);
-            
-            for (const item of pedido.itens) {
-              // Itens podem vir diretamente ou dentro de wrapper {item: {...}}
-              const itemData = item.item || item;
-              
-              const itemProcessado = {
-                pedido_id: pedido.id,
-                numero_pedido: pedido.numero,
-                sku: itemData.codigo || itemData.sku || '',
-                descricao: itemData.descricao || '',
-                quantidade: parseInt(itemData.quantidade || '0'),
-                // ✅ CORRIGIDO: Múltiplas fontes para valor_unitario
-                valor_unitario: parseFloat(itemData.valor_unitario || itemData.valor || itemData.preco || '0'),
-                // ✅ CORRIGIDO: Múltiplas fontes para valor_total + cálculo de fallback
-                valor_total: (() => {
-                  const valorTotal = parseFloat(itemData.total || itemData.valor_total || '0');
-                  const valorUnit = parseFloat(itemData.valor_unitario || itemData.valor || itemData.preco || '0');
-                  const qtd = parseInt(itemData.quantidade || '0');
-                  return valorTotal > 0 ? valorTotal : (valorUnit * qtd);
-                })(),
-                ncm: itemData.ncm || null,
-                codigo_barras: itemData.codigo_barras || null,
-                observacoes: itemData.observacoes || null
-              };
-
-              allItens.push(itemProcessado);
-              itensEncontrados++;
-            }
-          } 
-          // Verificar se os itens estão em outro formato/campo
-          else if (pedido.produtos && Array.isArray(pedido.produtos)) {
-            console.log(`📦 Pedido ${pedido.numero}: ${pedido.produtos.length} produtos encontrados`);
-            
-            for (const produto of pedido.produtos) {
-              const produtoData = produto.produto || produto;
-              
-              const itemProcessado = {
-                pedido_id: pedido.id,
-                numero_pedido: pedido.numero,
-                sku: produtoData.codigo || produtoData.sku || '',
-                descricao: produtoData.descricao || '',
-                quantidade: parseInt(produtoData.quantidade || '0'),
-                // ✅ CORRIGIDO: Múltiplas fontes para valor_unitario
-                valor_unitario: parseFloat(produtoData.valor_unitario || produtoData.valor || produtoData.preco || '0'),
-                // ✅ CORRIGIDO: Múltiplas fontes para valor_total + cálculo de fallback
-                valor_total: (() => {
-                  const valorTotal = parseFloat(produtoData.total || produtoData.valor_total || '0');
-                  const valorUnit = parseFloat(produtoData.valor_unitario || produtoData.valor || produtoData.preco || '0');
-                  const qtd = parseInt(produtoData.quantidade || '0');
-                  return valorTotal > 0 ? valorTotal : (valorUnit * qtd);
-                })(),
-                ncm: produtoData.ncm || null,
-                codigo_barras: produtoData.codigo_barras || null,
-                observacoes: produtoData.observacoes || null
-              };
-
-              allItens.push(itemProcessado);
-              itensEncontrados++;
-            }
-          }
-          else {
-            // ✅ DIAGNÓSTICO CRÍTICO: Estrutura completa do pedido para debug
-            console.error(`⚠️ Pedido ${pedido.numero} SEM ITENS! Estrutura completa:`, {
-              tem_itens: !!pedido.itens,
-              tipo_itens: typeof pedido.itens,
-              é_array_itens: Array.isArray(pedido.itens),
-              tem_produtos: !!pedido.produtos,
-              tipo_produtos: typeof pedido.produtos,
-              é_array_produtos: Array.isArray(pedido.produtos),
-              todas_keys_pedido: Object.keys(pedido),
-              estrutura_pedido: JSON.stringify(pedido, null, 2).substring(0, 500)
-            });
-          }
-          
-          if (itensEncontrados > 0) {
-            console.log(`✅ Pedido ${pedido.numero}: ${itensEncontrados} itens processados com sucesso`);
-          }
+          console.log(`📝 Pedido ${pedido.numero} (ID: ${pedido.id}) adicionado à lista para busca detalhada`);
         }
+        
+        // Adicionar IDs coletados à lista geral
+        allPedidos.push(...pedidosIds.map(p => ({ ...p, processado: false })));
 
         paginaAtual++;
         tentativasConsecutivasFalha = 0;
@@ -599,37 +505,68 @@ Deno.serve(async (req) => {
       }
     } while (paginaAtual <= totalPaginas);
 
-    console.log(`📊 Processamento concluído: ${allPedidos.length} pedidos, ${allItens.length} itens`);
+    console.log(`📊 Coleta de IDs concluída: ${allPedidos.length} pedidos identificados`);
 
-    // ✅ ULTRA OTIMIZADO: Buscar detalhes individuais com processamento paralelo
-    if (allPedidos.length > 0 && allItens.length === 0) {
-      console.log('🚀 Pedidos sem itens detectados. Iniciando busca paralela ultra rápida...');
+    // ✅ NOVA ESTRATÉGIA: SEMPRE buscar detalhes completos via pedido.obter
+    const pedidosCompletos: TinyPedido[] = [];
+    const allItens: any[] = [];
+    
+    if (allPedidos.length > 0) {
+      console.log('🚀 NOVA ESTRATÉGIA: Buscando dados completos via pedido.obter para todos os pedidos...');
       
-      // Função para buscar detalhes de um pedido
-      const buscarDetalhesPedido = async (pedido: TinyPedido): Promise<any[]> => {
+      // Função para buscar detalhes completos de um pedido
+      const buscarDetalhesCompletos = async (pedidoRef: {id: string, numero: string}): Promise<{pedido: TinyPedido | null, itens: any[]}> => {
         try {
           const detalhesParams = new URLSearchParams({
             token: config.tiny_erp_token,
             formato: 'json',
-            id: pedido.id
+            id: pedidoRef.id
           });
           
           const detalhesData = await makeApiCallWithRetry(
             `https://api.tiny.com.br/api2/pedido.obter.php`,
             detalhesParams,
             config,
-            `Detalhes pedido ${pedido.numero}`
+            `Detalhes completos pedido ${pedidoRef.numero}`
           );
           
           const pedidoDetalhado = detalhesData.retorno?.pedido;
-          if (pedidoDetalhado?.itens && Array.isArray(pedidoDetalhado.itens)) {
-            console.log(`📦 Pedido ${pedido.numero}: ${pedidoDetalhado.itens.length} itens encontrados nos detalhes`);
+          if (!pedidoDetalhado) {
+            console.warn(`⚠️ Pedido ${pedidoRef.numero}: Sem dados retornados`);
+            return { pedido: null, itens: [] };
+          }
+
+          // ✅ PROCESSAR PEDIDO COMPLETO com todas as informações
+          const pedidoCompleto: TinyPedido = {
+            id: pedidoDetalhado.id,
+            numero: pedidoDetalhado.numero,
+            numero_ecommerce: pedidoDetalhado.numero_ecommerce,
+            data_pedido: convertDateFormat(pedidoDetalhado.data_pedido),
+            data_prevista: pedidoDetalhado.data_prevista ? convertDateFormat(pedidoDetalhado.data_prevista) : null,
+            nome_cliente: pedidoDetalhado.cliente?.nome || 'Cliente não informado',
+            cpf_cnpj: pedidoDetalhado.cliente?.cpf_cnpj,
+            situacao: pedidoDetalhado.situacao,
+            codigo_rastreamento: pedidoDetalhado.codigo_rastreamento,
+            url_rastreamento: pedidoDetalhado.url_rastreamento,
+            valor_frete: parseFloat(pedidoDetalhado.valor_frete || '0'),
+            valor_desconto: parseFloat(pedidoDetalhado.valor_desconto || pedidoDetalhado.desconto || '0'),
+            valor_total: parseFloat(pedidoDetalhado.total_pedido || pedidoDetalhado.valor_total || '0'),
+            obs: pedidoDetalhado.obs,
+            obs_interna: pedidoDetalhado.obs_interna,
+            canal_venda: determinarCanalVenda(pedidoDetalhado),
+            nome_ecommerce: determinarNomeEcommerce(pedidoDetalhado)
+          };
+
+          // ✅ PROCESSAR ITENS com informações completas
+          const itensProcessados: any[] = [];
+          if (pedidoDetalhado.itens && Array.isArray(pedidoDetalhado.itens)) {
+            console.log(`📦 Pedido ${pedidoRef.numero}: ${pedidoDetalhado.itens.length} itens encontrados nos detalhes completos`);
             
-            return pedidoDetalhado.itens.map((itemWrapper: any) => {
+            for (const itemWrapper of pedidoDetalhado.itens) {
               const item = itemWrapper.item || itemWrapper;
-              return {
-                pedido_id: pedido.id,
-                numero_pedido: pedido.numero,
+              itensProcessados.push({
+                pedido_id: pedidoRef.id,
+                numero_pedido: pedidoRef.numero,
                 sku: item.codigo || '',
                 descricao: item.descricao || '',
                 quantidade: parseInt(item.quantidade || '0'),
@@ -638,55 +575,65 @@ Deno.serve(async (req) => {
                 ncm: item.ncm || null,
                 codigo_barras: item.codigo_barras || null,
                 observacoes: item.observacoes || null
-              };
-            });
+              });
+            }
           }
-          return [];
+          
+          return { pedido: pedidoCompleto, itens: itensProcessados };
         } catch (error) {
-          console.warn(`⚠️ Erro ao buscar detalhes do pedido ${pedido.numero}:`, error.message);
-          return [];
+          console.warn(`⚠️ Erro ao buscar detalhes completos do pedido ${pedidoRef.numero}:`, error.message);
+          return { pedido: null, itens: [] };
         }
       };
 
       // Função para processar lote com semáforo para controlar concorrência
-      const processarLoteComConcorrencia = async (lote: TinyPedido[]): Promise<any[]> => {
-        const promises = lote.map((pedido, index) => 
+      const processarLoteComConcorrencia = async (lote: Array<{id: string, numero: string}>): Promise<{pedidos: TinyPedido[], itens: any[]}> => {
+        const promises = lote.map((pedidoRef, index) => 
           new Promise(async (resolve) => {
             // Pequeno delay escalonado para distribuir requests
             await sleep(index * 20);
-            const itens = await buscarDetalhesPedido(pedido);
-            resolve(itens);
+            const resultado = await buscarDetalhesCompletos(pedidoRef);
+            resolve(resultado);
           })
         );
         
         const resultados = await Promise.all(promises);
-        return resultados.flat();
+        const pedidosLote: TinyPedido[] = [];
+        const itensLote: any[] = [];
+        
+        for (const resultado of resultados as Array<{pedido: TinyPedido | null, itens: any[]}>) {
+          if (resultado.pedido) {
+            pedidosLote.push(resultado.pedido);
+          }
+          itensLote.push(...resultado.itens);
+        }
+        
+        return { pedidos: pedidosLote, itens: itensLote };
       };
 
       // Processar todos os pedidos em lotes paralelos
-      const todosPedidos = allPedidos;
-      const totalLotes = Math.ceil(todosPedidos.length / BATCH_SIZE);
+      const todosPedidosIds = allPedidos;
+      const totalLotes = Math.ceil(todosPedidosIds.length / BATCH_SIZE);
       
-      console.log(`🚀 Processando ${todosPedidos.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE} (máx ${MAX_CONCURRENT_REQUESTS} paralelos)`);
+      console.log(`🚀 Processando ${todosPedidosIds.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE} (máx ${MAX_CONCURRENT_REQUESTS} paralelos)`);
       
-      for (let i = 0; i < todosPedidos.length; i += BATCH_SIZE) {
-        const lote = todosPedidos.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < todosPedidosIds.length; i += BATCH_SIZE) {
+        const lote = todosPedidosIds.slice(i, i + BATCH_SIZE);
         const loteNumero = Math.floor(i / BATCH_SIZE) + 1;
         
         console.log(`⚡ Processando lote ${loteNumero}/${totalLotes} (${lote.length} pedidos)...`);
         
-        const itensLote = await processarLoteComConcorrencia(lote);
-        allItens.push(...itensLote);
+        const resultadoLote = await processarLoteComConcorrencia(lote);
+        pedidosCompletos.push(...resultadoLote.pedidos);
+        allItens.push(...resultadoLote.itens);
         
         // Delay mínimo entre lotes para não sobrecarregar
-        if (i + BATCH_SIZE < todosPedidos.length) {
+        if (i + BATCH_SIZE < todosPedidosIds.length) {
           await sleep(DELAY_ENTRE_LOTES);
         }
       }
       
-      console.log(`🚀 Busca paralela concluída: ${allItens.length} itens encontrados em tempo ultra otimizado!`);
-    } else if (allItens.length > 0) {
-      console.log('⚡ Itens já obtidos da pesquisa principal - sem necessidade de busca individual');
+      console.log(`🚀 Busca detalhada concluída: ${pedidosCompletos.length} pedidos e ${allItens.length} itens processados!`);
     }
 
     // ✅ SOLUÇÃO 3: LOGS DETALHADOS na inserção de dados no banco
@@ -696,9 +643,9 @@ Deno.serve(async (req) => {
     let itensSalvos = 0;
 
     // Log das datas que serão inseridas para verificação
-    if (allPedidos.length > 0) {
+    if (pedidosCompletos.length > 0) {
       console.log('📅 LOGS DE DATAS - Primeiros 3 pedidos que serão inseridos:');
-      allPedidos.slice(0, 3).forEach((pedido, index) => {
+      pedidosCompletos.slice(0, 3).forEach((pedido, index) => {
         console.log(`  Pedido ${index + 1} (${pedido.numero}):`, {
           data_pedido_original: pedido.data_pedido,
           data_prevista_original: pedido.data_prevista,
