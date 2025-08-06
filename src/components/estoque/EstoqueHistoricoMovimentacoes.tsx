@@ -25,7 +25,6 @@ export function EstoqueHistoricoMovimentacoes() {
   const [movimentacoesSelecionadas, setMovimentacoesSelecionadas] = useState<string[]>([]);
   const [showNovaModal, setShowNovaModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteMultipleDialog, setShowDeleteMultipleDialog] = useState(false);
   const [showExclusaoModal, setShowExclusaoModal] = useState(false);
   const [movimentacaoParaEditar, setMovimentacaoParaEditar] = useState<any>(null);
@@ -85,24 +84,10 @@ export function EstoqueHistoricoMovimentacoes() {
   };
 
   const confirmarExclusaoAvancada = async (movimentacaoId: string, retornarAoEstoque: boolean) => {
-    if (retornarAoEstoque) {
-      // Lógica para retornar ao estoque será implementada no hook
-      await excluirMovimentacao(movimentacaoId, true);
-    } else {
-      await excluirMovimentacao(movimentacaoId);
-    }
+    await excluirMovimentacao(movimentacaoId, retornarAoEstoque);
     setMovimentacaoParaExcluir(null);
     setShowExclusaoModal(false);
     setMovimentacoesSelecionadas([]);
-  };
-
-  const confirmarExclusao = async () => {
-    if (movimentacaoParaExcluir) {
-      await excluirMovimentacao(movimentacaoParaExcluir.id);
-      setMovimentacaoParaExcluir(null);
-      setShowDeleteDialog(false);
-      setMovimentacoesSelecionadas([]);
-    }
   };
 
   const abrirExclusaoMultipla = () => {
@@ -218,22 +203,6 @@ export function EstoqueHistoricoMovimentacoes() {
         onConfirm={confirmarExclusaoAvancada}
       />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir esta movimentação? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmarExclusao}>
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog open={showDeleteMultipleDialog} onOpenChange={setShowDeleteMultipleDialog}>
         <AlertDialogContent>
