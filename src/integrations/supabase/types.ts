@@ -304,6 +304,7 @@ export type Database = {
       pedidos: {
         Row: {
           canal_venda: string | null
+          cidade: string | null
           codigo_rastreamento: string | null
           cpf_cnpj: string | null
           created_at: string
@@ -317,6 +318,7 @@ export type Database = {
           obs: string | null
           obs_interna: string | null
           situacao: string
+          uf: string | null
           updated_at: string
           url_rastreamento: string | null
           valor_desconto: number
@@ -325,6 +327,7 @@ export type Database = {
         }
         Insert: {
           canal_venda?: string | null
+          cidade?: string | null
           codigo_rastreamento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
@@ -338,6 +341,7 @@ export type Database = {
           obs?: string | null
           obs_interna?: string | null
           situacao: string
+          uf?: string | null
           updated_at?: string
           url_rastreamento?: string | null
           valor_desconto?: number
@@ -346,6 +350,7 @@ export type Database = {
         }
         Update: {
           canal_venda?: string | null
+          cidade?: string | null
           codigo_rastreamento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
@@ -359,6 +364,7 @@ export type Database = {
           obs?: string | null
           obs_interna?: string | null
           situacao?: string
+          uf?: string | null
           updated_at?: string
           url_rastreamento?: string | null
           valor_desconto?: number
