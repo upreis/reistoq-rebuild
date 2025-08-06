@@ -159,6 +159,43 @@ export function Configuracoes() {
     }
   };
 
+  const handleSyncPedidos = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-pedidos-tiny-basico');
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro na sincronização",
+          description: error.message,
+        });
+        return;
+      }
+
+      if (data.success) {
+        toast({
+          title: "✅ Sincronização concluída!",
+          description: data.message,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Falha na sincronização",
+          description: data.error,
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível sincronizar pedidos",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -168,6 +205,100 @@ export function Configuracoes() {
           <p className="text-muted-foreground">APIs, notificações e preferências do sistema</p>
         </div>
       </div>
+
+      {/* Status Dashboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Status das Integrações
+          </CardTitle>
+          <CardDescription>
+            Status em tempo real das conexões e funcionalidades
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Tiny ERP</p>
+                <Badge variant={tinyToken ? "default" : "secondary"}>
+                  {tinyToken ? "Configurado" : "Pendente"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {tinyToken ? "API conectada e pronta" : "Token não configurado"}
+              </p>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Telegram Bot</p>
+                <Badge variant={telegramToken && telegramChatId ? "default" : "secondary"}>
+                  {telegramToken && telegramChatId ? "Configurado" : "Pendente"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {telegramToken && telegramChatId ? "Bot ativo e conectado" : "Bot ou Chat ID não configurado"}
+              </p>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Alertas Automáticos</p>
+                <Badge variant={alertasAutomaticos ? "default" : "secondary"}>
+                  {alertasAutomaticos ? "Ativo" : "Inativo"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {alertasAutomaticos 
+                  ? `Verificando a cada ${intervaloAlertas === "0" ? "tempo real" : `${intervaloAlertas}min`}`
+                  : "Sistema de alertas desativado"
+                }
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              disabled={!tinyToken || loading}
+              onClick={handleSyncPedidos}
+            >
+              {loading ? "Sincronizando..." : "🔄 Sincronizar Pedidos"}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              disabled={!telegramToken || !telegramChatId || loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('testar-telegram-bot');
+                  if (data?.success) {
+                    toast({
+                      title: "✅ Telegram funcionando!",
+                      description: "Mensagem de teste enviada",
+                    });
+                  }
+                } catch (error) {
+                  toast({
+                    variant: "destructive",
+                    title: "Erro",
+                    description: "Falha no teste do Telegram",
+                  });
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              {loading ? "Testando..." : "📱 Testar Telegram"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* API Configuration */}
       <Card>
@@ -230,15 +361,45 @@ export function Configuracoes() {
             <div className="flex gap-2">
               <Button 
                 variant="secondary" 
-                disabled={!tinyToken}
-                onClick={() => {
-                  toast({
-                    title: "Teste de conexão",
-                    description: "Funcionalidade será implementada em breve.",
-                  });
+                disabled={!tinyToken || loading}
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke('testar-tiny-conexao');
+                    
+                    if (error) {
+                      toast({
+                        variant: "destructive",
+                        title: "Erro no teste",
+                        description: error.message,
+                      });
+                      return;
+                    }
+
+                    if (data.success) {
+                      toast({
+                        title: "✅ Conexão bem-sucedida!",
+                        description: `Conectado à empresa: ${data.empresa.nome}`,
+                      });
+                    } else {
+                      toast({
+                        variant: "destructive",
+                        title: "Falha na conexão",
+                        description: data.error,
+                      });
+                    }
+                  } catch (error) {
+                    toast({
+                      variant: "destructive",
+                      title: "Erro",
+                      description: "Não foi possível testar a conexão",
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
               >
-                Testar Conexão
+                {loading ? "Testando..." : "Testar Conexão"}
               </Button>
             </div>
           </div>
@@ -303,15 +464,45 @@ export function Configuracoes() {
             
             <Button 
               variant="secondary"
-              disabled={!telegramToken || !telegramChatId}
-              onClick={() => {
-                toast({
-                  title: "Teste de mensagem",
-                  description: "Funcionalidade será implementada em breve.",
-                });
+              disabled={!telegramToken || !telegramChatId || loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('testar-telegram-bot');
+                  
+                  if (error) {
+                    toast({
+                      variant: "destructive",
+                      title: "Erro no teste",
+                      description: error.message,
+                    });
+                    return;
+                  }
+
+                  if (data.success) {
+                    toast({
+                      title: "✅ Mensagem enviada!",
+                      description: `Bot @${data.bot.username} funcionando perfeitamente`,
+                    });
+                  } else {
+                    toast({
+                      variant: "destructive",
+                      title: "Falha no envio",
+                      description: data.error,
+                    });
+                  }
+                } catch (error) {
+                  toast({
+                    variant: "destructive",
+                    title: "Erro",
+                    description: "Não foi possível enviar mensagem de teste",
+                  });
+                } finally {
+                  setLoading(false);
+                }
               }}
             >
-              Enviar Teste
+              {loading ? "Enviando..." : "Enviar Teste"}
             </Button>
           </div>
         </CardContent>
