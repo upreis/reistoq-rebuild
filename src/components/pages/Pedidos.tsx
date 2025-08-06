@@ -13,7 +13,6 @@ import { PedidosBarraAcoes } from "@/components/pedidos/PedidosBarraAcoes";
 import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
-import { ProcessamentoAutomaticoModal } from "@/components/pedidos/ProcessamentoAutomaticoModal";
 import { Button } from "@/components/ui/button";
 import { Download, TrendingDown, Loader2 } from "lucide-react";
 
@@ -64,7 +63,6 @@ export function Pedidos() {
   const [modalDetalhes, setModalDetalhes] = useState(false);
   const [modalEdicao, setModalEdicao] = useState(false);
   const [modalProcessamento, setModalProcessamento] = useState(false);
-  const [modalProcessamentoAutomatico, setModalProcessamentoAutomatico] = useState(false);
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedido | null>(null);
   const [processandoBaixaEstoque, setProcessandoBaixaEstoque] = useState(false);
   const [estoqueDisponivel, setEstoqueDisponivel] = useState<Record<string, number>>({});
@@ -335,7 +333,6 @@ export function Pedidos() {
         itensSelecionados={itensSelecionados}
         obterStatusEstoque={obterStatusEstoque}
         processandoBaixaEstoque={processandoBaixaEstoque}
-        onProcessamentoAutomatico={() => setModalProcessamentoAutomatico(true)}
         onBaixarEstoqueLote={async (itens) => {
           setProcessandoBaixaEstoque(true);
           try {
@@ -403,15 +400,6 @@ export function Pedidos() {
         onOpenChange={setModalProcessamento}
         item={itemSelecionado}
         onProcessar={handleFinalizarProcessamento}
-      />
-
-      <ProcessamentoAutomaticoModal
-        isOpen={modalProcessamentoAutomatico}
-        onClose={() => setModalProcessamentoAutomatico(false)}
-        onSucesso={() => {
-          recarregarDados();
-          verificarEstoqueDisponivel();
-        }}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { Download, TrendingDown, Zap } from "lucide-react";
+import { Download, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,6 @@ interface PedidosBarraAcoesProps {
   obterStatusEstoque?: (item: ItemPedidoEnriquecido) => string;
   processandoBaixaEstoque?: boolean;
   onBaixarEstoqueLote?: (itens: ItemPedidoEnriquecido[]) => void;
-  onProcessamentoAutomatico?: () => void;
 }
 
 export function PedidosBarraAcoes({
@@ -19,8 +18,7 @@ export function PedidosBarraAcoes({
   itensSelecionados,
   obterStatusEstoque,
   processandoBaixaEstoque,
-  onBaixarEstoqueLote,
-  onProcessamentoAutomatico
+  onBaixarEstoqueLote
 }: PedidosBarraAcoesProps) {
   
   const formatarData = (data: string) => {
@@ -134,17 +132,6 @@ export function PedidosBarraAcoes({
           </div>
 
           <div className="flex gap-2">
-            {onProcessamentoAutomatico && (
-              <Button 
-                variant="default"
-                onClick={onProcessamentoAutomatico}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                <Zap className="mr-2 h-4 w-4" />
-                Processamento Automático
-              </Button>
-            )}
-            
             <Button 
               variant="outline" 
               onClick={exportarTodos}
