@@ -28,6 +28,7 @@ import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
 import { EstoqueHistoricoMovimentacoes } from "@/components/estoque/EstoqueHistoricoMovimentacoes";
 import { PrevisaoReposicaoModal } from "@/components/estoque/PrevisaoReposicaoModal";
+import { RetornoEstoqueModal } from "@/components/estoque/RetornoEstoqueModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -62,6 +63,7 @@ export function Estoque() {
   const [modalMovimentacaoAberto, setModalMovimentacaoAberto] = useState(false);
   const [modalNovoProdutoAberto, setModalNovoProdutoAberto] = useState(false);
   const [modalPrevisaoAberto, setModalPrevisaoAberto] = useState(false);
+  const [modalRetornoAberto, setModalRetornoAberto] = useState(false);
   const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const { toast } = useToast();
@@ -108,12 +110,17 @@ export function Estoque() {
     setModalPrevisaoAberto(true);
   };
 
+  const abrirRetorno = () => {
+    setModalRetornoAberto(true);
+  };
+
   const fecharModais = () => {
     setModalDetalhesAberto(false);
     setModalEdicaoAberto(false);
     setModalMovimentacaoAberto(false);
     setModalNovoProdutoAberto(false);
     setModalPrevisaoAberto(false);
+    setModalRetornoAberto(false);
     setProdutoSelecionado(null);
   };
 
@@ -201,6 +208,7 @@ export function Estoque() {
         onNovoProduto={abrirNovoProduto}
         onGerarRelatorio={handleGerarRelatorio}
         onEnviarAlertas={handleEnviarAlertas}
+        onRetornoEstoque={abrirRetorno}
       />
 
       {/* Filters and File Management */}
@@ -270,6 +278,12 @@ export function Estoque() {
         produto={produtoSelecionado}
         isOpen={modalPrevisaoAberto}
         onClose={fecharModais}
+      />
+
+      <RetornoEstoqueModal
+        isOpen={modalRetornoAberto}
+        onClose={fecharModais}
+        onSuccess={recarregarDados}
       />
     </div>
   );

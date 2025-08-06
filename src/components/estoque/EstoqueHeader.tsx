@@ -1,4 +1,4 @@
-import { Plus, RefreshCw, Trash2, FileText, Bell } from "lucide-react";
+import { Plus, RefreshCw, Trash2, FileText, Bell, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -10,6 +10,7 @@ interface EstoqueHeaderProps {
   onNovoProduto: () => void;
   onGerarRelatorio?: (tipo: string) => void;
   onEnviarAlertas?: () => void;
+  onRetornoEstoque?: () => void;
 }
 
 export function EstoqueHeader({
@@ -19,7 +20,8 @@ export function EstoqueHeader({
   onExcluirSelecionados,
   onNovoProduto,
   onGerarRelatorio,
-  onEnviarAlertas
+  onEnviarAlertas,
+  onRetornoEstoque
 }: EstoqueHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -42,6 +44,11 @@ export function EstoqueHeader({
         <Button variant="outline" onClick={onEnviarAlertas}>
           <Bell className="mr-2 h-4 w-4" />
           Enviar Alertas
+        </Button>
+
+        <Button variant="outline" onClick={onRetornoEstoque}>
+          <RotateCcw className="mr-2 h-4 w-4" />
+          Retorno de Estoque
         </Button>
 
         <DropdownMenu>
