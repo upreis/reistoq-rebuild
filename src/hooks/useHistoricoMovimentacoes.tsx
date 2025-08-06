@@ -147,7 +147,11 @@ export function useHistoricoMovimentacoes() {
 
   const excluirMovimentacao = async (id: string, retornarAoEstoque: boolean = false) => {
     try {
+      console.log('🗑️ Excluindo movimentação:', { id, retornarAoEstoque });
+      
       if (retornarAoEstoque) {
+        console.log('📦 Retornando quantidade ao estoque...');
+        
         // Buscar dados da movimentação para reverter o estoque
         const { data: movimentacao, error: fetchError } = await supabase
           .from('movimentacoes_estoque')
@@ -166,11 +170,24 @@ export function useHistoricoMovimentacoes() {
         if (fetchError) throw fetchError;
 
         if (movimentacao && movimentacao.produtos) {
+          console.log('📊 Dados da movimentação:', {
+            tipo: movimentacao.tipo_movimentacao,
+            quantidadeMovimentada: movimentacao.quantidade_movimentada,
+            quantidadeAtual: movimentacao.produtos.quantidade_atual,
+            produto: movimentacao.produtos.nome
+          });
+          
           // Calcular nova quantidade após reversão
           const quantidadeAtual = movimentacao.produtos.quantidade_atual;
           const novaQuantidade = movimentacao.tipo_movimentacao === 'entrada' 
             ? quantidadeAtual - movimentacao.quantidade_movimentada
             : quantidadeAtual + movimentacao.quantidade_movimentada;
+
+          console.log('🔄 Calculando reversão:', {
+            quantidadeAtual,
+            novaQuantidade,
+            operacao: movimentacao.tipo_movimentacao === 'entrada' ? 'subtraindo' : 'somando'
+          });
 
           // Atualizar estoque do produto
           const { error: updateError } = await supabase
@@ -179,6 +196,8 @@ export function useHistoricoMovimentacoes() {
             .eq('id', movimentacao.produto_id);
 
           if (updateError) throw updateError;
+          
+          console.log('✅ Estoque atualizado com sucesso:', { novaQuantidade });
         }
       }
 
