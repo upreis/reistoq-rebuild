@@ -345,8 +345,8 @@ export function PedidosTabelaAvancada({
       </CardHeader>
       
       <CardContent>
-        <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[1800px]">
+        <div className="overflow-x-auto">
+          <div className="min-w-max">
             <Table>
             <TableHeader>
               <TableRow>

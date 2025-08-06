@@ -78,7 +78,7 @@ export function DashboardMiniPedidos({ itens, obterStatusEstoque }: DashboardMin
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
       {/* Card de Problemas */}
       <Card className={`${metricas.comProblema > 0 ? 'border-red-200 bg-red-50 dark:bg-red-900/10' : ''}`}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -119,45 +119,6 @@ export function DashboardMiniPedidos({ itens, obterStatusEstoque }: DashboardMin
               Precisam atenção
             </Badge>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Card de Prontos para Baixar */}
-      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/10">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Prontos p/ Baixar</CardTitle>
-          <Package className="h-4 w-4 text-blue-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{metricas.prontosBaixar}</div>
-          <p className="text-xs text-muted-foreground">
-            Com estoque disponível
-          </p>
-          {metricas.prontosBaixar > 0 && (
-            <Badge className="text-xs mt-2 bg-blue-600">
-              Pode processar
-            </Badge>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Card de Processados */}
-      <Card className="border-green-200 bg-green-50 dark:bg-green-900/10">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Estoque Baixado</CardTitle>
-          <CheckCircle className="h-4 w-4 text-green-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">{metricas.estoqueBaixado}</div>
-          <p className="text-xs text-muted-foreground">
-            Processados com sucesso
-          </p>
-          <div className="mt-2">
-            <Progress value={metricas.percentualSucesso} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              {metricas.percentualSucesso}% do total
-            </p>
-          </div>
         </CardContent>
       </Card>
 
