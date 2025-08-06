@@ -17,7 +17,7 @@ interface MovimentacaoCompleta {
   observacoes?: string;
   created_at: string;
   produto_id: string;
-  produtos?: {
+  produto?: {
     nome: string;
     sku_interno: string;
     quantidade_atual: number;
@@ -75,7 +75,7 @@ export function ExclusaoMovimentacaoModal({
     }
   };
 
-  const quantidadeAtualProduto = movimentacao.produtos?.quantidade_atual || 0;
+  const quantidadeAtualProduto = movimentacao.produto?.quantidade_atual || 0;
   const novaQuantidadeSeRetornar = movimentacao.tipo_movimentacao === 'entrada' 
     ? quantidadeAtualProduto - movimentacao.quantidade_movimentada
     : quantidadeAtualProduto + movimentacao.quantidade_movimentada;
@@ -106,8 +106,8 @@ export function ExclusaoMovimentacaoModal({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Produto:</span>
-                <p className="font-medium">{movimentacao.produtos?.nome}</p>
-                <p className="text-xs text-muted-foreground">SKU: {movimentacao.produtos?.sku_interno}</p>
+                <p className="font-medium">{movimentacao.produto?.nome}</p>
+                <p className="text-xs text-muted-foreground">SKU: {movimentacao.produto?.sku_interno}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Quantidade:</span>

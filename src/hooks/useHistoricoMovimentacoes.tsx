@@ -147,10 +147,16 @@ export function useHistoricoMovimentacoes() {
 
   const excluirMovimentacao = async (id: string, retornarAoEstoque: boolean = false) => {
     try {
-      console.log('🗑️ Excluindo movimentação:', { id, retornarAoEstoque });
+      console.log('🗑️ [INÍCIO] Excluindo movimentação:', { id, retornarAoEstoque });
+      console.log('🗑️ [DEBUG] Função chamada com parâmetros corretos');
+      
+      if (!id) {
+        console.error('❌ [ERRO] ID da movimentação não fornecido');
+        throw new Error('ID da movimentação é obrigatório');
+      }
       
       if (retornarAoEstoque) {
-        console.log('📦 Retornando quantidade ao estoque...');
+        console.log('📦 [REVERSÃO] Iniciando retorno ao estoque...');
         
         // Buscar dados da movimentação para reverter o estoque
         const { data: movimentacao, error: fetchError } = await supabase
@@ -225,12 +231,19 @@ export function useHistoricoMovimentacoes() {
         }
       }
 
+      // Excluir movimentação do banco
+      console.log('🗑️ [EXCLUSÃO] Removendo movimentação do banco...');
       const { error } = await supabase
         .from('movimentacoes_estoque')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [ERRO] Falha ao deletar movimentação:', error);
+        throw error;
+      }
+
+      console.log('✅ [SUCESSO] Movimentação excluída com sucesso');
 
       toast({
         title: "Movimentação excluída",
@@ -239,6 +252,7 @@ export function useHistoricoMovimentacoes() {
           : "A movimentação foi excluída com sucesso.",
       });
 
+      console.log('🔄 [ATUALIZAÇÃO] Recarregando dados...');
       buscarMovimentacoes();
     } catch (error: any) {
       console.error('Erro ao excluir movimentação:', error);
