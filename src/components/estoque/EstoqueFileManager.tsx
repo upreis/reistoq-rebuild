@@ -278,62 +278,66 @@ export function EstoqueFileManager({ onUploadSuccess }: EstoqueFileManagerProps)
 
   return (
     <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="text-lg">Importar/Exportar Estoque</CardTitle>
-        <CardDescription>
-          Gerencie seus dados de estoque via planilhas XLSX/CSV
-          <br />
-          <span className="text-xs text-muted-foreground">
-            Status válidos: ativo, baixo, critico, inativo
-          </span>
-          <br />
-          <span className="text-xs text-red-500 font-medium">
-            ⚠️ SKU Interno deve ser único - duplicatas não são permitidas
-          </span>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">Importar/Exportar</CardTitle>
+        <CardDescription className="text-sm">
+          Gerencie dados via planilhas XLSX/CSV
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-3">
-          <div className="relative">
-            <Input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={processarUpload}
-              disabled={uploading}
-              className="sr-only"
-              id="upload-estoque"
-            />
+        <div className="space-y-3">
+          {/* Aviso importante compacto */}
+          <div className="text-xs p-2 bg-muted rounded border-l-2 border-primary">
+            <div className="text-red-600 font-medium">⚠️ SKU interno deve ser único</div>
+            <div className="text-muted-foreground">Status: ativo, baixo, critico, inativo</div>
+          </div>
+          
+          {/* Botões de ação em grid */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="relative">
+              <Input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={processarUpload}
+                disabled={uploading}
+                className="sr-only"
+                id="upload-estoque"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={uploading}
+                asChild
+                className="w-full"
+              >
+                <label htmlFor="upload-estoque" className="cursor-pointer">
+                  <Upload className="mr-1 h-3 w-3" />
+                  <span className="text-xs">{uploading ? "..." : "Importar"}</span>
+                </label>
+              </Button>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
-              disabled={uploading}
-              asChild
+              onClick={downloadEstoque}
+              disabled={downloading}
+              className="w-full"
             >
-              <label htmlFor="upload-estoque" className="cursor-pointer">
-                <Upload className="mr-2 h-4 w-4" />
-                {uploading ? "Importando..." : "Importar"}
-              </label>
+              <Download className="mr-1 h-3 w-3" />
+              <span className="text-xs">{downloading ? "..." : "Exportar"}</span>
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={gerarTemplateExemplo}
+              className="w-full"
+            >
+              <FileSpreadsheet className="mr-1 h-3 w-3" />
+              <span className="text-xs">Template</span>
             </Button>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={downloadEstoque}
-            disabled={downloading}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            {downloading ? "Exportando..." : "Exportar"}
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={gerarTemplateExemplo}
-          >
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Template
-          </Button>
         </div>
       </CardContent>
     </Card>

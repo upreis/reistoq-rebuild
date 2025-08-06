@@ -199,7 +199,7 @@ export function Estoque() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <EstoqueHeader 
         produtosSelecionados={produtosSelecionados}
@@ -212,28 +212,32 @@ export function Estoque() {
         onRetornoEstoque={abrirRetorno}
       />
 
-      {/* Filters, File Management, and Sync Configuration */}
-      <div className="space-y-4">
-        {/* Primeira linha: Filtros e Importar/Exportar */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Métricas em destaque logo após header */}
+      <EstoqueBarraStatus metricas={metricas} />
+
+      {/* Linha de controles compacta */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        {/* Filtros ocupando 2 colunas */}
+        <div className="xl:col-span-2">
           <EstoqueFiltros 
             filtros={filtros}
             onAtualizarFiltros={atualizarFiltros}
             onLimparFiltros={limparFiltros}
           />
+        </div>
+        
+        {/* File Manager ocupando 1 coluna */}
+        <div className="xl:col-span-1">
           <EstoqueFileManager onUploadSuccess={recarregarDados} />
         </div>
         
-        {/* Segunda linha: Configuração de Sincronização */}
-        <div className="max-w-md">
+        {/* Sincronização ocupando 1 coluna */}
+        <div className="xl:col-span-1">
           <EstoqueSyncConfig />
         </div>
       </div>
 
-      {/* Status Bar */}
-      <EstoqueBarraStatus metricas={metricas} />
-
-      {/* Stock Table */}
+      {/* Tabela ocupando toda largura */}
       <EstoqueTabela 
         produtos={produtosPaginados}
         loading={loading}
