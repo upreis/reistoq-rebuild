@@ -32,6 +32,8 @@ export function useWebBarcodeScanner() {
   const [loading, setLoading] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [showProdutoModal, setShowProdutoModal] = useState(false);
+  const [codigoParaModal, setCodigoParaModal] = useState<string>('');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -187,14 +189,22 @@ export function useWebBarcodeScanner() {
           title: "Produto encontrado!",
           description: `${produto.nome} - ${produto.quantidade_atual} unidades`,
         });
+        
+        // Abrir modal para edição do produto encontrado
+        setCodigoParaModal(codigo);
+        setShowProdutoModal(true);
       } else {
         setScannedProduct(null);
         adicionarAoHistorico(codigo, 'Produto não encontrado', false);
         
+        // Abrir modal para criar novo produto
+        setCodigoParaModal(codigo);
+        setShowProdutoModal(true);
+        
         toast({
           title: "Produto não encontrado",
-          description: `Código ${codigo} não foi encontrado no sistema`,
-          variant: "destructive"
+          description: `Código ${codigo} será cadastrado como novo produto`,
+          variant: "default"
         });
       }
       
@@ -209,6 +219,19 @@ export function useWebBarcodeScanner() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Callback para quando produto for salvo no modal
+  const onProdutoSalvo = (produto: ScannedProduct) => {
+    setScannedProduct(produto);
+    // Atualizar histórico se era um produto não encontrado
+    setScanHistory(prev => 
+      prev.map(item => 
+        item.codigo === codigoParaModal 
+          ? { ...item, produto: produto.nome, found: true }
+          : item
+      )
+    );
   };
 
   // Iniciar scanner
@@ -306,11 +329,15 @@ export function useWebBarcodeScanner() {
     availableCameras,
     selectedCamera,
     videoRef,
+    showProdutoModal,
+    codigoParaModal,
     setSelectedCamera,
+    setShowProdutoModal,
     startScan,
     stopScan,
     buscarManualmente,
     limparResultado,
-    processarScan
+    processarScan,
+    onProdutoSalvo
   };
 }

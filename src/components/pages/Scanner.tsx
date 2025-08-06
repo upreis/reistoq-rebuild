@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWebBarcodeScanner } from "@/hooks/useWebBarcodeScanner";
+import { ProdutoScannerModal } from "@/components/scanner/ProdutoScannerModal";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,11 +23,15 @@ export function Scanner() {
     availableCameras,
     selectedCamera,
     videoRef,
+    showProdutoModal,
+    codigoParaModal,
     setSelectedCamera,
+    setShowProdutoModal,
     startScan,
     stopScan,
     buscarManualmente,
-    limparResultado
+    limparResultado,
+    onProdutoSalvo
   } = useWebBarcodeScanner();
 
   const [manualCode, setManualCode] = useState('');
@@ -374,6 +379,15 @@ export function Scanner() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal para criar/editar produto */}
+      <ProdutoScannerModal 
+        isOpen={showProdutoModal}
+        onClose={() => setShowProdutoModal(false)}
+        onSuccess={onProdutoSalvo}
+        codigoEscaneado={codigoParaModal}
+        produtoEncontrado={scannedProduct}
+      />
     </div>
   );
 }
