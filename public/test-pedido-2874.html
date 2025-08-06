@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Consulta Pedido 2874</title>
+</head>
+<body>
+    <h1>Consultando Pedido 2874 - Tiny ERP API</h1>
+    <div id="loading">Carregando...</div>
+    <div id="resultado" style="display:none;"></div>
+    
+    <script>
+    // Fazer a consulta diretamente
+    fetch('https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/obter-pedido-tiny', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk'
+        },
+        body: JSON.stringify({ numeroPedido: '2874' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultado').style.display = 'block';
+        
+        console.log('=== RESULTADO COMPLETO DA CONSULTA PEDIDO 2874 ===');
+        console.log(data);
+        
+        // Mostrar dados estruturados
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = `
+            <h2>Resultado da Consulta - Pedido 2874</h2>
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;">
+${JSON.stringify(data, null, 2)}
+            </pre>
+        `;
+        
+        // Análise dos campos se tiver dados
+        if (data.pedido) {
+            console.log('\n=== CAMPOS DISPONÍVEIS ===');
+            console.log('Campos principais do pedido:', Object.keys(data.pedido));
+            
+            if (data.pedido.cliente) {
+                console.log('Campos do cliente:', Object.keys(data.pedido.cliente));
+            }
+            
+            if (data.pedido.itens && data.pedido.itens.length > 0) {
+                console.log('Campos dos itens:', Object.keys(data.pedido.itens[0]));
+            }
+            
+            if (data.pedido.resumo) {
+                console.log('Campos do resumo:', Object.keys(data.pedido.resumo));
+            }
+        }
+    })
+    .catch(error => {
+        document.getElementById('loading').textContent = 'Erro: ' + error.message;
+        console.error('Erro na consulta:', error);
+    });
+    </script>
+</body>
+</html>
