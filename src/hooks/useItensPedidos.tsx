@@ -156,50 +156,41 @@ export function useItensPedidos() {
       setLoading(true);
       setError(null);
 
-      // ✅ SOLUÇÃO 4: ARQUITETURA OTIMIZADA - Usar sync-pedidos-rapido que retorna dados diretamente
-      console.log('🚀 Sincronizando pedidos com arquitetura otimizada...');
-      
-      // ✅ SOLUÇÃO 1: SEMPRE usar formato DD/MM/YYYY para edge functions
-      const formatarDataParaTiny = (data: string): string => {
-        if (!data) return '';
-        // Se já está em DD/MM/YYYY, usar como está
-        if (data.includes('/')) return data;
-        // Se está em YYYY-MM-DD, converter para DD/MM/YYYY
-        const [ano, mes, dia] = data.split('-');
-        return `${dia}/${mes}/${ano}`;
-      };
+    // ✅ BUSCAR TODOS OS PEDIDOS QUE ATENDEM AOS FILTROS, INDEPENDENTE DO STATUS DE PROCESSAMENTO
+    console.log('🚀 Buscando pedidos com filtros aplicados...');
+    
+    // ✅ SOLUÇÃO 1: SEMPRE usar formato DD/MM/YYYY para edge functions
+    const formatarDataParaTiny = (data: string): string => {
+      if (!data) return '';
+      // Se já está em DD/MM/YYYY, usar como está
+      if (data.includes('/')) return data;
+      // Se está em YYYY-MM-DD, converter para DD/MM/YYYY
+      const [ano, mes, dia] = data.split('-');
+      return `${dia}/${mes}/${ano}`;
+    };
 
+    // ✅ TENTAR PRIMEIRO A EDGE FUNCTION OTIMIZADA
+    try {
       const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-pedidos-rapido', {
         body: {
           filtros: {
             dataInicial: formatarDataParaTiny(filtros.dataInicio),
             dataFinal: formatarDataParaTiny(filtros.dataFinal),
-            // ✅ SOLUÇÃO 2: Situações já são convertidas corretamente na edge function
+            // ✅ MOSTRAR TODOS OS PEDIDOS, INDEPENDENTE DA SITUAÇÃO SE NÃO ESPECIFICADA
             situacao: filtros.situacoes.length > 0 ? filtros.situacoes : undefined
           }
         }
       });
 
-      if (syncError) {
-        console.warn('❌ Erro na sincronização com Tiny ERP:', syncError);
-        toast({
-          title: "Erro",
-          description: "Erro na sincronização com Tiny ERP. Tente novamente.",
-          variant: "destructive",
-        });
-        throw syncError;
-      }
-
-      // ✅ SOLUÇÃO 4: USAR DADOS RETORNADOS DIRETAMENTE (eliminar consulta local duplicada)
-      if (syncData?.itens && syncData?.pedidos) {
-        console.log(`🎯 Recebidos ${syncData.itens.length} itens e ${syncData.pedidos.length} pedidos diretamente`);
+      // ✅ SE A EDGE FUNCTION FUNCIONAR, USAR SEUS DADOS
+      if (!syncError && syncData?.itens && syncData?.pedidos) {
+        console.log(`🎯 Edge function: ${syncData.itens.length} itens e ${syncData.pedidos.length} pedidos`);
         
         // Enriquecer itens com dados dos pedidos
         const itensComPedidos = syncData.itens.map((item: any) => {
           const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
           return {
             ...item,
-            // ✅ MAPEAR VALOR TOTAL DO PEDIDO DIRETAMENTE NO ITEM
             valor_total_pedido: pedido?.valor_total || 0,
             valor_frete_pedido: pedido?.valor_frete || 0,
             valor_desconto_pedido: pedido?.valor_desconto || 0,
@@ -218,9 +209,7 @@ export function useItensPedidos() {
               obs_interna: pedido.obs_interna,
               valor_frete: pedido.valor_frete,
               valor_desconto: pedido.valor_desconto,
-              // ✅ VALOR TOTAL DO PEDIDO COMPLETO
               valor_total: pedido.valor_total,
-              // ✅ NOVAS COLUNAS SOLICITADAS
               canal_venda: pedido.canal_venda,
               nome_ecommerce: pedido.nome_ecommerce
             } : null
@@ -239,98 +228,104 @@ export function useItensPedidos() {
           );
         }
 
-        // Processar dados e aplicar mapeamento DE/PARA
+        // ✅ IMPORTANTE: APLICAR MAPEAMENTOS MAS MANTER TODOS OS ITENS
         const itensProcessados = await aplicarMapeamentos(itensFiltrados);
         
-        // ✅ Salvar dados no localStorage para persistir entre navegações
         localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
-        
         setItens(itensProcessados);
         calcularMetricas(itensProcessados);
 
         toast({
           title: "✅ Sincronização concluída",
-          description: syncData.message || `${itensProcessados.length} itens carregados com sucesso`,
+          description: `${itensProcessados.length} itens encontrados - incluindo itens sem estoque/mapeamento para análise`,
         });
+        
+        return; // Sucesso com edge function
       } else {
-        // Fallback: usar consulta local se edge function não retornar dados
-        console.log('⚠️ Edge function não retornou dados. Usando fallback...');
-        
-        let query = supabase
-          .from('itens_pedidos')
-          .select(`
-            *,
-            pedidos!inner(
-              numero_ecommerce,
-              nome_cliente,
-              cpf_cnpj,
-              cidade,
-              uf,
-              data_pedido,
-              data_prevista,
-              situacao,
-              codigo_rastreamento,
-              url_rastreamento,
-              obs,
-              obs_interna,
-              valor_frete,
-              valor_desconto
-            )
-          `);
-
-        // Aplicar filtros
-        if (filtros.busca) {
-          query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
-        }
-
-        if (filtros.dataInicio) {
-          query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
-        }
-
-        if (filtros.dataFinal) {
-          query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFinal);
-        }
-
-        if (filtros.situacoes.length > 0) {
-          // ✅ SOLUÇÃO 2: Mapear situações corretamente
-          const mapeamentoSituacoes: { [key: string]: string } = {
-            'Em Aberto': 'Em aberto',
-            'Aprovado': 'Aprovado', 
-            'Preparando Envio': 'Preparando envio',
-            'Faturado': 'Faturado',
-            'Pronto para Envio': 'Pronto para envio',
-            'Enviado': 'Enviado',
-            'Entregue': 'Entregue',
-            'Nao Entregue': 'Não entregue',
-            'Cancelado': 'Cancelado'
-          };
-          
-          const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
-          query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
-        }
-
-        const { data, error } = await query
-          .order('created_at', { ascending: false })
-          .limit(10000);
-
-        if (error) {
-          throw error;
-        }
-
-        // Processar dados e aplicar mapeamento DE/PARA
-        const itensProcessados = await aplicarMapeamentos(data || []);
-        
-        // ✅ Salvar dados no localStorage para persistir entre navegações
-        localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
-        
-        setItens(itensProcessados);
-        calcularMetricas(itensProcessados);
-
-        toast({
-          title: "Dados carregados",
-          description: `${data?.length || 0} itens carregados do cache local`,
-        });
+        console.warn('❌ Edge function falhou:', syncError?.message || 'Sem dados retornados');
       }
+    } catch (edgeFunctionError) {
+      console.warn('❌ Erro na edge function:', edgeFunctionError);
+    }
+
+    // ✅ FALLBACK: CONSULTA DIRETA NO BANCO (MOSTRA TODOS OS PEDIDOS)
+    console.log('⚠️ Usando fallback direto no banco para mostrar TODOS os pedidos...');
+    
+    let query = supabase
+      .from('itens_pedidos')
+      .select(`
+        *,
+        pedidos!inner(
+          numero_ecommerce,
+          nome_cliente,
+          cpf_cnpj,
+          cidade,
+          uf,
+          data_pedido,
+          data_prevista,
+          situacao,
+          codigo_rastreamento,
+          url_rastreamento,
+          obs,
+          obs_interna,
+          valor_frete,
+          valor_desconto,
+          valor_total
+        )
+      `);
+
+    // ✅ APLICAR APENAS OS FILTROS ESSENCIAIS (data e situação)
+    if (filtros.busca) {
+      query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
+    }
+
+    if (filtros.dataInicio) {
+      query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
+    }
+
+    if (filtros.dataFinal) {
+      query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFinal);
+    }
+
+    // ✅ FILTRAR POR SITUAÇÃO APENAS SE ESPECIFICADO
+    if (filtros.situacoes.length > 0) {
+      const mapeamentoSituacoes: { [key: string]: string } = {
+        'Em Aberto': 'Em aberto',
+        'Aprovado': 'Aprovado', 
+        'Preparando Envio': 'Preparando envio',
+        'Faturado': 'Faturado',
+        'Pronto para Envio': 'Pronto para envio',
+        'Enviado': 'Enviado',
+        'Entregue': 'Entregue',
+        'Nao Entregue': 'Não entregue',
+        'Cancelado': 'Cancelado'
+      };
+      
+      const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
+      query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
+    }
+
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(10000);
+
+    if (error) {
+      throw error;
+    }
+
+    console.log(`🎯 Fallback: ${data?.length || 0} itens encontrados no banco local`);
+
+    // ✅ PROCESSAR E APLICAR MAPEAMENTOS SEM FILTRAR NADA
+    const itensProcessados = await aplicarMapeamentos(data || []);
+    
+    localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
+    setItens(itensProcessados);
+    calcularMetricas(itensProcessados);
+
+    toast({
+      title: "Dados carregados",
+      description: `${itensProcessados.length} itens encontrados - incluindo itens sem estoque/mapeamento para análise`,
+    });
     } catch (err) {
       console.error('Erro ao buscar itens de pedidos:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
