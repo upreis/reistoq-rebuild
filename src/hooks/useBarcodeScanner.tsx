@@ -37,7 +37,18 @@ export function useBarcodeScanner() {
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
-  const isNative = Capacitor.isNativePlatform();
+  
+  // Forçar detecção nativa quando estiver em Capacitor
+  const platform = Capacitor.getPlatform();
+  const isNative = platform === 'ios' || platform === 'android' || Capacitor.isNativePlatform();
+  
+  // Debug detalhado para entender o problema
+  console.log('🔧 useBarcodeScanner Debug:', {
+    originalIsNative: Capacitor.isNativePlatform(),
+    platform,
+    forcedIsNative: isNative,
+    userAgent: navigator.userAgent
+  });
   
   
 

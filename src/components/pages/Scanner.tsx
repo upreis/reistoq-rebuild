@@ -24,6 +24,14 @@ export function Scanner() {
   } = useBarcodeScanner();
 
   const [manualCode, setManualCode] = useState('');
+  
+  // Debug - vamos ver o que está acontecendo
+  console.log('🔍 Scanner Debug:', { 
+    isNative, 
+    loading, 
+    isScanning, 
+    buttonDisabled: !isNative || loading 
+  });
   return (
     <div className="space-y-6">
       {/* Header */}
