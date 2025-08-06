@@ -29,6 +29,7 @@ import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
 import { EstoqueHistoricoMovimentacoes } from "@/components/estoque/EstoqueHistoricoMovimentacoes";
 import { PrevisaoReposicaoModal } from "@/components/estoque/PrevisaoReposicaoModal";
 import { RetornoEstoqueModal } from "@/components/estoque/RetornoEstoqueModal";
+import { EstoqueSyncConfig } from "@/components/estoque/EstoqueSyncConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -211,14 +212,15 @@ export function Estoque() {
         onRetornoEstoque={abrirRetorno}
       />
 
-      {/* Filters and File Management */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {/* Filters, File Management, and Sync Configuration */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <EstoqueFiltros 
           filtros={filtros}
           onAtualizarFiltros={atualizarFiltros}
           onLimparFiltros={limparFiltros}
         />
         <EstoqueFileManager onUploadSuccess={recarregarDados} />
+        <EstoqueSyncConfig />
       </div>
 
       {/* Status Bar */}
