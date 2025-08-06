@@ -103,53 +103,98 @@ export type Database = {
       }
       historico_vendas: {
         Row: {
+          cidade: string | null
           cliente_documento: string | null
           cliente_nome: string | null
+          codigo_barras: string | null
+          codigo_rastreamento: string | null
+          cpf_cnpj: string | null
           created_at: string
-          data_venda: string
+          data_pedido: string
+          data_prevista: string | null
+          descricao: string | null
           id: string
           id_unico: string
-          nome_produto: string | null
+          ncm: string | null
+          numero_ecommerce: string | null
           numero_pedido: string
+          obs: string | null
+          obs_interna: string | null
           observacoes: string | null
-          quantidade_vendida: number
+          pedido_id: string | null
+          quantidade: number
+          situacao: string | null
           sku_produto: string
           status: string
+          uf: string | null
           updated_at: string
+          url_rastreamento: string | null
+          valor_desconto: number | null
+          valor_frete: number | null
           valor_total: number
           valor_unitario: number
         }
         Insert: {
+          cidade?: string | null
           cliente_documento?: string | null
           cliente_nome?: string | null
+          codigo_barras?: string | null
+          codigo_rastreamento?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
-          data_venda: string
+          data_pedido: string
+          data_prevista?: string | null
+          descricao?: string | null
           id?: string
           id_unico: string
-          nome_produto?: string | null
+          ncm?: string | null
+          numero_ecommerce?: string | null
           numero_pedido: string
+          obs?: string | null
+          obs_interna?: string | null
           observacoes?: string | null
-          quantidade_vendida?: number
+          pedido_id?: string | null
+          quantidade?: number
+          situacao?: string | null
           sku_produto: string
           status?: string
+          uf?: string | null
           updated_at?: string
+          url_rastreamento?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
           valor_total?: number
           valor_unitario?: number
         }
         Update: {
+          cidade?: string | null
           cliente_documento?: string | null
           cliente_nome?: string | null
+          codigo_barras?: string | null
+          codigo_rastreamento?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
-          data_venda?: string
+          data_pedido?: string
+          data_prevista?: string | null
+          descricao?: string | null
           id?: string
           id_unico?: string
-          nome_produto?: string | null
+          ncm?: string | null
+          numero_ecommerce?: string | null
           numero_pedido?: string
+          obs?: string | null
+          obs_interna?: string | null
           observacoes?: string | null
-          quantidade_vendida?: number
+          pedido_id?: string | null
+          quantidade?: number
+          situacao?: string | null
           sku_produto?: string
           status?: string
+          uf?: string | null
           updated_at?: string
+          url_rastreamento?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
           valor_total?: number
           valor_unitario?: number
         }

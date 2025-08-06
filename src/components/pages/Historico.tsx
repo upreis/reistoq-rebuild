@@ -5,7 +5,7 @@ import { VendasHeader } from '@/components/vendas/VendasHeader';
 import { VendasFiltros } from '@/components/vendas/VendasFiltros';
 import { VendasMetricas } from '@/components/vendas/VendasMetricas';
 import { VendasFileManager } from '@/components/vendas/VendasFileManager';
-import { VendasTabela } from '@/components/vendas/VendasTabela';
+import { HistoricoVendasTabela } from '@/components/historico/HistoricoVendasTabela';
 import { NovaVendaModal } from '@/components/vendas/NovaVendaModal';
 import { VendaEditModal } from '@/components/vendas/VendaEditModal';
 import { useRelatorios } from '@/hooks/useRelatorios';
@@ -20,13 +20,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+
 export function Historico() {
   const [vendasSelecionadas, setVendasSelecionadas] = useState<string[]>([]);
   const [showNovaModal, setShowNovaModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteMultipleDialog, setShowDeleteMultipleDialog] = useState(false);
-  const [vendaParaEditar, setVendaParaEditar] = useState<any>(null);
+  const [vendaParaEditar, setVendaParaEditar] = useState<any | null>(null);
   const [vendaParaExcluir, setVendaParaExcluir] = useState<string | null>(null);
 
   const {
@@ -55,31 +56,12 @@ export function Historico() {
 
   const { gerarRelatorio, downloadRelatorio } = useRelatorios();
 
-  const selecionarVenda = (vendaId: string) => {
-    setVendasSelecionadas(prev => 
-      prev.includes(vendaId)
-        ? prev.filter(id => id !== vendaId)
-        : [...prev, vendaId]
-    );
-  };
-
-  const selecionarTodas = () => {
-    if (todasSelecionadas) {
-      setVendasSelecionadas([]);
-    } else {
-      setVendasSelecionadas(vendasPaginadas.map(v => v.id));
-    }
-  };
-
-  const todasSelecionadas = vendasPaginadas.length > 0 && 
-    vendasPaginadas.every(v => vendasSelecionadas.includes(v.id));
-
-  const abrirEdicao = (venda: any) => {
+  const editarVenda = (venda: any) => {
     setVendaParaEditar(venda);
     setShowEditModal(true);
   };
 
-  const abrirExclusao = (id: string) => {
+  const excluirVendaAction = (id: string) => {
     setVendaParaExcluir(id);
     setShowDeleteDialog(true);
   };
@@ -138,23 +120,21 @@ export function Historico() {
 
       <VendasMetricas metricas={metricas} loading={loading} />
 
-      <VendasTabela
+      <HistoricoVendasTabela
         vendas={vendasPaginadas}
-        loading={loading}
         vendasSelecionadas={vendasSelecionadas}
-        todasSelecionadas={todasSelecionadas}
+        onSelecaoChange={setVendasSelecionadas}
+        loading={loading}
         paginaAtual={paginaAtual}
         totalPaginas={totalPaginas}
+        totalItens={totalItens}
         itemInicial={itemInicial}
         itemFinal={itemFinal}
-        totalItens={totalItens}
-        onSelecionarVenda={selecionarVenda}
-        onSelecionarTodas={selecionarTodas}
-        onEditarVenda={abrirEdicao}
-        onExcluirVenda={abrirExclusao}
-        onPaginar={irParaPagina}
-        onPaginaAnterior={paginaAnterior}
+        onPaginaChange={irParaPagina}
         onProximaPagina={proximaPagina}
+        onPaginaAnterior={paginaAnterior}
+        onEditarVenda={editarVenda}
+        onExcluirVenda={excluirVendaAction}
       />
 
       <NovaVendaModal

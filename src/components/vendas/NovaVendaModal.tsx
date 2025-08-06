@@ -58,15 +58,15 @@ export function NovaVendaModal({ open, onOpenChange, onSuccess }: NovaVendaModal
           id_unico: formData.id_unico,
           numero_pedido: formData.numero_pedido,
           sku_produto: formData.sku_produto,
-          nome_produto: formData.nome_produto || null,
-          quantidade_vendida: quantidade,
+          descricao: formData.nome_produto || null,
+          quantidade: quantidade,
           valor_unitario: valorUnitario,
           valor_total: valorTotal,
           cliente_nome: formData.cliente_nome || null,
           cliente_documento: formData.cliente_documento || null,
           status: formData.status,
           observacoes: formData.observacoes || null,
-          data_venda: formData.data_venda,
+          data_pedido: formData.data_venda,
         }]);
 
       if (error) throw error;

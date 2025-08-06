@@ -16,15 +16,15 @@ interface VendaImportacao {
   id_unico: string;
   numero_pedido: string;
   sku_produto: string;
-  nome_produto?: string;
-  quantidade_vendida: number;
+  descricao?: string; // renomeado de nome_produto
+  quantidade: number; // renomeado de quantidade_vendida
   valor_unitario: number;
   valor_total: number;
   cliente_nome?: string;
   cliente_documento?: string;
   status: string;
   observacoes?: string;
-  data_venda: string;
+  data_pedido: string; // renomeado de data_venda
 }
 
 export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
@@ -227,15 +227,15 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
           id_unico: linha.id_unico?.toString().trim() || '',
           numero_pedido: linha.numero_pedido?.toString().trim() || '',
           sku_produto: linha.sku_produto?.toString().trim() || '',
-          nome_produto: linha.nome_produto?.toString().trim() || null,
-          quantidade_vendida: parseInt(linha.quantidade_vendida) || 0,
+          descricao: linha.nome_produto?.toString().trim() || null,
+          quantidade: parseInt(linha.quantidade_vendida) || 0,
           valor_unitario: parseFloat(linha.valor_unitario) || 0,
           valor_total: parseFloat(linha.valor_total) || 0,
           cliente_nome: linha.cliente_nome?.toString().trim() || null,
           cliente_documento: linha.cliente_documento?.toString().trim() || null,
           status: linha.status?.toString().trim() || 'concluida',
           observacoes: linha.observacoes?.toString().trim() || null,
-          data_venda: converterDataExcel(linha.data_venda)
+          data_pedido: converterDataExcel(linha.data_venda)
         };
         
         console.log(`Venda processada linha ${numeroLinha}:`, vendaProcessada);

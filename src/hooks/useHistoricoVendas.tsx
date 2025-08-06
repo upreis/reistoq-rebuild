@@ -7,17 +7,33 @@ interface HistoricoVenda {
   id_unico: string;
   numero_pedido: string;
   sku_produto: string;
-  nome_produto: string | null;
-  quantidade_vendida: number;
+  descricao: string | null; // renomeado de nome_produto
+  quantidade: number; // renomeado de quantidade_vendida
   valor_unitario: number;
   valor_total: number;
   cliente_nome: string | null;
   cliente_documento: string | null;
   status: string;
   observacoes: string | null;
-  data_venda: string;
+  data_pedido: string; // renomeado de data_venda
   created_at: string;
   updated_at: string;
+  // Novas colunas adicionadas
+  ncm: string | null;
+  codigo_barras: string | null;
+  pedido_id: string | null;
+  cpf_cnpj: string | null;
+  valor_frete: number | null;
+  data_prevista: string | null;
+  obs: string | null;
+  obs_interna: string | null;
+  cidade: string | null;
+  uf: string | null;
+  url_rastreamento: string | null;
+  situacao: string | null;
+  codigo_rastreamento: string | null;
+  numero_ecommerce: string | null;
+  valor_desconto: number | null;
 }
 
 interface HistoricoVendasMetricas {
@@ -65,15 +81,15 @@ export function useHistoricoVendas() {
 
       // Aplicar filtros
       if (filtros.termo_busca) {
-        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,nome_produto.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%,cliente_nome.ilike.%${filtros.termo_busca}%,cliente_documento.ilike.%${filtros.termo_busca}%`);
+        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,descricao.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%,cliente_nome.ilike.%${filtros.termo_busca}%,cliente_documento.ilike.%${filtros.termo_busca}%,cidade.ilike.%${filtros.termo_busca}%,uf.ilike.%${filtros.termo_busca}%,situacao.ilike.%${filtros.termo_busca}%`);
       }
 
       if (filtros.data_inicio) {
-        query = query.gte('data_venda', filtros.data_inicio);
+        query = query.gte('data_pedido', filtros.data_inicio);
       }
 
       if (filtros.data_fim) {
-        query = query.lte('data_venda', filtros.data_fim);
+        query = query.lte('data_pedido', filtros.data_fim);
       }
 
       const { data, error } = await query.limit(1000);
@@ -101,7 +117,7 @@ export function useHistoricoVendas() {
     const hoje = new Date().toISOString().split('T')[0];
     
     const vendasHoje = vendasList.filter(venda => 
-      venda.data_venda === hoje
+      venda.data_pedido === hoje
     );
 
     const vendasConcluidas = vendasList.filter(venda => venda.status === 'concluida');
