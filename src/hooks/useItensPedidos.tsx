@@ -20,6 +20,8 @@ export interface ItemPedido {
   numero_ecommerce?: string;
   nome_cliente: string;
   cpf_cnpj?: string;
+  cidade?: string;
+  uf?: string;
   data_pedido: string;
   data_prevista?: string;
   situacao: string;

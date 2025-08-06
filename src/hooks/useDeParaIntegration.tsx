@@ -36,6 +36,8 @@ export interface ItemPedidoEnriquecido {
   data_prevista?: string;
   situacao?: string;
   cpf_cnpj?: string;
+  cidade?: string;
+  uf?: string;
   codigo_rastreamento?: string;
   url_rastreamento?: string;
   valor_frete?: number;

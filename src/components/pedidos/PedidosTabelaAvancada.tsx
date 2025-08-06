@@ -294,7 +294,9 @@ export function PedidosTabelaAvancada({
                 <TableHead className="px-2 min-w-[120px]">SKU Pedido</TableHead>
                 <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>
                 <TableHead className="px-2 w-16">Qtd</TableHead>
-                <TableHead className="px-2 min-w-[100px]">Valor</TableHead>
+                <TableHead className="px-2 min-w-[120px]">Valor</TableHead>
+                <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>
+                <TableHead className="px-2 min-w-[60px]">UF</TableHead>
                 <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
                 <TableHead className="px-2 min-w-[120px]">Canal de Venda</TableHead>
                 <TableHead className="px-2 min-w-[140px]">Nome E-commerce</TableHead>
@@ -386,11 +388,23 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                     <TableCell className="px-2">
-                      <div className="text-right min-w-[100px]">
+                      <div className="text-right min-w-[120px]">
                         <div className="font-semibold">{formatarMoeda(item.valor_total)}</div>
                         <div className="text-xs text-muted-foreground">
                           {formatarMoeda(item.valor_unitario)} un.
                         </div>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="px-2">
+                      <div className="min-w-[100px] text-sm">
+                        {item.cidade || '-'}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="px-2">
+                      <div className="min-w-[60px] text-sm font-medium">
+                        {item.uf || '-'}
                       </div>
                     </TableCell>
                     
