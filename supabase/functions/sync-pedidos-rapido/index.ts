@@ -18,6 +18,45 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutos de cache - aumentado para reduzi
 const MAX_CONCURRENT_REQUESTS = 2; // Reduzido para evitar rate limit
 const INTELLIGENT_RATE_LIMIT_DETECTION = true; // Nova feature para detecção inteligente
 
+// Função para verificar se o processo deve continuar
+async function verificarStatusProcesso(supabase: any): Promise<{shouldContinue: boolean, status: string}> {
+  try {
+    const { data, error } = await supabase
+      .from('sync_control')
+      .select('status')
+      .eq('process_name', 'sync-pedidos-rapido')
+      .single();
+    
+    if (error) {
+      console.warn('Erro ao verificar status do processo:', error);
+      return { shouldContinue: true, status: 'unknown' };
+    }
+    
+    const shouldContinue = data.status === 'running';
+    console.log(`📋 Status do processo: ${data.status}, continuar: ${shouldContinue}`);
+    
+    return { shouldContinue, status: data.status };
+  } catch (error) {
+    console.warn('Erro ao verificar status:', error);
+    return { shouldContinue: true, status: 'unknown' };
+  }
+}
+
+// Função para atualizar progresso
+async function atualizarProgresso(supabase: any, progress: any) {
+  try {
+    await supabase
+      .from('sync_control')
+      .update({ 
+        progress,
+        status: 'running'
+      })
+      .eq('process_name', 'sync-pedidos-rapido');
+  } catch (error) {
+    console.warn('Erro ao atualizar progresso:', error);
+  }
+}
+
 interface TinyPedido {
   id: string;
   numero: string;
@@ -388,6 +427,13 @@ Deno.serve(async (req) => {
     // Sincronização paginada robusta - LIMITADA para evitar timeout
     do {
       try {
+        // ✅ CRÍTICO: Verificar se o processo deve continuar (pause/stop)
+        const { shouldContinue, status } = await verificarStatusProcesso(supabase);
+        if (!shouldContinue) {
+          console.log(`⏸️ Processo pausado/parado pelo usuário. Status: ${status}. Interrompendo na página ${paginaAtual}.`);
+          break;
+        }
+
         // CRÍTICO: Parar se exceder o limite de páginas por execução
         if (paginaAtual > MAX_PAGINAS_POR_EXECUCAO) {
           console.log(`⏰ Limite de ${MAX_PAGINAS_POR_EXECUCAO} páginas atingido. Parando para evitar timeout.`);
@@ -451,6 +497,14 @@ Deno.serve(async (req) => {
         if (paginaAtual === 1) {
           console.log(`🔍 DIAGNÓSTICO: API retornou ${pedidos.length} pedidos na primeira página. Total de páginas: ${totalPaginas}`);
           console.log(`📊 Isso significa que há ${pedidos.length * totalPaginas} pedidos estimados no total`);
+          
+          // ✅ NOVO: Atualizar progresso no controle
+          await atualizarProgresso(supabase, {
+            started_at: new Date().toISOString(),
+            total_items: pedidos.length * totalPaginas,
+            processed_items: 0,
+            current_step: `Iniciando processamento de ${totalPaginas} páginas...`
+          });
         }
 
         // ✅ NOVA ESTRATÉGIA: Coletar apenas IDs dos pedidos para busca detalhada
@@ -605,10 +659,24 @@ Deno.serve(async (req) => {
       console.log(`🚀 Processando ${todosPedidosIds.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE} (máx ${MAX_CONCURRENT_REQUESTS} paralelos)`);
       
       for (let i = 0; i < todosPedidosIds.length; i += BATCH_SIZE) {
+        // ✅ VERIFICAR STATUS ANTES DE CADA LOTE
+        const { shouldContinue, status } = await verificarStatusProcesso(supabase);
+        if (!shouldContinue) {
+          console.log(`⏸️ Processo pausado/parado pelo usuário durante lotes. Status: ${status}. Parando no lote ${Math.floor(i / BATCH_SIZE) + 1}.`);
+          break;
+        }
+
         const lote = todosPedidosIds.slice(i, i + BATCH_SIZE);
         const loteNumero = Math.floor(i / BATCH_SIZE) + 1;
         
         console.log(`⚡ Processando lote ${loteNumero}/${totalLotes} (${lote.length} pedidos)...`);
+        
+        // ✅ ATUALIZAR PROGRESSO
+        await atualizarProgresso(supabase, {
+          total_items: todosPedidosIds.length,
+          processed_items: i,
+          current_step: `Processando lote ${loteNumero}/${totalLotes}...`
+        });
         
         const resultadoLote = await processarLoteComConcorrencia(lote);
         pedidosCompletos.push(...resultadoLote.pedidos);
@@ -621,6 +689,25 @@ Deno.serve(async (req) => {
       }
       
       console.log(`🚀 Busca detalhada concluída: ${pedidosCompletos.length} pedidos e ${allItens.length} itens processados!`);
+      
+      // ✅ FINALIZAR PROCESSO OU MARCAR COMO PAUSADO
+      const { status: statusFinal } = await verificarStatusProcesso(supabase);
+      if (statusFinal === 'paused') {
+        console.log('⏸️ Processo foi pausado - finalizando com dados parciais');
+        await atualizarProgresso(supabase, {
+          total_items: todosPedidosIds.length,
+          processed_items: pedidosCompletos.length,
+          current_step: 'Pausado pelo usuário',
+          paused_at: new Date().toISOString()
+        });
+      } else {
+        await atualizarProgresso(supabase, {
+          total_items: todosPedidosIds.length,
+          processed_items: pedidosCompletos.length,
+          current_step: 'Finalizando...',
+          completed_at: new Date().toISOString()
+        });
+      }
     }
 
     // ✅ SOLUÇÃO 3: LOGS DETALHADOS na inserção de dados no banco
@@ -739,6 +826,22 @@ Deno.serve(async (req) => {
     // ✅ NOVO: Salvar no cache para próximas consultas
     setCache(cacheKey, resultado);
 
+    // ✅ MARCAR PROCESSO COMO FINALIZADO
+    try {
+      await supabase
+        .from('sync_control')
+        .update({ 
+          status: 'idle',
+          progress: {
+            ...resultado.dados,
+            completed_at: new Date().toISOString()
+          }
+        })
+        .eq('process_name', 'sync-pedidos-rapido');
+    } catch (error) {
+      console.warn('Erro ao finalizar status do processo:', error);
+    }
+
     return new Response(JSON.stringify(resultado), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
@@ -746,6 +849,26 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('💥 Erro na sincronização:', error);
+    
+    // ✅ MARCAR PROCESSO COMO ERRO
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      await supabase
+        .from('sync_control')
+        .update({ 
+          status: 'stopped',
+          progress: {
+            error: error.message,
+            stopped_at: new Date().toISOString()
+          }
+        })
+        .eq('process_name', 'sync-pedidos-rapido');
+    } catch (statusError) {
+      console.warn('Erro ao atualizar status de erro:', statusError);
+    }
     
     return new Response(JSON.stringify({
       success: false,

@@ -4,9 +4,26 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Clock, Zap, Settings, ChevronDown } from "lucide-react";
+import { Clock, Zap, Settings, ChevronDown, Play, Pause, Square, RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SyncStatus {
+  process_name: string;
+  status: 'idle' | 'running' | 'paused' | 'stopped';
+  progress?: {
+    started_at?: string;
+    paused_at?: string;
+    resumed_at?: string;
+    stopped_at?: string;
+    total_items?: number;
+    processed_items?: number;
+    current_step?: string;
+  };
+  updated_at: string;
+}
 
 interface PedidosControleSincronizacaoProps {
   onSincronizar: () => void;
@@ -23,7 +40,29 @@ export function PedidosControleSincronizacao({
   const [intervaloSincronizacao, setIntervaloSincronizacao] = useState('5'); // minutos
   const [proximaSincronizacao, setProximaSincronizacao] = useState<Date | null>(null);
   const [tempoRestante, setTempoRestante] = useState<string>('');
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
   const [configAberta, setConfigAberta] = useState(false);
+
+  // Função para verificar status do sync
+  const verificarStatusSync = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-control', {
+        body: { 
+          action: 'status',
+          process_name: 'sync-pedidos-rapido'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSyncStatus(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status:', error);
+    }
+  };
 
   // Carregar configurações salvas
   useEffect(() => {
@@ -39,6 +78,40 @@ export function PedidosControleSincronizacao({
     }
   }, []);
 
+  // Verificar status inicial e configurar polling
+  useEffect(() => {
+    verificarStatusSync();
+
+    // Se estiver executando, iniciar polling
+    if (syncStatus?.status === 'running') {
+      setIsPolling(true);
+    }
+  }, []);
+
+  // Polling para verificar status quando está executando
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (isPolling) {
+      intervalId = setInterval(verificarStatusSync, 2000); // A cada 2 segundos
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isPolling]);
+
+  // Parar polling quando não estiver mais executando
+  useEffect(() => {
+    if (syncStatus?.status && ['idle', 'stopped', 'paused'].includes(syncStatus.status)) {
+      setIsPolling(false);
+    } else if (syncStatus?.status === 'running') {
+      setIsPolling(true);
+    }
+  }, [syncStatus?.status]);
+
   // Salvar configurações
   useEffect(() => {
     const config = {
@@ -47,6 +120,93 @@ export function PedidosControleSincronizacao({
     };
     localStorage.setItem('pedidos-sincronizacao-config', JSON.stringify(config));
   }, [sincronizacaoAutomatica, intervaloSincronizacao]);
+
+  // Funções de controle
+  const handlePausarSync = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-control', {
+        body: { 
+          action: 'pause',
+          process_name: 'sync-pedidos-rapido',
+          progress: syncStatus?.progress
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSyncStatus(prev => prev ? { ...prev, status: 'paused' } : null);
+        toast({
+          title: "Sincronização Pausada",
+          description: "O processo foi pausado. Você pode retomá-lo quando desejar.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível pausar a sincronização.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRetomar = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-control', {
+        body: { 
+          action: 'resume',
+          process_name: 'sync-pedidos-rapido',
+          progress: syncStatus?.progress
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSyncStatus(prev => prev ? { ...prev, status: 'running' } : null);
+        setIsPolling(true);
+        toast({
+          title: "Sincronização Retomada",
+          description: "O processo foi retomado.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível retomar a sincronização.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePararSync = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-control', {
+        body: { 
+          action: 'stop',
+          process_name: 'sync-pedidos-rapido',
+          progress: syncStatus?.progress
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSyncStatus(prev => prev ? { ...prev, status: 'stopped' } : null);
+        setIsPolling(false);
+        toast({
+          title: "Sincronização Interrompida",
+          description: "O processo foi interrompido completamente.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível parar a sincronização.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Controle de sincronização automática
   useEffect(() => {
@@ -145,8 +305,93 @@ export function PedidosControleSincronizacao({
     return data.toLocaleDateString();
   };
 
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'running': return 'text-blue-600';
+      case 'paused': return 'text-yellow-600';
+      case 'stopped': return 'text-red-600';
+      default: return 'text-green-600';
+    }
+  };
+
+  const getStatusText = (status?: string) => {
+    switch (status) {
+      case 'running': return 'Executando...';
+      case 'paused': return 'Pausado';
+      case 'stopped': return 'Parado';
+      default: return 'Pronto';
+    }
+  };
+
   return (
-    <Collapsible open={configAberta} onOpenChange={setConfigAberta}>
+    <div className="space-y-4">
+      {/* Controles de Sync em Tempo Real */}
+      {syncStatus && (syncStatus.status === 'running' || syncStatus.status === 'paused') && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full ${
+                  syncStatus.status === 'running' ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500'
+                }`} />
+                <span className="text-sm font-medium">
+                  {syncStatus.status === 'running' ? 'Sincronizando...' : 'Pausado'}
+                </span>
+                {syncStatus.progress?.current_step && (
+                  <span className="text-xs text-muted-foreground">
+                    - {syncStatus.progress.current_step}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {syncStatus.progress?.total_items && syncStatus.progress?.processed_items && (
+                  <Badge variant="outline" className="text-xs">
+                    {syncStatus.progress.processed_items}/{syncStatus.progress.total_items}
+                  </Badge>
+                )}
+                
+                {syncStatus.status === 'running' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handlePausarSync}
+                    className="h-7 px-2"
+                  >
+                    <Pause className="h-3 w-3 mr-1" />
+                    Pausar
+                  </Button>
+                )}
+                
+                {syncStatus.status === 'paused' && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetomar}
+                      className="h-7 px-2"
+                    >
+                      <Play className="h-3 w-3 mr-1" />
+                      Retomar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handlePararSync}
+                      className="h-7 px-2"
+                    >
+                      <Square className="h-3 w-3 mr-1" />
+                      Parar
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      <Collapsible open={configAberta} onOpenChange={setConfigAberta}>
       <div className="bg-card border rounded-lg">
         <CollapsibleTrigger className="w-full">
           <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors rounded-lg">
@@ -166,9 +411,9 @@ export function PedidosControleSincronizacao({
                   Automático
                 </Badge>
               )}
-              <span className={`text-xs ${loading ? 'text-yellow-600' : 'text-green-600'}`}>
-                {loading ? 'Sincronizando...' : 'Pronto'}
-              </span>
+                <span className={`text-xs ${getStatusColor(syncStatus?.status)}`}>
+                  {getStatusText(syncStatus?.status)}
+                </span>
             </div>
           </div>
         </CollapsibleTrigger>
@@ -224,6 +469,7 @@ export function PedidosControleSincronizacao({
           </div>
         </CollapsibleContent>
       </div>
-    </Collapsible>
+      </Collapsible>
+    </div>
   );
 }

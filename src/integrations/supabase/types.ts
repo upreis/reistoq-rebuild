@@ -529,6 +529,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_control: {
+        Row: {
+          created_at: string
+          id: string
+          process_name: string
+          progress: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          process_name: string
+          progress?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          process_name?: string
+          progress?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

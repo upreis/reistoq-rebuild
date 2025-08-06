@@ -142,12 +142,34 @@ export function Pedidos() {
     itemFinal
   } = usePedidosPaginado({ pedidos: itens });
 
-  const handleBuscarPedidos = () => {
-    buscarComFiltros();
-    toast({
-      title: "Buscando pedidos",
-      description: "Os pedidos estão sendo carregados com os filtros aplicados.",
-    });
+  const handleBuscarPedidos = async () => {
+    try {
+      // ✅ NOVO: Marcar processo como iniciado
+      await supabase.functions.invoke('sync-control', {
+        body: { 
+          action: 'start',
+          process_name: 'sync-pedidos-rapido',
+          progress: {
+            started_at: new Date().toISOString(),
+            current_step: 'Iniciando busca...'
+          }
+        }
+      });
+
+      // Executar busca normal
+      buscarComFiltros();
+      toast({
+        title: "Buscando pedidos",
+        description: "Os pedidos estão sendo carregados com os filtros aplicados.",
+      });
+    } catch (error) {
+      console.error('Erro ao iniciar busca:', error);
+      buscarComFiltros(); // Executa mesmo com erro no controle
+      toast({
+        title: "Buscando pedidos",
+        description: "Os pedidos estão sendo carregados com os filtros aplicados.",
+      });
+    }
   };
 
 
