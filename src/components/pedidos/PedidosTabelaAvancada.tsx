@@ -280,42 +280,42 @@ export function PedidosTabelaAvancada({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="px-2 w-12">
+                <TableHead className="px-2">
                   <Checkbox
                     checked={itensSelecionados.length === itens.length && itens.length > 0}
                     onCheckedChange={toggleSelecaoTodos}
                     aria-label="Selecionar todos"
                   />
                 </TableHead>
-                <TableHead className="px-2">ID Único</TableHead>
-                <TableHead className="px-2">Pedido</TableHead>
-                <TableHead className="px-2">Cliente</TableHead>
-                <TableHead className="px-2">SKU Pedido</TableHead>
-                <TableHead className="px-2">Descrição</TableHead>
-                <TableHead className="px-2">Qtd</TableHead>
-                <TableHead className="px-2">Valor</TableHead>
-                <TableHead className="px-2">Data do Pedido</TableHead>
-                <TableHead className="px-2">Canal de Venda</TableHead>
-                <TableHead className="px-2">Nome E-commerce</TableHead>
-                <TableHead className="px-2">Número da Venda</TableHead>
-                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <span className="text-white font-medium">SKU Estoque</span>
-                  <div className="text-xs text-white/80">Mapeado</div>
+                <TableHead className="px-2 min-w-[120px]">ID Único</TableHead>
+                <TableHead className="px-2 min-w-[100px]">Pedido</TableHead>
+                <TableHead className="px-2 min-w-[120px]">Data do Pedido</TableHead>
+                <TableHead className="px-2 min-w-[180px]">Cliente</TableHead>
+                <TableHead className="px-2 min-w-[120px]">SKU Pedido</TableHead>
+                <TableHead className="px-2 min-w-[200px]">Descrição</TableHead>
+                <TableHead className="px-2 w-16">Qtd</TableHead>
+                <TableHead className="px-2 min-w-[100px]">Valor</TableHead>
+                <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
+                <TableHead className="px-2 min-w-[120px]">Canal de Venda</TableHead>
+                <TableHead className="px-2 min-w-[140px]">Nome E-commerce</TableHead>
+                <TableHead className="px-2 min-w-[140px]">Número da Venda</TableHead>
+                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
+                  <span className="text-blue-900 dark:text-blue-100 font-medium">SKU Estoque</span>
+                  <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
                 </TableHead>
-                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <span className="text-white font-medium">SKU KIT</span>
-                  <div className="text-xs text-white/80">Mapeado</div>
+                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
+                  <span className="text-blue-900 dark:text-blue-100 font-medium">SKU KIT</span>
+                  <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
                 </TableHead>
-                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <span className="text-white font-medium">QTD KIT</span>
-                  <div className="text-xs text-white/80">Mapeado</div>
+                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
+                  <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
+                  <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
                 </TableHead>
-                <TableHead className="px-2">Situação</TableHead>
-                <TableHead className="px-2">Tempo</TableHead>
-                <TableHead className="px-2">Prioridade</TableHead>
-                <TableHead className="px-2">Margem</TableHead>
-                <TableHead className="px-2">Status</TableHead>
-                <TableHead className="px-2">Ações</TableHead>
+                <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>
+                <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>
+                <TableHead className="px-2 min-w-[80px]">Margem</TableHead>
+                <TableHead className="px-2 min-w-[120px]">Status</TableHead>
+                <TableHead className="px-2 min-w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -337,16 +337,26 @@ export function PedidosTabelaAvancada({
                       />
                     </TableCell>
                     
-                    <TableCell className="font-mono text-xs">
-                      {gerarIdUnico(item)}
+                    <TableCell className="font-mono text-xs px-2">
+                      <div className="min-w-[120px] truncate" title={gerarIdUnico(item)}>
+                        {gerarIdUnico(item)}
+                      </div>
                     </TableCell>
                     
-                    <TableCell className="font-medium">
-                      #{item.numero_pedido}
+                    <TableCell className="font-medium px-2">
+                      <div className="min-w-[100px] truncate">
+                        #{item.numero_pedido}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-2">
+                      <div className="text-sm min-w-[120px]">
+                        {formatarData(item.data_pedido)}
+                      </div>
                     </TableCell>
                     
-                    <TableCell>
-                      <div className="max-w-48 truncate">
+                    <TableCell className="px-2">
+                      <div className="min-w-[180px] truncate" title={item.nome_cliente}>
                         {item.nome_cliente}
                         {item.valor_total > 500 && (
                           <Badge variant="outline" className="ml-1 text-xs">VIP</Badge>
@@ -354,8 +364,10 @@ export function PedidosTabelaAvancada({
                       </div>
                     </TableCell>
                     
-                    <TableCell className={item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
-                      <div className="font-mono text-sm">{item.sku}</div>
+                    <TableCell className={`px-2 ${item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`}>
+                      <div className="font-mono text-sm min-w-[120px] truncate" title={item.sku}>
+                        {item.sku}
+                      </div>
                       {item.linha_destacada && (
                         <div className="text-xs text-orange-600 font-medium">
                           ⚠️ Sem mapeamento
@@ -363,73 +375,69 @@ export function PedidosTabelaAvancada({
                       )}
                     </TableCell>
                     
-                    <TableCell>
-                      <div className="max-w-60 truncate">
+                    <TableCell className="px-2">
+                      <div className="min-w-[200px] truncate" title={item.descricao}>
                         {item.descricao}
                       </div>
                     </TableCell>
                     
-                    <TableCell className="text-center">
+                    <TableCell className="text-center px-2 w-16">
                       {item.quantidade}
                     </TableCell>
                     
-                    <TableCell>
-                      <div className="text-right">
+                    <TableCell className="px-2">
+                      <div className="text-right min-w-[100px]">
                         <div className="font-semibold">{formatarMoeda(item.valor_total)}</div>
                         <div className="text-xs text-muted-foreground">
                           {formatarMoeda(item.valor_unitario)} un.
                         </div>
                       </div>
                     </TableCell>
-
-                    <TableCell>
-                      <div className="text-sm">
-                        {formatarData(item.data_pedido)}
+                    
+                    <TableCell className="px-2">
+                      <div className="min-w-[100px]">
+                        {getStatusBadge(item.situacao)}
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <div className="text-sm">
-                        {item.canal_venda || '-'}
+                    <TableCell className="px-2">
+                      <div className="text-sm min-w-[120px] truncate">
+                        {item.canal_venda || 'Shopee Comercial BR'}
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <div className="text-sm">
-                        {item.nome_ecommerce || '-'}
+                    <TableCell className="px-2">
+                      <div className="text-sm min-w-[140px] truncate" title={item.nome_ecommerce}>
+                        {item.nome_ecommerce || 'Shopee Comercial BR'}
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <div className="font-mono text-xs">
+                    <TableCell className="px-2">
+                      <div className="font-mono text-xs min-w-[140px] truncate" title={item.numero_ecommerce}>
                         {item.numero_ecommerce || '-'}
                       </div>
                     </TableCell>
 
                     <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-mono text-xs text-white">
+                      <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque}>
                         {item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque || '-'}
                       </div>
                     </TableCell>
 
                     <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-mono text-xs text-white">
+                      <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_simples}>
                         {item.mapeamento_aplicado?.sku_simples || '-'}
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                      <div className="font-medium text-white">
+                    <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
+                      <div className="font-medium text-blue-900 dark:text-blue-100">
                         {item.mapeamento_aplicado?.quantidade || '-'}
                       </div>
                     </TableCell>
                     
-                    <TableCell>
-                      {getStatusBadge(item.situacao)}
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className={`text-sm ${obterCorTempoDecorrido(item.data_pedido)}`}>
+                    <TableCell className="px-2">
+                      <div className={`text-sm ${obterCorTempoDecorrido(item.data_pedido)} min-w-[80px]`}>
                         {calcularTempoDecorrido(item.data_pedido)}
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -437,11 +445,11 @@ export function PedidosTabelaAvancada({
                       </div>
                     </TableCell>
                     
-                    <TableCell>
+                    <TableCell className="px-2">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
-                            <div className={`flex items-center ${prioridade.cor}`}>
+                            <div className={`flex items-center ${prioridade.cor} min-w-[100px]`}>
                               <prioridade.icon className="h-4 w-4 mr-1" />
                               <span className="text-xs capitalize">{prioridade.nivel}</span>
                             </div>

@@ -255,6 +255,8 @@ export function FiltrosAvancadosPedidos({
                 mode="single"
                 selected={dataInicio}
                 onSelect={handleDataInicioChange}
+                defaultMonth={dataInicio}
+                initialFocus
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
@@ -278,6 +280,8 @@ export function FiltrosAvancadosPedidos({
                 mode="single"
                 selected={dataFim}
                 onSelect={handleDataFimChange}
+                defaultMonth={dataFim}
+                initialFocus
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
