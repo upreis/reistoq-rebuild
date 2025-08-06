@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Consulta Pedido 2874</title>
+</head>
+<body>
+    <h1>Consultando Pedido 2874</h1>
+    <div id="resultado"></div>
+    
+    <script>
+    fetch('https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/test-pedido-2874', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('=== RESULTADO COMPLETO ===');
+        console.log(data);
+        document.getElementById('resultado').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        document.getElementById('resultado').innerHTML = 'Erro: ' + error.message;
+    });
+    </script>
+</body>
+</html>
