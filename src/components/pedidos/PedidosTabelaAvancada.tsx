@@ -210,22 +210,31 @@ export function PedidosTabelaAvancada({
     }
   };
 
-  // Função para selecionar/deselecionar todos
+  // Função para selecionar/deselecionar todos os itens elegíveis
   const toggleSelecaoTodos = () => {
-    if (itensSelecionados.length === itens.length) {
-      onSelecaoChange([]); // Deselecionar todos
-    } else {
-      onSelecaoChange([...itens]); // Selecionar todos
-    }
-  };
-
-  // Função para auto-selecionar itens elegíveis quando página carrega
-  const autoSelecionarElegiveis = () => {
     const itensElegiveis = itens.filter(item => {
       const status = obterStatusEstoque?.(item);
       return status === 'disponivel';
     });
-    onSelecaoChange(itensElegiveis);
+    
+    const todosElegiveisEstaoSelecionados = itensElegiveis.every(item => 
+      itensSelecionados.some(itemSel => itemSel.id === item.id)
+    );
+    
+    if (todosElegiveisEstaoSelecionados) {
+      // Remove apenas os itens elegíveis da seleção, mantendo outros se houver
+      const novaSelecao = itensSelecionados.filter(itemSel => 
+        !itensElegiveis.some(elegivel => elegivel.id === itemSel.id)
+      );
+      onSelecaoChange(novaSelecao);
+    } else {
+      // Adiciona todos os itens elegíveis à seleção atual
+      const idsJaSelecionados = itensSelecionados.map(item => item.id);
+      const itensParaAdicionar = itensElegiveis.filter(item => 
+        !idsJaSelecionados.includes(item.id)
+      );
+      onSelecaoChange([...itensSelecionados, ...itensParaAdicionar]);
+    }
   };
 
 
@@ -280,13 +289,21 @@ export function PedidosTabelaAvancada({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="px-2">
-                  <Checkbox
-                    checked={itensSelecionados.length === itens.length && itens.length > 0}
-                    onCheckedChange={toggleSelecaoTodos}
-                    aria-label="Selecionar todos"
-                  />
-                </TableHead>
+                 <TableHead className="px-2">
+                   <Checkbox
+                     checked={(() => {
+                       const itensElegiveis = itens.filter(item => {
+                         const status = obterStatusEstoque?.(item);
+                         return status === 'disponivel';
+                       });
+                       return itensElegiveis.length > 0 && itensElegiveis.every(item => 
+                         itensSelecionados.some(itemSel => itemSel.id === item.id)
+                       );
+                     })()}
+                     onCheckedChange={toggleSelecaoTodos}
+                     aria-label="Selecionar todos os itens elegíveis"
+                   />
+                 </TableHead>
                 <TableHead className="px-2 min-w-[120px]">ID Único</TableHead>
                 <TableHead className="px-2 min-w-[100px]">Pedido</TableHead>
                 <TableHead className="px-2 min-w-[120px]">Data do Pedido</TableHead>
