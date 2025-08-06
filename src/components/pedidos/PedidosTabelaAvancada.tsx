@@ -290,6 +290,7 @@ export function PedidosTabelaAvancada({
                 <TableHead className="px-2">Descrição</TableHead>
                 <TableHead className="px-2">Qtd</TableHead>
                 <TableHead className="px-2">Valor</TableHead>
+                <TableHead className="px-2">Data do Pedido</TableHead>
                 <TableHead className="px-2">Numero da Venda</TableHead>
                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                   <span className="text-white font-medium">SKU Estoque</span>
@@ -312,14 +313,14 @@ export function PedidosTabelaAvancada({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {itens.map((item) => {
+              {itens.map((item, index) => {
                 const prioridade = obterPrioridade(item);
                 const margemLucro = calcularMargemLucro(item);
                 const statusEstoque = obterStatusEstoque?.(item);
                 const isElegivel = statusEstoque === 'disponivel';
                 
                 return (
-                  <TableRow key={item.id}>
+                  <TableRow key={`${item.id}-${index}`}>
                     
                     <TableCell className="px-2 w-12">
                       <Checkbox
@@ -372,6 +373,12 @@ export function PedidosTabelaAvancada({
                         <div className="text-xs text-muted-foreground">
                           {formatarMoeda(item.valor_unitario)} un.
                         </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="text-sm">
+                        {formatarData(item.data_pedido)}
                       </div>
                     </TableCell>
 
