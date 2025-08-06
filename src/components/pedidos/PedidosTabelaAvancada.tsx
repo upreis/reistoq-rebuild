@@ -312,29 +312,27 @@ export function PedidosTabelaAvancada({
                 <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>
                 <TableHead className="px-2 w-16">Qtd</TableHead>
                 <TableHead className="px-2 min-w-[120px]">Valor</TableHead>
-                <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>
-                <TableHead className="px-2 min-w-[60px]">UF</TableHead>
-                <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
-                <TableHead className="px-2 min-w-[120px]">Canal de Venda</TableHead>
-                <TableHead className="px-2 min-w-[140px]">Nome E-commerce</TableHead>
-                <TableHead className="px-2 min-w-[140px]">Número da Venda</TableHead>
-                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
-                  <span className="text-blue-900 dark:text-blue-100 font-medium">SKU Estoque</span>
-                  <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
-                </TableHead>
-                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
-                  <span className="text-blue-900 dark:text-blue-100 font-medium">SKU KIT</span>
-                  <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
-                </TableHead>
-                <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
-                  <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
-                  <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
-                </TableHead>
-                <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>
-                <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>
-                <TableHead className="px-2 min-w-[80px]">Margem</TableHead>
-                <TableHead className="px-2 min-w-[120px]">Status</TableHead>
-                <TableHead className="px-2 min-w-[100px]">Ações</TableHead>
+                 <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>
+                 <TableHead className="px-2 min-w-[60px]">UF</TableHead>
+                 <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
+                 <TableHead className="px-2 min-w-[140px]">Número da Venda</TableHead>
+                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
+                   <span className="text-blue-900 dark:text-blue-100 font-medium">SKU Estoque</span>
+                   <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
+                 </TableHead>
+                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
+                   <span className="text-blue-900 dark:text-blue-100 font-medium">SKU KIT</span>
+                   <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
+                 </TableHead>
+                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
+                   <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
+                   <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
+                 </TableHead>
+                 <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>
+                 <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>
+                 <TableHead className="px-2 min-w-[80px]">Margem</TableHead>
+                 <TableHead className="px-2 min-w-[120px]">Status</TableHead>
+                 <TableHead className="px-2 min-w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -431,23 +429,11 @@ export function PedidosTabelaAvancada({
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-2">
-                      <div className="text-sm min-w-[120px] truncate">
-                        {item.canal_venda || 'Shopee Comercial BR'}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-2">
-                      <div className="text-sm min-w-[140px] truncate" title={item.nome_ecommerce}>
-                        {item.nome_ecommerce || 'Shopee Comercial BR'}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-2">
-                      <div className="font-mono text-xs min-w-[140px] truncate" title={item.numero_ecommerce}>
-                        {item.numero_ecommerce || '-'}
-                      </div>
-                    </TableCell>
+                     <TableCell className="px-2">
+                       <div className="font-mono text-xs min-w-[140px] truncate" title={item.numero_ecommerce}>
+                         {item.numero_ecommerce || '-'}
+                       </div>
+                     </TableCell>
 
                     <TableCell className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                       <div className="font-mono text-xs text-blue-900 dark:text-blue-100 min-w-[120px] truncate" title={item.mapeamento_aplicado?.sku_correspondente || item.sku_estoque}>
