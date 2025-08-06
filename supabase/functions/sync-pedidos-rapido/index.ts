@@ -257,7 +257,7 @@ async function buscarConfiguracoesTiny(supabase: any): Promise<ConfiguracaoTiny>
     .from('configuracoes')
     .select('chave, valor')
     .in('chave', [
-      'tiny_erp_token', 
+      'tiny_token',
       'tiny_api_url',
       'tiny_timeout_segundos',
       'tiny_max_tentativas', 
@@ -275,7 +275,7 @@ async function buscarConfiguracoesTiny(supabase: any): Promise<ConfiguracaoTiny>
   }, {});
 
   return {
-    tiny_erp_token: configMap.tiny_erp_token,
+    tiny_erp_token: configMap.tiny_token,
     tiny_api_url: configMap.tiny_api_url,
     tiny_timeout_segundos: parseInt(configMap.tiny_timeout_segundos) || 30,
     tiny_max_tentativas: parseInt(configMap.tiny_max_tentativas) || 3,

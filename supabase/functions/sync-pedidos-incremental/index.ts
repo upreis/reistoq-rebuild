@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     const { data: config, error: configError } = await supabase
       .from('configuracoes')
       .select('valor')
-      .eq('chave', 'tiny_erp_token')
+      .eq('chave', 'tiny_token')
       .single();
 
     if (configError) {
