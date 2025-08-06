@@ -150,15 +150,14 @@ export function EstoqueTabela({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-      {/* Informações da paginação */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Mostrando {itemInicial} a {itemFinal} de {totalItens} produtos
-        </span>
-      </div>
-
-      {/* Tabela */}
+        <div className="overflow-x-auto">
+          <div className="w-full">
+            {/* Informações da paginação */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+              <span>
+                Mostrando {itemInicial} a {itemFinal} de {totalItens} produtos
+              </span>
+            </div>
       <Table>
         <TableHeader>
           <TableRow className="border-border">
@@ -168,185 +167,186 @@ export function EstoqueTabela({
                 onCheckedChange={onSelecionarTodos}
               />
             </TableHead>
-            <TableHead className="text-muted-foreground">
+            <TableHead className="text-muted-foreground min-w-[140px]">
               <Button variant="ghost" className="h-auto p-0 font-medium">
                 Código de Barras
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TableHead>
-            <TableHead className="text-muted-foreground w-40">
+            <TableHead className="text-muted-foreground min-w-[120px]">
               <Button variant="ghost" className="h-auto p-0 font-medium">
                 SKU
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TableHead>
-            <TableHead className="text-muted-foreground w-60">
+            <TableHead className="text-muted-foreground min-w-[180px]">
               <Button variant="ghost" className="h-auto p-0 font-medium">
                 Produto
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TableHead>
-            <TableHead className="text-muted-foreground">Categoria</TableHead>
-            <TableHead className="text-muted-foreground">
+            <TableHead className="text-muted-foreground min-w-[120px]">Categoria</TableHead>
+            <TableHead className="text-muted-foreground w-20">
               <Button variant="ghost" className="h-auto p-0 font-medium">
                 Qtd Atual
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TableHead>
-            <TableHead className="text-muted-foreground">Mínimo</TableHead>
-            <TableHead className="text-muted-foreground">Máximo</TableHead>
-            <TableHead className="text-muted-foreground">Localização</TableHead>
-            <TableHead className="text-muted-foreground">Preço Custo</TableHead>
-            <TableHead className="text-muted-foreground">Preço Venda</TableHead>
-            <TableHead className="text-muted-foreground">Imagem</TableHead>
-            <TableHead className="text-muted-foreground">Status</TableHead>
-            <TableHead className="text-muted-foreground">Ações</TableHead>
+            <TableHead className="text-muted-foreground w-20">Mínimo</TableHead>
+            <TableHead className="text-muted-foreground w-20">Máximo</TableHead>
+            <TableHead className="text-muted-foreground min-w-[100px]">Localização</TableHead>
+            <TableHead className="text-muted-foreground min-w-[100px]">Preço Custo</TableHead>
+            <TableHead className="text-muted-foreground min-w-[100px]">Preço Venda</TableHead>
+            <TableHead className="text-muted-foreground w-20">Imagem</TableHead>
+            <TableHead className="text-muted-foreground w-20">Status</TableHead>
+            <TableHead className="text-muted-foreground min-w-[120px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {produtos.map((produto) => {
-            const statusInfo = getStatusBadge(produto);
-            return (
-              <TableRow 
-                key={produto.id} 
-                className="border-border hover:bg-muted/50 cursor-pointer"
-                onClick={() => onAbrirDetalhes(produto)}
-              >
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={produtosSelecionados.includes(produto.id)}
-                    onCheckedChange={() => onSelecionarProduto(produto.id)}
-                  />
-                </TableCell>
-                <TableCell className="text-foreground">
-                  {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
-                </TableCell>
-                <TableCell className="font-medium text-foreground max-w-40 truncate" title={produto.sku_interno}>
-                  {produto.sku_interno}
-                </TableCell>
-                <TableCell className="font-medium text-foreground max-w-60 truncate" title={produto.nome}>
-                  {produto.nome}
-                </TableCell>
-                <TableCell className="text-foreground">
-                  {produto.categoria || <span className="text-muted-foreground">-</span>}
-                </TableCell>
-                <TableCell className="text-foreground font-medium">{produto.quantidade_atual}</TableCell>
-                <TableCell className="text-foreground">{produto.estoque_minimo}</TableCell>
-                <TableCell className="text-foreground">{produto.estoque_maximo}</TableCell>
-                <TableCell className="text-foreground">
-                  {produto.localizacao || <span className="text-muted-foreground">-</span>}
-                </TableCell>
-                <TableCell className="text-foreground">
-                  {formatarMoeda(produto.preco_custo || 0)}
-                </TableCell>
-                <TableCell className="text-foreground">
-                  {formatarMoeda(produto.preco_venda || 0)}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <ProdutoImageUpload
-                    produtoId={produto.id}
-                    currentImageUrl={produto.url_imagem}
-                    onImageUploaded={onImageUploaded}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Badge variant={statusInfo.variant} className="text-xs">
-                    {statusInfo.texto}
-                  </Badge>
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex gap-1">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="text-xs px-2"
-                      onClick={() => onAbrirEdicao(produto)}
+              <TableBody>
+                {produtos.map((produto) => {
+                  const statusInfo = getStatusBadge(produto);
+                  return (
+                    <TableRow 
+                      key={produto.id} 
+                      className="border-border hover:bg-muted/50 cursor-pointer"
+                      onClick={() => onAbrirDetalhes(produto)}
                     >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="secondary" 
-                      className="text-xs px-2"
-                      onClick={() => onMovimentar(produto)}
-                    >
-                      Movimentar
-                    </Button>
-                    {onAbrirPrevisao && (
-                      <Button 
-                        size="sm" 
-                        variant="premium" 
-                        className="text-xs px-2"
-                        onClick={() => onAbrirPrevisao(produto)}
-                        title="Previsão IA"
-                      >
-                        <Brain className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={produtosSelecionados.includes(produto.id)}
+                          onCheckedChange={() => onSelecionarProduto(produto.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="text-foreground min-w-[140px] truncate" title={produto.codigo_barras}>
+                        {produto.codigo_barras || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground min-w-[120px] truncate" title={produto.sku_interno}>
+                        {produto.sku_interno}
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground min-w-[180px] truncate" title={produto.nome}>
+                        {produto.nome}
+                      </TableCell>
+                      <TableCell className="text-foreground min-w-[120px] truncate" title={produto.categoria}>
+                        {produto.categoria || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell className="text-foreground font-medium text-center w-20">{produto.quantidade_atual}</TableCell>
+                      <TableCell className="text-foreground text-center w-20">{produto.estoque_minimo}</TableCell>
+                      <TableCell className="text-foreground text-center w-20">{produto.estoque_maximo}</TableCell>
+                      <TableCell className="text-foreground min-w-[100px] truncate" title={produto.localizacao}>
+                        {produto.localizacao || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell className="text-foreground min-w-[100px]">
+                        {formatarMoeda(produto.preco_custo || 0)}
+                      </TableCell>
+                      <TableCell className="text-foreground min-w-[100px]">
+                        {formatarMoeda(produto.preco_venda || 0)}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()} className="w-20">
+                        <ProdutoImageUpload
+                          produtoId={produto.id}
+                          currentImageUrl={produto.url_imagem}
+                          onImageUploaded={onImageUploaded}
+                        />
+                      </TableCell>
+                      <TableCell className="w-20">
+                        <Badge variant={statusInfo.variant} className="text-xs">
+                          {statusInfo.texto}
+                        </Badge>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[120px]">
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-xs px-2"
+                            onClick={() => onAbrirEdicao(produto)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="secondary" 
+                            className="text-xs px-2"
+                            onClick={() => onMovimentar(produto)}
+                          >
+                            Movimentar
+                          </Button>
+                          {onAbrirPrevisao && (
+                            <Button 
+                              size="sm" 
+                              variant="premium" 
+                              className="text-xs px-2"
+                              onClick={() => onAbrirPrevisao(produto)}
+                              title="Previsão IA"
+                            >
+                              <Brain className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
 
-      {/* Paginação */}
-      {totalPaginas > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Página {paginaAtual} de {totalPaginas}
+            {/* Paginação */}
+            {totalPaginas > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Página {paginaAtual} de {totalPaginas}
+                </div>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={onPaginaAnterior}
+                        className={paginaAtual <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPaginas <= 5) {
+                        pageNumber = i + 1;
+                      } else if (paginaAtual <= 3) {
+                        pageNumber = i + 1;
+                      } else if (paginaAtual >= totalPaginas - 2) {
+                        pageNumber = totalPaginas - 4 + i;
+                      } else {
+                        pageNumber = paginaAtual - 2 + i;
+                      }
+                      
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            onClick={() => onPaginar(pageNumber)}
+                            isActive={pageNumber === paginaAtual}
+                            className="cursor-pointer"
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    
+                    {totalPaginas > 5 && paginaAtual < totalPaginas - 2 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={onProximaPagina}
+                        className={paginaAtual >= totalPaginas ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={onPaginaAnterior}
-                  className={paginaAtual <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              
-              {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
-                let pageNumber;
-                if (totalPaginas <= 5) {
-                  pageNumber = i + 1;
-                } else if (paginaAtual <= 3) {
-                  pageNumber = i + 1;
-                } else if (paginaAtual >= totalPaginas - 2) {
-                  pageNumber = totalPaginas - 4 + i;
-                } else {
-                  pageNumber = paginaAtual - 2 + i;
-                }
-                
-                return (
-                  <PaginationItem key={pageNumber}>
-                    <PaginationLink
-                      onClick={() => onPaginar(pageNumber)}
-                      isActive={pageNumber === paginaAtual}
-                      className="cursor-pointer"
-                    >
-                      {pageNumber}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-              
-              {totalPaginas > 5 && paginaAtual < totalPaginas - 2 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={onProximaPagina}
-                  className={paginaAtual >= totalPaginas ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
         </div>
       </CardContent>
     </Card>
