@@ -201,15 +201,7 @@ export type Database = {
           valor_total?: number
           valor_unitario?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "itens_pedidos_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       mapeamentos_depara: {
         Row: {
