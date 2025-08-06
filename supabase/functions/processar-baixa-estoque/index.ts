@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Função auxiliar para formatar moeda
+function formatarMoeda(valor: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(valor);
+}
+
 interface ItemParaBaixaEstoque {
   id: string;
   numero_pedido: string;
@@ -129,6 +137,7 @@ serve(async (req) => {
           .insert({
             id_unico: `${item.numero_pedido}-${item.sku_pedido}`,
             numero_pedido: item.numero_pedido,
+            numero_venda: item.numero_ecommerce || item.numero_pedido, // ✅ ADICIONADO: número da venda
             sku_produto: item.sku_kit,
             sku_estoque: item.sku_kit,
             sku_kit: item.sku_kit,
@@ -136,7 +145,7 @@ serve(async (req) => {
             descricao: item.descricao,
             quantidade: item.quantidade_kit,
             valor_unitario: item.valor_unitario || (item.valor_total / item.quantidade_pedido),
-            valor_total: item.valor_total,
+            valor_total: item.valor_total, // ✅ JÁ INCLUÍDO: valor total
             cliente_nome: item.nome_cliente,
             cliente_documento: item.cpf_cnpj,
             cidade: item.cidade,
@@ -145,7 +154,7 @@ serve(async (req) => {
             numero_ecommerce: item.numero_ecommerce,
             data_pedido: item.data_pedido,
             status: 'estoque_baixado',
-            observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}`
+            observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}. Valor: ${formatarMoeda(item.valor_total)}`
           });
 
         if (historicoError) {

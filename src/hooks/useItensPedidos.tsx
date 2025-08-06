@@ -228,6 +228,20 @@ export function useItensPedidos() {
           );
         }
 
+        // ✅ ORDENAR OS DADOS ANTES DE APLICAR MAPEAMENTOS 
+        itensFiltrados.sort((a: any, b: any) => {
+          // Primeiro por data (mais recente primeiro)
+          const dataA = new Date(a.pedidos?.data_pedido || a.data_pedido);
+          const dataB = new Date(b.pedidos?.data_pedido || b.data_pedido);
+          if (dataA.getTime() !== dataB.getTime()) {
+            return dataB.getTime() - dataA.getTime();
+          }
+          // Depois por valor (maior primeiro)
+          const valorA = a.pedidos?.valor_total || a.valor_total || 0;
+          const valorB = b.pedidos?.valor_total || b.valor_total || 0;
+          return valorB - valorA;
+        });
+
         // ✅ IMPORTANTE: APLICAR MAPEAMENTOS MAS MANTER TODOS OS ITENS
         const itensProcessados = await aplicarMapeamentos(itensFiltrados);
         
@@ -306,7 +320,8 @@ export function useItensPedidos() {
     }
 
     const { data, error } = await query
-      .order('created_at', { ascending: false })
+      .order('pedidos.data_pedido', { ascending: false })
+      .order('pedidos.valor_total', { ascending: false }) // ✅ ORDENAR POR VALOR (maior primeiro)
       .limit(10000);
 
     if (error) {
@@ -314,6 +329,22 @@ export function useItensPedidos() {
     }
 
     console.log(`🎯 Fallback: ${data?.length || 0} itens encontrados no banco local`);
+
+    // ✅ ORDENAR OS DADOS DO FALLBACK TAMBÉM
+    if (data) {
+      data.sort((a: any, b: any) => {
+        // Primeiro por data (mais recente primeiro)
+        const dataA = new Date(a.pedidos?.data_pedido || a.data_pedido);
+        const dataB = new Date(b.pedidos?.data_pedido || b.data_pedido);
+        if (dataA.getTime() !== dataB.getTime()) {
+          return dataB.getTime() - dataA.getTime();
+        }
+        // Depois por valor (maior primeiro)  
+        const valorA = a.pedidos?.valor_total || a.valor_total || 0;
+        const valorB = b.pedidos?.valor_total || b.valor_total || 0;
+        return valorB - valorA;
+      });
+    }
 
     // ✅ PROCESSAR E APLICAR MAPEAMENTOS SEM FILTRAR NADA
     const itensProcessados = await aplicarMapeamentos(data || []);
