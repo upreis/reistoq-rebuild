@@ -682,11 +682,22 @@ Deno.serve(async (req) => {
     }
 
     if (allItens.length > 0) {
-      console.log(`💾 Iniciando salvamento de ${allItens.length} itens...`);
+      // ✅ CORREÇÃO: Remover duplicatas antes do upsert para evitar erro "cannot affect row a second time"
+      const itensUnicos = allItens.reduce((acc, item) => {
+        const chave = `${item.numero_pedido}_${item.sku}`;
+        if (!acc.has(chave)) {
+          acc.set(chave, item);
+        }
+        return acc;
+      }, new Map());
+      
+      const itensDeduplicated = Array.from(itensUnicos.values());
+      
+      console.log(`💾 Iniciando salvamento de ${itensDeduplicated.length} itens únicos (${allItens.length} originais, ${allItens.length - itensDeduplicated.length} duplicatas removidas)...`);
       salvarPromises.push(
         supabase
           .from('itens_pedidos')
-          .upsert(allItens, { 
+          .upsert(itensDeduplicated, { 
             onConflict: 'numero_pedido,sku',
             ignoreDuplicates: false 
           })
@@ -695,8 +706,8 @@ Deno.serve(async (req) => {
               console.error('❌ ERRO ao salvar itens:', error);
               throw new Error(`Erro ao salvar itens: ${error.message}`);
             }
-            console.log(`✅ ${allItens.length} itens salvos com sucesso no Supabase`);
-            return allItens.length;
+            console.log(`✅ ${itensDeduplicated.length} itens salvos com sucesso no Supabase`);
+            return itensDeduplicated.length;
           })
       );
     }
