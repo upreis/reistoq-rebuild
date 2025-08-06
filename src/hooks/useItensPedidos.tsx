@@ -31,6 +31,12 @@ export interface ItemPedido {
   valor_desconto: number;
   created_at?: string;
   updated_at?: string;
+  // Novos campos solicitados
+  cidade?: string;
+  uf?: string;
+  valor_total_pedido?: number;
+  total_itens?: number;
+  valor_produtos?: number;
   // Dados do mapeamento DE/PARA (aplicado na exibição)
   sku_correspondente?: string;
   sku_simples?: string;
@@ -186,6 +192,16 @@ export function useItensPedidos() {
         // Enriquecer itens com dados dos pedidos
         const itensComPedidos = syncData.itens.map((item: any) => {
           const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
+          // Calcular total de itens do pedido
+          const totalItensPedido = syncData.itens
+            .filter((i: any) => i.numero_pedido === item.numero_pedido)
+            .reduce((sum: number, i: any) => sum + (i.quantidade || 0), 0);
+          
+          // Calcular valor total dos produtos (sem frete e desconto)
+          const valorProdutosPedido = syncData.itens
+            .filter((i: any) => i.numero_pedido === item.numero_pedido)
+            .reduce((sum: number, i: any) => sum + (i.valor_total || 0), 0);
+          
           return {
             ...item,
             pedidos: pedido ? {
@@ -200,7 +216,13 @@ export function useItensPedidos() {
               obs: pedido.obs,
               obs_interna: pedido.obs_interna,
               valor_frete: pedido.valor_frete,
-              valor_desconto: pedido.valor_desconto
+              valor_desconto: pedido.valor_desconto,
+              // Novos campos calculados
+              cidade: pedido.cidade,
+              uf: pedido.uf,
+              valor_total_pedido: pedido.valor_total,
+              total_itens: totalItensPedido,
+              valor_produtos: valorProdutosPedido
             } : null
           };
         });
@@ -385,6 +407,12 @@ export function useItensPedidos() {
           valor_desconto: pedidoData.valor_desconto,
           created_at: item.created_at,
           updated_at: item.updated_at,
+          // Novos campos solicitados
+          cidade: pedidoData.cidade,
+          uf: pedidoData.uf,
+          valor_total_pedido: pedidoData.valor_total_pedido,
+          total_itens: pedidoData.total_itens,
+          valor_produtos: pedidoData.valor_produtos,
           // Dados do mapeamento e produto
           sku_correspondente: skuCorrespondente !== item.sku ? skuCorrespondente : undefined,
           sku_simples: skuSimples,

@@ -25,6 +25,8 @@ interface TinyPedido {
   data_prevista?: string;
   nome_cliente: string;
   cpf_cnpj?: string;
+  cidade?: string;
+  uf?: string;
   situacao: string;
   codigo_rastreamento?: string;
   url_rastreamento?: string;
@@ -460,6 +462,8 @@ Deno.serve(async (req) => {
             data_prevista: pedido.data_prevista ? convertDateFormat(pedido.data_prevista) : null,
             nome_cliente: pedido.nome || pedido.cliente?.nome || 'Cliente não informado',
             cpf_cnpj: pedido.cpf_cnpj || pedido.cliente?.cpf_cnpj,
+            cidade: pedido.cliente?.cidade,
+            uf: pedido.cliente?.uf,
             situacao: pedido.situacao,
             codigo_rastreamento: pedido.codigo_rastreamento,
             url_rastreamento: pedido.url_rastreamento,

@@ -285,11 +285,18 @@ export function PedidosTabelaAvancada({
                 </TableHead>
                 <TableHead className="px-2">ID Único</TableHead>
                 <TableHead className="px-2">Pedido</TableHead>
+                <TableHead className="px-2">Data Pedido</TableHead>
                 <TableHead className="px-2">Cliente</TableHead>
+                <TableHead className="px-2">Cidade/UF</TableHead>
                 <TableHead className="px-2">SKU Pedido</TableHead>
                 <TableHead className="px-2">Descrição</TableHead>
                 <TableHead className="px-2">Qtd</TableHead>
-                <TableHead className="px-2">Valor</TableHead>
+                <TableHead className="px-2">Valor Unitário</TableHead>
+                <TableHead className="px-2">Valor Item</TableHead>
+                <TableHead className="px-2">Valor Frete</TableHead>
+                <TableHead className="px-2">Valor Desconto</TableHead>
+                <TableHead className="px-2">Valor Total Pedido</TableHead>
+                <TableHead className="px-2">Total Itens</TableHead>
                 <TableHead className="px-2">Numero da Venda</TableHead>
                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                   <span className="text-white font-medium">SKU Estoque</span>
@@ -339,11 +346,23 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                     <TableCell>
+                      <div className="text-sm">
+                        {formatarData(item.data_pedido)}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
                       <div className="max-w-48 truncate">
                         {item.nome_cliente}
                         {item.valor_total > 500 && (
                           <Badge variant="outline" className="ml-1 text-xs">VIP</Badge>
                         )}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="text-sm text-muted-foreground">
+                        {item.cidade && item.uf ? `${item.cidade}/${item.uf}` : '-'}
                       </div>
                     </TableCell>
                     
@@ -366,12 +385,39 @@ export function PedidosTabelaAvancada({
                       {item.quantidade}
                     </TableCell>
                     
-                    <TableCell>
-                      <div className="text-right">
-                        <div className="font-semibold">{formatarMoeda(item.valor_total)}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatarMoeda(item.valor_unitario)} un.
-                        </div>
+                    <TableCell className="text-right">
+                      <div className="font-medium">
+                        {formatarMoeda(item.valor_unitario)}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="text-right">
+                      <div className="font-semibold">
+                        {formatarMoeda(item.valor_total)}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="text-right">
+                      <div className="text-sm">
+                        {formatarMoeda(item.valor_frete || 0)}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="text-right">
+                      <div className="text-sm">
+                        {formatarMoeda(item.valor_desconto || 0)}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="text-right">
+                      <div className="font-bold text-primary">
+                        {formatarMoeda(item.valor_total_pedido || 0)}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="text-center">
+                      <div className="font-medium">
+                        {item.total_itens || '-'}
                       </div>
                     </TableCell>
 
