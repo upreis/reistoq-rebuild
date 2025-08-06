@@ -481,8 +481,8 @@ Deno.serve(async (req) => {
           console.log(`📝 Pedido ${pedido.numero} (ID: ${pedido.id}) adicionado à lista para busca detalhada`);
         }
         
-        // Adicionar IDs coletados à lista geral
-        allPedidos.push(...pedidosIds.map(p => ({ ...p, processado: false })));
+        // Adicionar IDs coletados à lista geral (sem typing issues)
+        allPedidos.push(...pedidosIds as any);
 
         paginaAtual++;
         tentativasConsecutivasFalha = 0;
@@ -509,7 +509,7 @@ Deno.serve(async (req) => {
 
     // ✅ NOVA ESTRATÉGIA: SEMPRE buscar detalhes completos via pedido.obter
     const pedidosCompletos: TinyPedido[] = [];
-    const allItens: any[] = [];
+    // allItens já foi declarado anteriormente, vamos reutilizar
     
     if (allPedidos.length > 0) {
       console.log('🚀 NOVA ESTRATÉGIA: Buscando dados completos via pedido.obter para todos os pedidos...');
@@ -657,12 +657,12 @@ Deno.serve(async (req) => {
     // Executar salvamento de pedidos e itens em paralelo
     const salvarPromises = [];
 
-    if (allPedidos.length > 0) {
-      console.log(`💾 Iniciando salvamento de ${allPedidos.length} pedidos...`);
+    if (pedidosCompletos.length > 0) {
+      console.log(`💾 Iniciando salvamento de ${pedidosCompletos.length} pedidos...`);
       salvarPromises.push(
         supabase
           .from('pedidos')
-          .upsert(allPedidos, { 
+          .upsert(pedidosCompletos, { 
             onConflict: 'numero',
             ignoreDuplicates: false 
           })
@@ -671,8 +671,8 @@ Deno.serve(async (req) => {
               console.error('❌ ERRO ao salvar pedidos:', error);
               throw new Error(`Erro ao salvar pedidos: ${error.message}`);
             }
-            console.log(`✅ ${allPedidos.length} pedidos salvos com sucesso no Supabase`);
-            return allPedidos.length;
+            console.log(`✅ ${pedidosCompletos.length} pedidos salvos com sucesso no Supabase`);
+            return pedidosCompletos.length;
           })
       );
     }
@@ -700,8 +700,8 @@ Deno.serve(async (req) => {
     // Aguardar todas as operações de salvamento
     if (salvarPromises.length > 0) {
       const resultados = await Promise.all(salvarPromises);
-      pedidosSalvos = allPedidos.length > 0 ? resultados[0] : 0;
-      itensSalvos = allItens.length > 0 ? resultados[allPedidos.length > 0 ? 1 : 0] : 0;
+      pedidosSalvos = pedidosCompletos.length > 0 ? resultados[0] : 0;
+      itensSalvos = allItens.length > 0 ? resultados[pedidosCompletos.length > 0 ? 1 : 0] : 0;
       
       console.log('📊 LOGS FINAIS DE INSERÇÃO:', {
         pedidos_salvos: pedidosSalvos,
@@ -720,7 +720,7 @@ Deno.serve(async (req) => {
     const resultado = {
       success: true,
       dados: {
-        pedidos_encontrados: allPedidos.length,
+        pedidos_encontrados: pedidosCompletos.length,
         itens_encontrados: allItens.length,
         pedidos_salvos: pedidosSalvos,
         itens_salvos: itensSalvos,
@@ -731,12 +731,12 @@ Deno.serve(async (req) => {
         cache_utilizado: false
       },
       // ✅ NOVO: Retornar os dados processados diretamente (elimina consulta local)
-      pedidos: allPedidos,
+      pedidos: pedidosCompletos,
       itens: allItens,
       message: `Sincronização concluída: ${pedidosSalvos} pedidos e ${itensSalvos} itens processados`
     };
     
-    console.log(`🎯 Resposta otimizada preparada: ${allPedidos.length} pedidos + ${allItens.length} itens retornados diretamente`);
+    console.log(`🎯 Resposta otimizada preparada: ${pedidosCompletos.length} pedidos + ${allItens.length} itens retornados diretamente`);
 
     // ✅ NOVO: Salvar no cache para próximas consultas
     setCache(cacheKey, resultado);
