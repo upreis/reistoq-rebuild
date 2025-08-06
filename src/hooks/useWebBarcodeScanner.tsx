@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { pipeline } from '@huggingface/transformers';
 
 interface ScannedProduct {
   id: string;
@@ -37,6 +38,15 @@ export function useWebBarcodeScanner() {
   const [codigoParaModal, setCodigoParaModal] = useState<string>('');
   const [searchResults, setSearchResults] = useState<ScannedProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Novas configurações
+  const [continuousMode, setContinuousMode] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [productCache, setProductCache] = useState<Map<string, ScannedProduct>>(new Map());
+  
+  // Referência para busca com debounce
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -133,8 +143,36 @@ export function useWebBarcodeScanner() {
     }
   };
 
-  // Buscar produto no banco de dados
+  // Feedback sonoro/vibração
+  const playFeedback = useCallback((success: boolean = true) => {
+    if (soundEnabled) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = success ? 800 : 400;
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.3);
+    }
+    
+    if (vibrationEnabled && navigator.vibrate) {
+      navigator.vibrate(success ? [100] : [100, 50, 100]);
+    }
+  }, [soundEnabled, vibrationEnabled]);
+
+  // Buscar produto no banco de dados com cache
   const buscarProduto = async (codigo: string): Promise<ScannedProduct | null> => {
+    // Verificar cache primeiro
+    if (productCache.has(codigo)) {
+      return productCache.get(codigo)!;
+    }
+
     try {
       const { data, error } = await supabase
         .from('produtos')
@@ -159,7 +197,13 @@ export function useWebBarcodeScanner() {
         throw error;
       }
 
-      return data as ScannedProduct;
+      const produto = data as ScannedProduct;
+      if (produto) {
+        // Adicionar ao cache
+        setProductCache(prev => new Map(prev.set(codigo, produto)));
+      }
+
+      return produto;
     } catch (error) {
       console.error('Erro ao buscar produto:', error);
       return null;
@@ -221,6 +265,7 @@ export function useWebBarcodeScanner() {
       if (produto) {
         setScannedProduct(produto);
         adicionarAoHistorico(codigo, produto.nome, true);
+        playFeedback(true);
         
         toast({
           title: "Produto encontrado!",
@@ -233,6 +278,7 @@ export function useWebBarcodeScanner() {
       } else {
         setScannedProduct(null);
         adicionarAoHistorico(codigo, 'Produto não encontrado', false);
+        playFeedback(false);
         
         // Abrir modal para criar novo produto
         setCodigoParaModal(codigo);
@@ -248,6 +294,7 @@ export function useWebBarcodeScanner() {
       setLastScanResult(codigo);
     } catch (error) {
       console.error('Erro ao processar scan:', error);
+      playFeedback(false);
       toast({
         title: "Erro ao processar código",
         description: "Ocorreu um erro ao buscar o produto",
@@ -294,7 +341,9 @@ export function useWebBarcodeScanner() {
           if (result) {
             const code = result.getText();
             processarScan(code);
-            stopScan(); // Para após primeiro scan
+            if (!continuousMode) {
+              stopScan(); // Para após primeiro scan apenas se não estiver em modo contínuo
+            }
           }
         }
       );
@@ -369,12 +418,62 @@ export function useWebBarcodeScanner() {
     }
   };
 
-  // Selecionar produto da lista de resultados
-  const selecionarProduto = (produto: ScannedProduct) => {
-    setScannedProduct(produto);
-    setLastScanResult(produto.sku_interno);
-    setSearchResults([]);
-    adicionarAoHistorico(produto.sku_interno, produto.nome, true);
+  // Busca com debounce
+  const buscarComDebounce = useCallback((termo: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      if (termo.length >= 2) {
+        buscarManualmente(termo);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+  }, []);
+
+  // Scanner por upload de imagem
+  const scanFromImage = async (file: File): Promise<string | null> => {
+    try {
+      setLoading(true);
+      
+      // Criar elemento de imagem
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) throw new Error('Não foi possível criar contexto do canvas');
+
+      return new Promise((resolve, reject) => {
+        img.onload = async () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          
+          if (codeReaderRef.current) {
+            try {
+              const result = await codeReaderRef.current.decodeFromImage(img);
+              resolve(result.getText());
+            } catch (error) {
+              resolve(null);
+            }
+          } else {
+            reject(new Error('Scanner não inicializado'));
+          }
+        };
+        
+        img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+        img.src = URL.createObjectURL(file);
+      });
+    } catch (error) {
+      console.error('Erro ao escanear imagem:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Limpar resultado
@@ -383,6 +482,40 @@ export function useWebBarcodeScanner() {
     setLastScanResult('');
     setSearchResults([]);
   }, []);
+
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.target && (event.target as HTMLElement).tagName === 'INPUT') return;
+      
+      switch (event.code) {
+        case 'Space':
+          event.preventDefault();
+          if (isScanning) {
+            stopScan();
+          } else {
+            startScan();
+          }
+          break;
+        case 'Escape':
+          event.preventDefault();
+          limparResultado();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isScanning, stopScan, limparResultado]);
+
+  // Selecionar produto da lista de resultados
+  const selecionarProduto = (produto: ScannedProduct) => {
+    setScannedProduct(produto);
+    setLastScanResult(produto.sku_interno);
+    setSearchResults([]);
+    adicionarAoHistorico(produto.sku_interno, produto.nome, true);
+  };
+
 
   // Cleanup ao desmontar
   useEffect(() => {
@@ -406,11 +539,19 @@ export function useWebBarcodeScanner() {
     videoRef,
     showProdutoModal,
     codigoParaModal,
+    continuousMode,
+    soundEnabled,
+    vibrationEnabled,
     setSelectedCamera,
     setShowProdutoModal,
+    setContinuousMode,
+    setSoundEnabled,
+    setVibrationEnabled,
     startScan,
     stopScan,
     buscarManualmente,
+    buscarComDebounce,
+    scanFromImage,
     selecionarProduto,
     limparResultado,
     processarScan,

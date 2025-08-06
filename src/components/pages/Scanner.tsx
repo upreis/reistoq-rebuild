@@ -1,4 +1,4 @@
-import { ScanLine, Camera, Search, Package, X, Clock, Video, VideoOff, AlertCircle } from "lucide-react";
+import { ScanLine, Camera, Search, Package, X, Clock, Video, VideoOff, AlertCircle, Upload, Maximize2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useWebBarcodeScanner } from "@/hooks/useWebBarcodeScanner";
 import { ProdutoScannerModal } from "@/components/scanner/ProdutoScannerModal";
 import { MovimentacaoRapida } from "@/components/scanner/MovimentacaoRapida";
-import { useState } from "react";
+import { ScannerStats } from "@/components/scanner/ScannerStats";
+import { ScannerHistory } from "@/components/scanner/ScannerHistory";
+import { ScannerModeToggle } from "@/components/scanner/ScannerModeToggle";
+import { useState, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 export function Scanner() {
   const {
@@ -28,11 +32,19 @@ export function Scanner() {
     videoRef,
     showProdutoModal,
     codigoParaModal,
+    continuousMode,
+    soundEnabled,
+    vibrationEnabled,
     setSelectedCamera,
     setShowProdutoModal,
+    setContinuousMode,
+    setSoundEnabled,
+    setVibrationEnabled,
     startScan,
     stopScan,
     buscarManualmente,
+    buscarComDebounce,
+    scanFromImage,
     selecionarProduto,
     limparResultado,
     onProdutoSalvo,
@@ -40,6 +52,9 @@ export function Scanner() {
   } = useWebBarcodeScanner();
 
   const [manualCode, setManualCode] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // Função para recarregar dados do produto após movimentação
   const recarregarProduto = async () => {
@@ -50,17 +65,44 @@ export function Scanner() {
       }
     }
   };
-  
-  // Debug - vamos ver o que está acontecendo
-  console.log('🔍 Scanner Web Debug:', { 
-    isSupported, 
-    hasPermission,
-    loading, 
-    isScanning, 
-    availableCameras: availableCameras.length,
-    searchResults: searchResults.length,
-    scannedProduct: !!scannedProduct
-  });
+
+  // Função para upload de imagem
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const codigo = await scanFromImage(file);
+      if (codigo) {
+        toast({
+          title: "Código detectado!",
+          description: `Código ${codigo} encontrado na imagem`,
+        });
+      } else {
+        toast({
+          title: "Nenhum código encontrado",
+          description: "Não foi possível detectar um código de barras na imagem",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao processar imagem",
+        description: "Ocorreu um erro ao escanear a imagem",
+        variant: "destructive"
+      });
+    }
+    
+    // Limpar input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Toggle fullscreen para mobile
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -71,17 +113,48 @@ export function Scanner() {
         </div>
       </div>
 
-      {/* Scanner Interface */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Estatísticas */}
+      <ScannerStats scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
+
+      {/* Scanner Interface - Layout mais compacto */}
+      <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-4`}>
         {/* Camera Scanner */}
-        <Card>
+        <Card className={isFullscreen ? 'col-span-1' : 'lg:col-span-2'}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
-              Scanner de Câmera
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                <CardTitle>Scanner de Câmera</CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleFullscreen}
+                  className="lg:hidden"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </div>
+            </div>
             <CardDescription>
-              Use a câmera do dispositivo para ler códigos de barras
+              Use a câmera ou faça upload de uma imagem para ler códigos de barras
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -203,28 +276,30 @@ export function Scanner() {
           </CardContent>
         </Card>
 
-        {/* Manual Input */}
-        <Card>
+        {/* Manual Input com busca instantânea */}
+        <Card className={isFullscreen ? 'hidden' : ''}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
-              Busca Manual
+              Busca Inteligente
             </CardTitle>
             <CardDescription>
-              Digite o código manualmente para buscar o produto
+              Busca instantânea por SKU, nome ou código de barras
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Buscar Produto</label>
               <p className="text-xs text-muted-foreground">
-                Digite SKU, nome ou código de barras para buscar
+                Digite para buscar automaticamente (mín. 2 caracteres)
               </p>
               <Input 
                 placeholder="Ex: SKU-001, Produto XYZ ou 789012345..."
-                className="text-center"
                 value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
+                onChange={(e) => {
+                  setManualCode(e.target.value);
+                  buscarComDebounce(e.target.value);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     buscarManualmente(manualCode);
@@ -240,7 +315,7 @@ export function Scanner() {
               disabled={isSearching || !manualCode.trim()}
             >
               <Search className="mr-2 h-4 w-4" />
-              {isSearching ? "Buscando..." : "Buscar Produto"}
+              {isSearching ? "Buscando..." : "Buscar Agora"}
             </Button>
 
             {/* Resultados da busca múltipla */}
@@ -292,6 +367,18 @@ export function Scanner() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Configurações do Scanner */}
+      {!isFullscreen && (
+        <ScannerModeToggle
+          continuousMode={continuousMode}
+          onContinuousModeChange={setContinuousMode}
+          soundEnabled={soundEnabled}
+          onSoundEnabledChange={setSoundEnabled}
+          vibrationEnabled={vibrationEnabled}
+          onVibrationEnabledChange={setVibrationEnabled}
+        />
+      )}
 
       {/* Results */}
       <Card>
@@ -412,50 +499,10 @@ export function Scanner() {
         </CardContent>
       </Card>
 
-      {/* Recent Scans */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Códigos Lidos Recentemente</CardTitle>
-          <CardDescription>
-            Histórico dos últimos códigos escaneados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {scanHistory.length > 0 ? (
-              scanHistory.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-mono text-sm text-foreground">{item.codigo}</p>
-                    <p className={`text-sm ${item.found ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {item.produto}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(item.timestamp), { 
-                        addSuffix: true, 
-                        locale: ptBR 
-                      })}
-                    </p>
-                    <Badge 
-                      variant={item.found ? "default" : "destructive"}
-                      className="text-xs"
-                    >
-                      {item.found ? "Encontrado" : "Não encontrado"}
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <ScanLine className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Nenhum código escaneado ainda</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Histórico com filtros avançados */}
+      {!isFullscreen && (
+        <ScannerHistory scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
+      )}
 
       {/* Modal para criar/editar produto */}
       <ProdutoScannerModal 
