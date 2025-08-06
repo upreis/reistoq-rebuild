@@ -124,12 +124,12 @@ serve(async (req) => {
             id_unico: `${item.numero_pedido}-${item.sku_pedido}`,
             numero_pedido: item.numero_pedido,
             sku_produto: item.sku_kit,
-            nome_produto: produto.nome,
-            quantidade_vendida: item.quantidade_kit,
+            descricao: item.descricao,
+            quantidade: item.quantidade_kit,
             valor_unitario: item.valor_total / item.quantidade_pedido,
             valor_total: (item.valor_total / item.quantidade_pedido) * item.quantidade_kit,
             cliente_nome: item.nome_cliente,
-            data_venda: item.data_pedido,
+            data_pedido: item.data_pedido,
             status: 'estoque_baixado',
             observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}`
           });
