@@ -197,6 +197,10 @@ export function useItensPedidos() {
           const pedido = syncData.pedidos.find((p: any) => p.numero === item.numero_pedido);
           return {
             ...item,
+            // ✅ MAPEAR VALOR TOTAL DO PEDIDO DIRETAMENTE NO ITEM
+            valor_total_pedido: pedido?.valor_total || 0,
+            valor_frete_pedido: pedido?.valor_frete || 0,
+            valor_desconto_pedido: pedido?.valor_desconto || 0,
             pedidos: pedido ? {
               numero_ecommerce: pedido.numero_ecommerce,
               nome_cliente: pedido.nome_cliente,
