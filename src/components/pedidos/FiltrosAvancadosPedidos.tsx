@@ -151,15 +151,8 @@ export function FiltrosAvancadosPedidos({
   };
 
   const contarFiltrosAtivos = useMemo(() => {
-    let count = 0;
-    if (filtros.busca && filtros.busca.trim()) count++;
-    if (filtros.dataInicio || filtros.dataFinal) count++;
-    if (filtros.situacoes && filtros.situacoes.length > 0) count++;
-    if ((filtros.valorMinimo && filtros.valorMinimo > 0) || (filtros.valorMaximo && filtros.valorMaximo > 0)) count++;
-    if (filtros.clienteVip) count++;
-    
-    return count;
-  }, [filtros.busca, filtros.dataInicio, filtros.dataFinal, filtros.situacoes, filtros.valorMinimo, filtros.valorMaximo, filtros.clienteVip]);
+    return filtros.situacoes ? filtros.situacoes.length : 0;
+  }, [filtros.situacoes]);
 
   return (
     <div className="space-y-4">
@@ -263,7 +256,7 @@ export function FiltrosAvancadosPedidos({
               <Filter className="mr-2 h-4 w-4" />
               Filtros Avançados
               {contarFiltrosAtivos > 0 && (
-                <Badge className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                <Badge className="ml-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
                   {contarFiltrosAtivos}
                 </Badge>
               )}
