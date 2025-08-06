@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardExecutivo } from "@/components/estoque/DashboardExecutivo";
+import { DashboardAutomacao } from "@/components/dashboard/DashboardAutomacao";
 
 const metrics = [
   {
@@ -84,9 +85,10 @@ export function Dashboard() {
 
       {/* Dashboard Tabs */}
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="geral">Visão Geral</TabsTrigger>
           <TabsTrigger value="executivo">Dashboard Executivo</TabsTrigger>
+          <TabsTrigger value="automacao">Automação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral" className="space-y-6 mt-6">
@@ -182,6 +184,10 @@ export function Dashboard() {
 
         <TabsContent value="executivo" className="mt-6">
           <DashboardExecutivo />
+        </TabsContent>
+
+        <TabsContent value="automacao" className="mt-6">
+          <DashboardAutomacao />
         </TabsContent>
       </Tabs>
     </div>

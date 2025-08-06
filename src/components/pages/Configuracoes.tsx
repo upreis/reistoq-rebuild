@@ -18,6 +18,16 @@ export function Configuracoes() {
   const [telegramChatId, setTelegramChatId] = useState("");
   const [alertasAutomaticos, setAlertasAutomaticos] = useState(false);
   const [intervaloAlertas, setIntervaloAlertas] = useState("60");
+  
+  // Novas configurações de automação - Fase 2
+  const [syncAutomatico, setSyncAutomatico] = useState(false);
+  const [syncIntervalo, setSyncIntervalo] = useState("30");
+  const [autoMapearSku, setAutoMapearSku] = useState(false);
+  const [alertasEstoqueBaixo, setAlertasEstoqueBaixo] = useState(false);
+  const [alertasSkusPendentes, setAlertasSkusPendentes] = useState(false);
+  const [alertasPedidosParados, setAlertasPedidosParados] = useState(false);
+  const [alertasSyncFalhas, setAlertasSyncFalhas] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -28,7 +38,20 @@ export function Configuracoes() {
         const { data, error } = await supabase
           .from('configuracoes')
           .select('chave, valor')
-          .in('chave', ['tiny_token', 'telegram_token', 'telegram_chat_id', 'alertas_automaticos', 'intervalo_alertas']);
+          .in('chave', [
+            'tiny_token', 
+            'telegram_token', 
+            'telegram_chat_id', 
+            'alertas_automaticos', 
+            'intervalo_alertas',
+            'sync_automatico',
+            'sync_intervalo',
+            'auto_mapear_sku',
+            'alertas_estoque_baixo',
+            'alertas_skus_pendentes',
+            'alertas_pedidos_parados',
+            'alertas_sync_falhas'
+          ]);
 
         if (error) throw error;
 
@@ -48,6 +71,27 @@ export function Configuracoes() {
               break;
             case 'intervalo_alertas':
               setIntervaloAlertas(config.valor);
+              break;
+            case 'sync_automatico':
+              setSyncAutomatico(config.valor === 'true');
+              break;
+            case 'sync_intervalo':
+              setSyncIntervalo(config.valor);
+              break;
+            case 'auto_mapear_sku':
+              setAutoMapearSku(config.valor === 'true');
+              break;
+            case 'alertas_estoque_baixo':
+              setAlertasEstoqueBaixo(config.valor === 'true');
+              break;
+            case 'alertas_skus_pendentes':
+              setAlertasSkusPendentes(config.valor === 'true');
+              break;
+            case 'alertas_pedidos_parados':
+              setAlertasPedidosParados(config.valor === 'true');
+              break;
+            case 'alertas_sync_falhas':
+              setAlertasSyncFalhas(config.valor === 'true');
               break;
           }
         });
@@ -113,6 +157,70 @@ export function Configuracoes() {
           .from('configuracoes')
           .upsert(
             { chave: 'intervalo_alertas', valor: intervaloAlertas, tipo: 'number' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      // Salvar configurações de automação - Fase 2
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'sync_automatico', valor: syncAutomatico.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'sync_intervalo', valor: syncIntervalo, tipo: 'number' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'auto_mapear_sku', valor: autoMapearSku.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'alertas_estoque_baixo', valor: alertasEstoqueBaixo.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'alertas_skus_pendentes', valor: alertasSkusPendentes.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'alertas_pedidos_parados', valor: alertasPedidosParados.toString(), tipo: 'boolean' },
+            { onConflict: 'chave' }
+          )
+      );
+
+      updates.push(
+        supabase
+          .from('configuracoes')
+          .upsert(
+            { chave: 'alertas_sync_falhas', valor: alertasSyncFalhas.toString(), tipo: 'boolean' },
             { onConflict: 'chave' }
           )
       );
