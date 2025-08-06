@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, Filter, RotateCcw, Calendar as CalendarIcon, ChevronDown, Play, Star, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -150,7 +150,7 @@ export function FiltrosAvancadosPedidos({
     localStorage.setItem('filtros-pedidos-salvos', JSON.stringify(novosFiltrosSalvos));
   };
 
-  const contarFiltrosAtivos = () => {
+  const contarFiltrosAtivos = useMemo(() => {
     let count = 0;
     if (filtros.busca && filtros.busca.trim()) count++;
     if (filtros.dataInicio || filtros.dataFinal) count++;
@@ -158,19 +158,8 @@ export function FiltrosAvancadosPedidos({
     if ((filtros.valorMinimo && filtros.valorMinimo > 0) || (filtros.valorMaximo && filtros.valorMaximo > 0)) count++;
     if (filtros.clienteVip) count++;
     
-    console.log('Contando filtros ativos:', {
-      busca: filtros.busca,
-      dataInicio: filtros.dataInicio,
-      dataFinal: filtros.dataFinal,
-      situacoes: filtros.situacoes,
-      valorMinimo: filtros.valorMinimo,
-      valorMaximo: filtros.valorMaximo,
-      clienteVip: filtros.clienteVip,
-      totalAtivos: count
-    });
-    
     return count;
-  };
+  }, [filtros.busca, filtros.dataInicio, filtros.dataFinal, filtros.situacoes, filtros.valorMinimo, filtros.valorMaximo, filtros.clienteVip]);
 
   return (
     <div className="space-y-4">
@@ -273,9 +262,9 @@ export function FiltrosAvancadosPedidos({
             <Button variant="outline" className="bg-background relative">
               <Filter className="mr-2 h-4 w-4" />
               Filtros Avançados
-              {contarFiltrosAtivos() > 0 && (
+              {contarFiltrosAtivos > 0 && (
                 <Badge className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
-                  {contarFiltrosAtivos()}
+                  {contarFiltrosAtivos}
                 </Badge>
               )}
               <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", filtrosAbertos && "rotate-180")} />
@@ -284,7 +273,7 @@ export function FiltrosAvancadosPedidos({
         </Collapsible>
 
         {/* Botão Salvar Filtro */}
-        {contarFiltrosAtivos() > 0 && (
+        {contarFiltrosAtivos > 0 && (
           <Button
             variant="outline"
             onClick={() => setMostrarSalvarFiltro(!mostrarSalvarFiltro)}
