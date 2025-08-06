@@ -325,71 +325,75 @@ export function PedidosControleSincronizacao({
 
   return (
     <div className="space-y-4">
-      {/* Controles de Sync em Tempo Real */}
-      {syncStatus && (syncStatus.status === 'running' || syncStatus.status === 'paused') && (
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
-          <CardContent className="py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${
-                  syncStatus.status === 'running' ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500'
-                }`} />
-                <span className="text-sm font-medium">
-                  {syncStatus.status === 'running' ? 'Sincronizando...' : 'Pausado'}
+      {/* Status de Sincronização - Sempre Visível */}
+      <Card className={`${syncStatus && (syncStatus.status === 'running' || syncStatus.status === 'paused') 
+        ? 'border-blue-200 bg-blue-50 dark:bg-blue-900/20' 
+        : 'border-border bg-card'}`}>
+        <CardContent className="py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`h-2 w-2 rounded-full ${
+                syncStatus?.status === 'running' ? 'bg-blue-500 animate-pulse' : 
+                syncStatus?.status === 'paused' ? 'bg-yellow-500' :
+                'bg-green-500'
+              }`} />
+              <span className="text-sm font-medium">
+                {syncStatus?.status === 'running' ? 'Sincronizando...' : 
+                 syncStatus?.status === 'paused' ? 'Pausado' : 
+                 'Pronto para sincronizar'}
+              </span>
+              {syncStatus?.progress?.current_step && (
+                <span className="text-xs text-muted-foreground">
+                  - {syncStatus.progress.current_step}
                 </span>
-                {syncStatus.progress?.current_step && (
-                  <span className="text-xs text-muted-foreground">
-                    - {syncStatus.progress.current_step}
-                  </span>
-                )}
-              </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {syncStatus?.progress?.total_items && syncStatus?.progress?.processed_items && (
+                <Badge variant="outline" className="text-xs">
+                  {syncStatus.progress.processed_items}/{syncStatus.progress.total_items}
+                </Badge>
+              )}
               
-              <div className="flex items-center gap-2">
-                {syncStatus.progress?.total_items && syncStatus.progress?.processed_items && (
-                  <Badge variant="outline" className="text-xs">
-                    {syncStatus.progress.processed_items}/{syncStatus.progress.total_items}
-                  </Badge>
-                )}
-                
-                {syncStatus.status === 'running' && (
+              {syncStatus?.status === 'running' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handlePausarSync}
+                  className="h-7 px-2"
+                >
+                  <Pause className="h-3 w-3 mr-1" />
+                  Pausar
+                </Button>
+              )}
+              
+              {syncStatus?.status === 'paused' && (
+                <>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={handlePausarSync}
+                    onClick={handleRetomar}
                     className="h-7 px-2"
                   >
-                    <Pause className="h-3 w-3 mr-1" />
-                    Pausar
+                    <Play className="h-3 w-3 mr-1" />
+                    Retomar
                   </Button>
-                )}
-                
-                {syncStatus.status === 'paused' && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleRetomar}
-                      className="h-7 px-2"
-                    >
-                      <Play className="h-3 w-3 mr-1" />
-                      Retomar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={handlePararSync}
-                      className="h-7 px-2"
-                    >
-                      <Square className="h-3 w-3 mr-1" />
-                      Parar
-                    </Button>
-                  </>
-                )}
-              </div>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handlePararSync}
+                    className="h-7 px-2"
+                  >
+                    <Square className="h-3 w-3 mr-1" />
+                    Parar
+                  </Button>
+                </>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
       
       <Collapsible open={configAberta} onOpenChange={setConfigAberta}>
       <div className="bg-card border rounded-lg">
