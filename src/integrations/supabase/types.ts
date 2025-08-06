@@ -311,6 +311,7 @@ export type Database = {
       }
       pedidos: {
         Row: {
+          canal_venda: string | null
           codigo_rastreamento: string | null
           cpf_cnpj: string | null
           created_at: string
@@ -318,6 +319,7 @@ export type Database = {
           data_prevista: string | null
           id: string
           nome_cliente: string
+          nome_ecommerce: string | null
           numero: string
           numero_ecommerce: string | null
           obs: string | null
@@ -330,6 +332,7 @@ export type Database = {
           valor_total: number
         }
         Insert: {
+          canal_venda?: string | null
           codigo_rastreamento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
@@ -337,6 +340,7 @@ export type Database = {
           data_prevista?: string | null
           id?: string
           nome_cliente: string
+          nome_ecommerce?: string | null
           numero: string
           numero_ecommerce?: string | null
           obs?: string | null
@@ -349,6 +353,7 @@ export type Database = {
           valor_total: number
         }
         Update: {
+          canal_venda?: string | null
           codigo_rastreamento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
@@ -356,6 +361,7 @@ export type Database = {
           data_prevista?: string | null
           id?: string
           nome_cliente?: string
+          nome_ecommerce?: string | null
           numero?: string
           numero_ecommerce?: string | null
           obs?: string | null
