@@ -157,7 +157,7 @@ export function useHistoricoMovimentacoes() {
           .from('movimentacoes_estoque')
           .select(`
             *,
-            produtos (
+            produto:produtos(
               id,
               nome,
               sku_interno,
@@ -165,29 +165,43 @@ export function useHistoricoMovimentacoes() {
             )
           `)
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error('❌ Erro ao buscar movimentação:', fetchError);
+          throw fetchError;
+        }
 
-        if (movimentacao && movimentacao.produtos) {
+        if (movimentacao && movimentacao.produto) {
           console.log('📊 Dados da movimentação:', {
             tipo: movimentacao.tipo_movimentacao,
             quantidadeMovimentada: movimentacao.quantidade_movimentada,
-            quantidadeAtual: movimentacao.produtos.quantidade_atual,
-            produto: movimentacao.produtos.nome
+            quantidadeAtual: movimentacao.produto.quantidade_atual,
+            produto: movimentacao.produto.nome,
+            sku: movimentacao.produto.sku_interno
           });
           
           // Calcular nova quantidade após reversão
-          const quantidadeAtual = movimentacao.produtos.quantidade_atual;
+          const quantidadeAtual = movimentacao.produto.quantidade_atual;
+          const quantidadeMovimentada = movimentacao.quantidade_movimentada;
+          
+          // Se foi uma entrada, subtraímos para reverter
+          // Se foi uma saída, somamos para reverter
           const novaQuantidade = movimentacao.tipo_movimentacao === 'entrada' 
-            ? quantidadeAtual - movimentacao.quantidade_movimentada
-            : quantidadeAtual + movimentacao.quantidade_movimentada;
+            ? quantidadeAtual - quantidadeMovimentada
+            : quantidadeAtual + quantidadeMovimentada;
 
           console.log('🔄 Calculando reversão:', {
             quantidadeAtual,
+            quantidadeMovimentada,
             novaQuantidade,
-            operacao: movimentacao.tipo_movimentacao === 'entrada' ? 'subtraindo' : 'somando'
+            operacao: movimentacao.tipo_movimentacao === 'entrada' ? 'subtraindo (revertendo entrada)' : 'somando (revertendo saída)'
           });
+
+          // Validar se a nova quantidade não fica negativa
+          if (novaQuantidade < 0) {
+            throw new Error(`Não é possível reverter a movimentação. O estoque ficaria negativo (${novaQuantidade}).`);
+          }
 
           // Atualizar estoque do produto
           const { error: updateError } = await supabase
@@ -195,9 +209,19 @@ export function useHistoricoMovimentacoes() {
             .update({ quantidade_atual: novaQuantidade })
             .eq('id', movimentacao.produto_id);
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error('❌ Erro ao atualizar estoque:', updateError);
+            throw updateError;
+          }
           
-          console.log('✅ Estoque atualizado com sucesso:', { novaQuantidade });
+          console.log('✅ Estoque atualizado com sucesso:', { 
+            produto: movimentacao.produto.sku_interno,
+            quantidadeAnterior: quantidadeAtual,
+            novaQuantidade 
+          });
+        } else {
+          console.warn('⚠️ Movimentação não encontrada ou sem produto associado');
+          throw new Error('Movimentação não encontrada ou sem produto associado');
         }
       }
 
