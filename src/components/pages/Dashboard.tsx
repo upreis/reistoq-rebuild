@@ -1,4 +1,4 @@
-import { TrendingUp, Package, ShoppingCart, AlertTriangle, BarChart3, Users } from "lucide-react";
+import { TrendingUp, Package, ShoppingCart, AlertTriangle, BarChart3, Users, Zap, Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -83,13 +83,32 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {/* Dashboard Tabs */}
-      <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="geral">Visão Geral</TabsTrigger>
-          <TabsTrigger value="executivo">Dashboard Executivo</TabsTrigger>
-          <TabsTrigger value="automacao">Automação</TabsTrigger>
-        </TabsList>
+      {/* Dashboard Tabs - Melhorado para maior visibilidade */}
+      <div className="bg-card rounded-lg border shadow-sm p-1">
+        <Tabs defaultValue="geral" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-muted/50 h-12 p-1 rounded-md">
+            <TabsTrigger 
+              value="geral" 
+              className="flex items-center gap-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200 text-sm font-medium"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger 
+              value="executivo" 
+              className="flex items-center gap-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200 text-sm font-medium"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Dashboard Executivo
+            </TabsTrigger>
+            <TabsTrigger 
+              value="automacao" 
+              className="flex items-center gap-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200 text-sm font-medium"
+            >
+              <Zap className="h-4 w-4" />
+              Automação
+            </TabsTrigger>
+          </TabsList>
 
         <TabsContent value="geral" className="space-y-6 mt-6">
           {/* Metrics Cards */}
@@ -189,7 +208,8 @@ export function Dashboard() {
         <TabsContent value="automacao" className="mt-6">
           <DashboardAutomacao />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }
