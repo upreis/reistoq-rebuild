@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Eye, Edit, Play, MoreHorizontal, ExternalLink, Copy, 
   Clock, TrendingUp, TrendingDown, AlertTriangle, Download, CheckSquare, Square, Settings
@@ -62,14 +62,33 @@ export function PedidosTabelaAvancada({
   onProcessarPedido,
   obterStatusEstoque
 }: PedidosTabelaAvancadaProps) {
-  const [colunasVisiveis, setColunasVisiveis] = useState({
-    tempoDecorrido: false,
-    prioridade: false,
-    margem: false,
-    numeroVenda: true,
-    cidade: true,
-    uf: true
+  // Carrega configuração salva ou usa padrão
+  const [colunasVisiveis, setColunasVisiveis] = useState(() => {
+    const savedConfig = localStorage.getItem('pedidos-colunas-config');
+    if (savedConfig) {
+      try {
+        return JSON.parse(savedConfig);
+      } catch {
+        // Se der erro no parse, usa configuração padrão
+      }
+    }
+    return {
+      idUnico: true,
+      cliente: true,
+      descricao: true,
+      tempoDecorrido: false,
+      prioridade: false,
+      margem: false,
+      numeroVenda: true,
+      cidade: true,
+      uf: true
+    };
   });
+
+  // Salva configuração sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('pedidos-colunas-config', JSON.stringify(colunasVisiveis));
+  }, [colunasVisiveis]);
 
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -298,6 +317,27 @@ export function PedidosTabelaAvancada({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, idUnico: !prev.idUnico }))}>
+              <Checkbox 
+                checked={colunasVisiveis.idUnico} 
+                className="mr-2" 
+              />
+              ID Único
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, cliente: !prev.cliente }))}>
+              <Checkbox 
+                checked={colunasVisiveis.cliente} 
+                className="mr-2" 
+              />
+              Cliente
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, descricao: !prev.descricao }))}>
+              <Checkbox 
+                checked={colunasVisiveis.descricao} 
+                className="mr-2" 
+              />
+              Descrição
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, tempoDecorrido: !prev.tempoDecorrido }))}>
               <Checkbox 
                 checked={colunasVisiveis.tempoDecorrido} 
@@ -346,7 +386,7 @@ export function PedidosTabelaAvancada({
       
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="min-w-max">
+          <div className="w-full">
             <Table>
             <TableHeader>
               <TableRow>
@@ -365,12 +405,12 @@ export function PedidosTabelaAvancada({
                      aria-label="Selecionar todos os itens elegíveis"
                    />
                  </TableHead>
-                <TableHead className="px-2 min-w-[120px]">ID Único</TableHead>
+                {colunasVisiveis.idUnico && <TableHead className="px-2 min-w-[120px]">ID Único</TableHead>}
                 <TableHead className="px-2 min-w-[100px]">Pedido</TableHead>
                 <TableHead className="px-2 min-w-[120px]">Data do Pedido</TableHead>
-                <TableHead className="px-2 max-w-[180px]">Cliente</TableHead>
+                {colunasVisiveis.cliente && <TableHead className="px-2 max-w-[180px]">Cliente</TableHead>}
                 <TableHead className="px-2 min-w-[120px]">SKU Pedido</TableHead>
-                <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>
+                {colunasVisiveis.descricao && <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>}
                 <TableHead className="px-2 w-16">Qtd</TableHead>
                  <TableHead className="px-2 min-w-[120px]">Valor</TableHead>
                  {colunasVisiveis.cidade && <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>}
@@ -415,49 +455,55 @@ export function PedidosTabelaAvancada({
                       />
                     </TableCell>
                     
-                    <TableCell className="font-mono text-xs px-2">
-                      <div className="min-w-[120px] truncate" title={gerarIdUnico(item)}>
-                        {gerarIdUnico(item)}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className="font-medium px-2">
-                      <div className="min-w-[100px] truncate">
-                        #{item.numero_pedido}
-                      </div>
-                    </TableCell>
+                     {colunasVisiveis.idUnico && (
+                       <TableCell className="font-mono text-xs px-2">
+                         <div className="min-w-[120px] truncate" title={gerarIdUnico(item)}>
+                           {gerarIdUnico(item)}
+                         </div>
+                       </TableCell>
+                     )}
+                     
+                     <TableCell className="font-medium px-2">
+                       <div className="min-w-[100px] truncate">
+                         #{item.numero_pedido}
+                       </div>
+                     </TableCell>
 
-                    <TableCell className="px-2">
-                      <div className="text-sm min-w-[120px]">
-                        {formatarData(item.data_pedido)}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <div className="max-w-[180px] truncate" title={item.nome_cliente}>
-                        {item.nome_cliente?.substring(0, 25)}{item.nome_cliente?.length > 25 ? '...' : ''}
-                        {item.valor_total > 500 && (
-                          <Badge variant="outline" className="ml-1 text-xs">VIP</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell className={`px-2 ${item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`}>
-                      <div className="font-mono text-sm min-w-[120px] truncate" title={item.sku}>
-                        {item.sku}
-                      </div>
-                      {item.linha_destacada && (
-                        <div className="text-xs text-orange-600 font-medium">
-                          ⚠️ Sem mapeamento
-                        </div>
-                      )}
-                    </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <div className="max-w-[200px] truncate" title={item.descricao}>
-                        {item.descricao?.substring(0, 25)}{item.descricao?.length > 25 ? '...' : ''}
-                      </div>
-                    </TableCell>
+                     <TableCell className="px-2">
+                       <div className="text-sm min-w-[120px]">
+                         {formatarData(item.data_pedido)}
+                       </div>
+                     </TableCell>
+                     
+                     {colunasVisiveis.cliente && (
+                       <TableCell className="px-2">
+                         <div className="max-w-[180px] truncate" title={item.nome_cliente}>
+                           {item.nome_cliente?.substring(0, 25)}{item.nome_cliente?.length > 25 ? '...' : ''}
+                           {item.valor_total > 500 && (
+                             <Badge variant="outline" className="ml-1 text-xs">VIP</Badge>
+                           )}
+                         </div>
+                       </TableCell>
+                     )}
+                     
+                     <TableCell className={`px-2 ${item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`}>
+                       <div className="font-mono text-sm min-w-[120px] truncate" title={item.sku}>
+                         {item.sku}
+                       </div>
+                       {item.linha_destacada && (
+                         <div className="text-xs text-orange-600 font-medium">
+                           ⚠️ Sem mapeamento
+                         </div>
+                       )}
+                     </TableCell>
+                     
+                     {colunasVisiveis.descricao && (
+                       <TableCell className="px-2">
+                         <div className="max-w-[200px] truncate" title={item.descricao}>
+                           {item.descricao?.substring(0, 25)}{item.descricao?.length > 25 ? '...' : ''}
+                         </div>
+                       </TableCell>
+                     )}
                     
                     <TableCell className="text-center px-2 w-16">
                       {item.quantidade}
