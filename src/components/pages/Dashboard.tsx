@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardExecutivo } from "@/components/estoque/DashboardExecutivo";
 import { DashboardAutomacao } from "@/components/dashboard/DashboardAutomacao";
+import { DashboardMonitoramento } from "@/components/dashboard/DashboardMonitoramento";
 
 const metrics = [
   {
@@ -86,7 +87,7 @@ export function Dashboard() {
       {/* Dashboard Tabs - Melhorado para maior visibilidade */}
       <div className="bg-card rounded-lg border shadow-sm p-1">
         <Tabs defaultValue="geral" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-muted/50 h-12 p-1 rounded-md">
+          <TabsList className="grid w-full grid-cols-4 bg-muted/50 h-12 p-1 rounded-md">
             <TabsTrigger 
               value="geral" 
               className="flex items-center gap-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200 text-sm font-medium"
@@ -107,6 +108,13 @@ export function Dashboard() {
             >
               <Zap className="h-4 w-4" />
               Automação
+            </TabsTrigger>
+            <TabsTrigger 
+              value="monitoramento" 
+              className="flex items-center gap-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200 text-sm font-medium"
+            >
+              <Activity className="h-4 w-4" />
+              Monitoramento
             </TabsTrigger>
           </TabsList>
 
@@ -207,6 +215,10 @@ export function Dashboard() {
 
         <TabsContent value="automacao" className="mt-6">
           <DashboardAutomacao />
+        </TabsContent>
+
+        <TabsContent value="monitoramento" className="mt-6">
+          <DashboardMonitoramento />
         </TabsContent>
         </Tabs>
       </div>

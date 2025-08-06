@@ -111,6 +111,24 @@ export function DashboardAutomacao() {
           { onConflict: 'chave' }
         );
       
+      // Gerenciar cron job de sincronização após salvar as configurações
+      if (config.sync_automatico && parseInt(config.sync_intervalo) > 0) {
+        try {
+          const { error: cronError } = await supabase.functions.invoke('gerenciar-cron-sync', {
+            body: {
+              ativar: config.sync_automatico,
+              intervalo_minutos: parseInt(config.sync_intervalo)
+            }
+          });
+
+          if (cronError) {
+            console.error('Erro ao configurar cron job de sync:', cronError);
+          }
+        } catch (cronError) {
+          console.error('Erro ao chamar função de cron sync:', cronError);
+        }
+      }
+      
       toast({
         title: "Configuração salva",
         description: "As alterações foram aplicadas com sucesso.",
