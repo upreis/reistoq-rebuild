@@ -291,7 +291,9 @@ export function PedidosTabelaAvancada({
                 <TableHead className="px-2">Qtd</TableHead>
                 <TableHead className="px-2">Valor</TableHead>
                 <TableHead className="px-2">Data do Pedido</TableHead>
-                <TableHead className="px-2">Numero da Venda</TableHead>
+                <TableHead className="px-2">Canal de Venda</TableHead>
+                <TableHead className="px-2">Nome E-commerce</TableHead>
+                <TableHead className="px-2">Número da Venda</TableHead>
                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                   <span className="text-white font-medium">SKU Estoque</span>
                   <div className="text-xs text-white/80">Mapeado</div>
@@ -379,6 +381,18 @@ export function PedidosTabelaAvancada({
                     <TableCell>
                       <div className="text-sm">
                         {formatarData(item.data_pedido)}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="text-sm">
+                        {item.canal_venda || '-'}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="text-sm">
+                        {item.nome_ecommerce || '-'}
                       </div>
                     </TableCell>
 

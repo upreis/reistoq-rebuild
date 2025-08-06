@@ -33,6 +33,9 @@ interface TinyPedido {
   valor_total: number;
   obs?: string;
   obs_interna?: string;
+  // ✅ NOVAS COLUNAS ADICIONADAS
+  canal_venda?: string;
+  nome_ecommerce?: string;
   itens?: TinyItemPedido[];
 }
 
@@ -110,13 +113,28 @@ function formatDateForTinyAPI(dateStr: string): string {
 function determinarNomeEcommerce(pedido: any): string {
   const numeroEcommerce = pedido.numero_ecommerce || '';
   
-  if (numeroEcommerce.startsWith('ML-')) return 'Mercado Livre';
-  if (numeroEcommerce.startsWith('MSHOPS-')) return 'Mercado Shops';
-  if (numeroEcommerce.startsWith('MKTPLACE-')) return 'Marketplace';
-  if (numeroEcommerce.startsWith('AMAZON-')) return 'Amazon';
-  if (numeroEcommerce.startsWith('SHOPEE-')) return 'Shopee';
+  // Padrão Shopee: números longos com sufixo alfanumérico
+  if (/^\d{6}[A-Z0-9]{6,}$/.test(numeroEcommerce)) return 'Shopee Comercial BR';
   
-  return numeroEcommerce ? 'Loja Virtual' : 'Balcão';
+  // Padrão Mercado Livre
+  if (/^MLM?\d+/.test(numeroEcommerce)) return 'Mercado Livre';
+  
+  // Padrão Amazon
+  if (/^\d{3}-\d{7}-\d{7}$/.test(numeroEcommerce)) return 'Amazon';
+  
+  // Se tem número e-commerce mas não é padrão conhecido
+  if (numeroEcommerce) return 'E-commerce';
+  
+  // Sem número e-commerce = venda direta
+  return 'Venda Direta';
+}
+
+function determinarCanalVenda(pedido: any): string {
+  // Se tem campo canal_venda direto, usar ele
+  if (pedido.canal_venda) return pedido.canal_venda;
+  
+  // Senão, derivar do nome do e-commerce
+  return determinarNomeEcommerce(pedido);
 }
 
 // ✅ CORRIGIDO: Função para mapear situações conforme tabela auxiliar do Tiny ERP
@@ -467,7 +485,10 @@ Deno.serve(async (req) => {
             valor_desconto: parseFloat(pedido.valor_desconto || '0'),
             valor_total: parseFloat(pedido.valor_total || '0'),
             obs: pedido.obs,
-            obs_interna: pedido.obs_interna
+            obs_interna: pedido.obs_interna,
+            // ✅ NOVAS COLUNAS SOLICITADAS
+            canal_venda: determinarCanalVenda(pedido),
+            nome_ecommerce: determinarNomeEcommerce(pedido)
           };
 
           allPedidos.push(pedidoProcessado);
@@ -489,8 +510,15 @@ Deno.serve(async (req) => {
                 sku: itemData.codigo || itemData.sku || '',
                 descricao: itemData.descricao || '',
                 quantidade: parseInt(itemData.quantidade || '0'),
-                valor_unitario: parseFloat(itemData.valor_unitario || '0'),
-                valor_total: parseFloat(itemData.valor_total || '0'),
+                // ✅ CORRIGIDO: Múltiplas fontes para valor_unitario
+                valor_unitario: parseFloat(itemData.valor_unitario || itemData.valor || itemData.preco || '0'),
+                // ✅ CORRIGIDO: Múltiplas fontes para valor_total + cálculo de fallback
+                valor_total: (() => {
+                  const valorTotal = parseFloat(itemData.total || itemData.valor_total || '0');
+                  const valorUnit = parseFloat(itemData.valor_unitario || itemData.valor || itemData.preco || '0');
+                  const qtd = parseInt(itemData.quantidade || '0');
+                  return valorTotal > 0 ? valorTotal : (valorUnit * qtd);
+                })(),
                 ncm: itemData.ncm || null,
                 codigo_barras: itemData.codigo_barras || null,
                 observacoes: itemData.observacoes || null
@@ -513,8 +541,15 @@ Deno.serve(async (req) => {
                 sku: produtoData.codigo || produtoData.sku || '',
                 descricao: produtoData.descricao || '',
                 quantidade: parseInt(produtoData.quantidade || '0'),
-                valor_unitario: parseFloat(produtoData.valor_unitario || '0'),
-                valor_total: parseFloat(produtoData.valor_total || '0'),
+                // ✅ CORRIGIDO: Múltiplas fontes para valor_unitario
+                valor_unitario: parseFloat(produtoData.valor_unitario || produtoData.valor || produtoData.preco || '0'),
+                // ✅ CORRIGIDO: Múltiplas fontes para valor_total + cálculo de fallback
+                valor_total: (() => {
+                  const valorTotal = parseFloat(produtoData.total || produtoData.valor_total || '0');
+                  const valorUnit = parseFloat(produtoData.valor_unitario || produtoData.valor || produtoData.preco || '0');
+                  const qtd = parseInt(produtoData.quantidade || '0');
+                  return valorTotal > 0 ? valorTotal : (valorUnit * qtd);
+                })(),
                 ncm: produtoData.ncm || null,
                 codigo_barras: produtoData.codigo_barras || null,
                 observacoes: produtoData.observacoes || null

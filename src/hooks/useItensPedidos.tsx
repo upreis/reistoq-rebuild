@@ -31,6 +31,9 @@ export interface ItemPedido {
   valor_desconto: number;
   created_at?: string;
   updated_at?: string;
+  // ✅ NOVAS COLUNAS SOLICITADAS
+  canal_venda?: string;
+  nome_ecommerce?: string;
   // Dados do mapeamento DE/PARA (aplicado na exibição)
   sku_correspondente?: string;
   sku_simples?: string;
@@ -200,7 +203,10 @@ export function useItensPedidos() {
               obs: pedido.obs,
               obs_interna: pedido.obs_interna,
               valor_frete: pedido.valor_frete,
-              valor_desconto: pedido.valor_desconto
+              valor_desconto: pedido.valor_desconto,
+              // ✅ NOVAS COLUNAS SOLICITADAS
+              canal_venda: pedido.canal_venda,
+              nome_ecommerce: pedido.nome_ecommerce
             } : null
           };
         });
@@ -383,6 +389,9 @@ export function useItensPedidos() {
           obs_interna: pedidoData.obs_interna,
           valor_frete: pedidoData.valor_frete,
           valor_desconto: pedidoData.valor_desconto,
+          // ✅ NOVAS COLUNAS SOLICITADAS
+          canal_venda: pedidoData.canal_venda,
+          nome_ecommerce: pedidoData.nome_ecommerce,
           created_at: item.created_at,
           updated_at: item.updated_at,
           // Dados do mapeamento e produto

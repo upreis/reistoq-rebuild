@@ -42,6 +42,9 @@ export interface ItemPedidoEnriquecido {
   valor_desconto?: number;
   obs?: string;
   obs_interna?: string;
+  // ✅ NOVAS COLUNAS SOLICITADAS
+  canal_venda?: string;
+  nome_ecommerce?: string;
   // Campos do estoque
   produto_nome?: string;
   estoque_atual?: number;
