@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
-import { 
-  Eye, Edit, Trash2, Download, Settings, MoreHorizontal, 
-  CheckSquare, Square 
-} from "lucide-react";
+import { Edit, Trash2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +34,6 @@ interface HistoricoVenda {
   data_pedido: string;
   created_at: string;
   updated_at: string;
-  // Novas colunas adicionadas
   ncm: string | null;
   codigo_barras: string | null;
   pedido_id: string | null;
@@ -53,6 +49,10 @@ interface HistoricoVenda {
   codigo_rastreamento: string | null;
   numero_ecommerce: string | null;
   valor_desconto: number | null;
+  numero_venda: string | null;
+  sku_estoque: string | null;
+  sku_kit: string | null;
+  qtd_kit: number | null;
 }
 
 interface HistoricoVendasTabelaProps {
@@ -86,62 +86,37 @@ export function HistoricoVendasTabela({
   onProximaPagina,
   onPaginaAnterior,
   onEditarVenda,
-  onExcluirVenda
+  onExcluirVenda,
 }: HistoricoVendasTabelaProps) {
-  // Carrega configuração salva ou usa padrão
   const [colunasVisiveis, setColunasVisiveis] = useState(() => {
-    const savedConfig = localStorage.getItem('historico-vendas-colunas-config');
-    if (savedConfig) {
-      try {
-        return JSON.parse(savedConfig);
-      } catch {
-        // Se der erro no parse, usa configuração padrão
-      }
-    }
-    return {
+    const saved = localStorage.getItem('historico-vendas-colunas-visiveis');
+    return saved ? JSON.parse(saved) : {
       idUnico: true,
-      numeroPedido: true,
+      pedido: true,
+      dataPedido: true,
+      cliente: true,
+      skuPedido: true,
       descricao: true,
-      clienteNome: true,
-      cidade: false,
-      uf: false,
-      situacao: false,
-      codigoRastreamento: false,
-      numeroEcommerce: false,
-      valorFrete: false,
-      valorDesconto: false,
-      dataPrevista: false,
-      ncm: false,
-      codigoBarras: false,
-      cpfCnpj: false,
-      obs: false,
-      obsInterna: false,
-      urlRastreamento: false
+      qtd: true,
+      valor: true,
+      cidade: true,
+      uf: true,
+      situacao: true,
+      numeroVenda: false,
+      skuEstoque: false,
+      skuKit: false,
+      qtdKit: false,
     };
   });
 
-  // Salva configuração sempre que mudar
   useEffect(() => {
-    localStorage.setItem('historico-vendas-colunas-config', JSON.stringify(colunasVisiveis));
+    localStorage.setItem('historico-vendas-colunas-visiveis', JSON.stringify(colunasVisiveis));
   }, [colunasVisiveis]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'concluida':
-        return <Badge className="bg-green-600">Concluída</Badge>;
-      case 'pendente':
-        return <Badge variant="secondary">Pendente</Badge>;
-      case 'cancelada':
-        return <Badge variant="destructive">Cancelada</Badge>;
-      case 'processando':
-        return <Badge variant="outline">Processando</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
   const getSituacaoBadge = (situacao: string | null) => {
-    if (!situacao) return <span className="text-muted-foreground">-</span>;
+    if (!situacao) {
+      return <Badge variant="outline">-</Badge>;
+    }
     
     const situacaoLower = situacao.toLowerCase();
     
@@ -173,12 +148,10 @@ export function HistoricoVendasTabela({
     }
   };
 
-  // Função para verificar se venda está selecionada
   const isVendaSelecionada = (vendaId: string) => {
     return vendasSelecionadas.includes(vendaId);
   };
 
-  // Função para alternar seleção de uma venda
   const toggleSelecaoVenda = (vendaId: string) => {
     if (isVendaSelecionada(vendaId)) {
       onSelecaoChange(vendasSelecionadas.filter(id => id !== vendaId));
@@ -187,7 +160,6 @@ export function HistoricoVendasTabela({
     }
   };
 
-  // Função para selecionar/deselecionar todas as vendas
   const toggleSelecaoTodas = () => {
     if (vendasSelecionadas.length === vendas.length) {
       onSelecaoChange([]);
@@ -252,17 +224,33 @@ export function HistoricoVendasTabela({
               <Checkbox checked={colunasVisiveis.idUnico} className="mr-2" />
               ID Único
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, numeroPedido: !prev.numeroPedido }))}>
-              <Checkbox checked={colunasVisiveis.numeroPedido} className="mr-2" />
-              Número do Pedido
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, pedido: !prev.pedido }))}>
+              <Checkbox checked={colunasVisiveis.pedido} className="mr-2" />
+              Pedido
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, dataPedido: !prev.dataPedido }))}>
+              <Checkbox checked={colunasVisiveis.dataPedido} className="mr-2" />
+              Data do Pedido
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, cliente: !prev.cliente }))}>
+              <Checkbox checked={colunasVisiveis.cliente} className="mr-2" />
+              Cliente
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, skuPedido: !prev.skuPedido }))}>
+              <Checkbox checked={colunasVisiveis.skuPedido} className="mr-2" />
+              SKU Pedido
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, descricao: !prev.descricao }))}>
               <Checkbox checked={colunasVisiveis.descricao} className="mr-2" />
               Descrição
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, clienteNome: !prev.clienteNome }))}>
-              <Checkbox checked={colunasVisiveis.clienteNome} className="mr-2" />
-              Cliente
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, qtd: !prev.qtd }))}>
+              <Checkbox checked={colunasVisiveis.qtd} className="mr-2" />
+              Qtd
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, valor: !prev.valor }))}>
+              <Checkbox checked={colunasVisiveis.valor} className="mr-2" />
+              Valor
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, cidade: !prev.cidade }))}>
               <Checkbox checked={colunasVisiveis.cidade} className="mr-2" />
@@ -274,311 +262,237 @@ export function HistoricoVendasTabela({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, situacao: !prev.situacao }))}>
               <Checkbox checked={colunasVisiveis.situacao} className="mr-2" />
-              Situação do Pedido
+              Situação
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, codigoRastreamento: !prev.codigoRastreamento }))}>
-              <Checkbox checked={colunasVisiveis.codigoRastreamento} className="mr-2" />
-              Código Rastreamento
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, numeroVenda: !prev.numeroVenda }))}>
+              <Checkbox checked={colunasVisiveis.numeroVenda} className="mr-2" />
+              Número da Venda
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, numeroEcommerce: !prev.numeroEcommerce }))}>
-              <Checkbox checked={colunasVisiveis.numeroEcommerce} className="mr-2" />
-              Número E-commerce
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, skuEstoque: !prev.skuEstoque }))}>
+              <Checkbox checked={colunasVisiveis.skuEstoque} className="mr-2" />
+              SKU Estoque
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, valorFrete: !prev.valorFrete }))}>
-              <Checkbox checked={colunasVisiveis.valorFrete} className="mr-2" />
-              Valor Frete
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, skuKit: !prev.skuKit }))}>
+              <Checkbox checked={colunasVisiveis.skuKit} className="mr-2" />
+              SKU KIT
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, valorDesconto: !prev.valorDesconto }))}>
-              <Checkbox checked={colunasVisiveis.valorDesconto} className="mr-2" />
-              Valor Desconto
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, dataPrevista: !prev.dataPrevista }))}>
-              <Checkbox checked={colunasVisiveis.dataPrevista} className="mr-2" />
-              Data Prevista
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, ncm: !prev.ncm }))}>
-              <Checkbox checked={colunasVisiveis.ncm} className="mr-2" />
-              NCM
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, codigoBarras: !prev.codigoBarras }))}>
-              <Checkbox checked={colunasVisiveis.codigoBarras} className="mr-2" />
-              Código de Barras
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, cpfCnpj: !prev.cpfCnpj }))}>
-              <Checkbox checked={colunasVisiveis.cpfCnpj} className="mr-2" />
-              CPF/CNPJ
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, qtdKit: !prev.qtdKit }))}>
+              <Checkbox checked={colunasVisiveis.qtdKit} className="mr-2" />
+              QTD KIT
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
-      
       <CardContent>
-        <div className="overflow-x-auto">
-          <div className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="px-2">
-                    <Checkbox
-                      checked={vendasSelecionadas.length === vendas.length && vendas.length > 0}
-                      onCheckedChange={toggleSelecaoTodas}
-                      aria-label="Selecionar todas as vendas"
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox 
+                    checked={vendasSelecionadas.length === vendas.length}
+                    onCheckedChange={toggleSelecaoTodas}
+                  />
+                </TableHead>
+                {colunasVisiveis.idUnico && <TableHead>ID Único</TableHead>}
+                {colunasVisiveis.pedido && <TableHead>Pedido</TableHead>}
+                {colunasVisiveis.dataPedido && <TableHead>Data do Pedido</TableHead>}
+                {colunasVisiveis.cliente && <TableHead>Cliente</TableHead>}
+                {colunasVisiveis.skuPedido && <TableHead>SKU Pedido</TableHead>}
+                {colunasVisiveis.descricao && <TableHead>Descrição</TableHead>}
+                {colunasVisiveis.qtd && <TableHead>Qtd</TableHead>}
+                {colunasVisiveis.valor && <TableHead>Valor</TableHead>}
+                {colunasVisiveis.cidade && <TableHead>Cidade</TableHead>}
+                {colunasVisiveis.uf && <TableHead>UF</TableHead>}
+                {colunasVisiveis.situacao && <TableHead>Situação</TableHead>}
+                {colunasVisiveis.numeroVenda && <TableHead>Número da Venda</TableHead>}
+                {colunasVisiveis.skuEstoque && <TableHead>SKU Estoque</TableHead>}
+                {colunasVisiveis.skuKit && <TableHead>SKU KIT</TableHead>}
+                {colunasVisiveis.qtdKit && <TableHead>QTD KIT</TableHead>}
+                <TableHead className="w-24">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {vendas.map((venda) => (
+                <TableRow key={venda.id}>
+                  <TableCell>
+                    <Checkbox 
+                      checked={isVendaSelecionada(venda.id)}
+                      onCheckedChange={() => toggleSelecaoVenda(venda.id)}
                     />
-                  </TableHead>
-                  {colunasVisiveis.idUnico && <TableHead className="px-2 min-w-[120px]">ID Único</TableHead>}
-                  {colunasVisiveis.numeroPedido && <TableHead className="px-2 min-w-[100px]">Pedido</TableHead>}
-                  <TableHead className="px-2 min-w-[120px]">Data</TableHead>
-                  <TableHead className="px-2 min-w-[120px]">SKU</TableHead>
-                  {colunasVisiveis.descricao && <TableHead className="px-2 max-w-[200px]">Descrição</TableHead>}
-                  <TableHead className="px-2 w-16">Qtd</TableHead>
-                  <TableHead className="px-2 min-w-[120px]">Valor Unit.</TableHead>
-                  <TableHead className="px-2 min-w-[120px]">Valor Total</TableHead>
-                  {colunasVisiveis.clienteNome && <TableHead className="px-2 max-w-[180px]">Cliente</TableHead>}
-                  {colunasVisiveis.cidade && <TableHead className="px-2 min-w-[100px]">Cidade</TableHead>}
-                  {colunasVisiveis.uf && <TableHead className="px-2 min-w-[60px]">UF</TableHead>}
-                  <TableHead className="px-2 min-w-[100px]">Status</TableHead>
-                  {colunasVisiveis.situacao && <TableHead className="px-2 min-w-[120px]">Situação</TableHead>}
-                  {colunasVisiveis.codigoRastreamento && <TableHead className="px-2 min-w-[120px]">Rastreamento</TableHead>}
-                  {colunasVisiveis.numeroEcommerce && <TableHead className="px-2 min-w-[120px]">E-commerce</TableHead>}
-                  {colunasVisiveis.valorFrete && <TableHead className="px-2 min-w-[100px]">Frete</TableHead>}
-                  {colunasVisiveis.valorDesconto && <TableHead className="px-2 min-w-[100px]">Desconto</TableHead>}
-                  {colunasVisiveis.dataPrevista && <TableHead className="px-2 min-w-[120px]">Data Prevista</TableHead>}
-                  {colunasVisiveis.ncm && <TableHead className="px-2 min-w-[100px]">NCM</TableHead>}
-                  {colunasVisiveis.codigoBarras && <TableHead className="px-2 min-w-[120px]">Cód. Barras</TableHead>}
-                  {colunasVisiveis.cpfCnpj && <TableHead className="px-2 min-w-[120px]">CPF/CNPJ</TableHead>}
-                  <TableHead className="px-2 min-w-[100px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vendas.map((venda) => (
-                  <TableRow key={venda.id}>
-                    <TableCell className="px-2 w-12">
-                      <Checkbox
-                        checked={isVendaSelecionada(venda.id)}
-                        onCheckedChange={() => toggleSelecaoVenda(venda.id)}
-                        aria-label={`Selecionar venda ${venda.id_unico}`}
-                      />
+                  </TableCell>
+                  {colunasVisiveis.idUnico && (
+                    <TableCell className="font-mono text-sm">
+                      {venda.id_unico || '-'}
                     </TableCell>
-                    
-                    {colunasVisiveis.idUnico && (
-                      <TableCell className="font-mono text-xs px-2">
-                        <div className="min-w-[120px] truncate" title={venda.id_unico}>
-                          {venda.id_unico}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.numeroPedido && (
-                      <TableCell className="font-medium px-2">
-                        <div className="min-w-[100px] truncate">
-                          #{venda.numero_pedido}
-                        </div>
-                      </TableCell>
-                    )}
-
-                    <TableCell className="px-2">
-                      <div className="text-sm min-w-[120px]">
-                        {formatarData(venda.data_pedido)}
-                      </div>
+                  )}
+                  {colunasVisiveis.pedido && (
+                    <TableCell className="font-mono text-sm">
+                      {venda.numero_pedido}
                     </TableCell>
-                    
-                    <TableCell className="px-2">
-                      <div className="font-mono text-sm min-w-[120px] truncate" title={venda.sku_produto}>
-                        {venda.sku_produto}
-                      </div>
+                  )}
+                  {colunasVisiveis.dataPedido && (
+                    <TableCell>
+                      {formatarData(venda.data_pedido)}
                     </TableCell>
-                    
-                    {colunasVisiveis.descricao && (
-                      <TableCell className="px-2">
-                        <div className="max-w-[200px] truncate" title={venda.descricao || ''}>
-                          {venda.descricao || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    <TableCell className="text-center px-2 w-16">
+                  )}
+                  {colunasVisiveis.cliente && (
+                    <TableCell className="max-w-[200px] truncate">
+                      {venda.cliente_nome || '-'}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.skuPedido && (
+                    <TableCell className="font-mono text-sm">
+                      {venda.sku_produto}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.descricao && (
+                    <TableCell className="max-w-[300px] truncate">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>{venda.descricao || '-'}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">{venda.descricao || 'Sem descrição'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.qtd && (
+                    <TableCell className="text-center">
                       {venda.quantidade}
                     </TableCell>
-                    
-                    <TableCell className="px-2 min-w-[120px]">
-                      {formatarMoeda(venda.valor_unitario)}
-                    </TableCell>
-                    
-                    <TableCell className="px-2 min-w-[120px] font-medium">
+                  )}
+                  {colunasVisiveis.valor && (
+                    <TableCell className="text-right font-mono">
                       {formatarMoeda(venda.valor_total)}
                     </TableCell>
-                    
-                    {colunasVisiveis.clienteNome && (
-                      <TableCell className="px-2">
-                        <div className="max-w-[180px] truncate" title={venda.cliente_nome || ''}>
-                          {venda.cliente_nome || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.cidade && (
-                      <TableCell className="px-2">
-                        <div className="min-w-[100px] truncate" title={venda.cidade || ''}>
-                          {venda.cidade || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.uf && (
-                      <TableCell className="px-2 text-center w-16">
-                        {venda.uf || '-'}
-                      </TableCell>
-                    )}
-                    
-                    <TableCell className="px-2">
-                      {getStatusBadge(venda.status)}
+                  )}
+                  {colunasVisiveis.cidade && (
+                    <TableCell>
+                      {venda.cidade || '-'}
                     </TableCell>
-                    
-                    {colunasVisiveis.situacao && (
-                      <TableCell className="px-2">
-                        {getSituacaoBadge(venda.situacao)}
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.codigoRastreamento && (
-                      <TableCell className="px-2">
-                        <div className="min-w-[120px] truncate" title={venda.codigo_rastreamento || ''}>
-                          {venda.codigo_rastreamento || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.numeroEcommerce && (
-                      <TableCell className="px-2">
-                        <div className="min-w-[120px] truncate" title={venda.numero_ecommerce || ''}>
-                          {venda.numero_ecommerce || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.valorFrete && (
-                      <TableCell className="px-2 min-w-[100px]">
-                        {venda.valor_frete ? formatarMoeda(venda.valor_frete) : '-'}
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.valorDesconto && (
-                      <TableCell className="px-2 min-w-[100px]">
-                        {venda.valor_desconto ? formatarMoeda(venda.valor_desconto) : '-'}
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.dataPrevista && (
-                      <TableCell className="px-2">
-                        <div className="text-sm min-w-[120px]">
-                          {venda.data_prevista ? formatarData(venda.data_prevista) : '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.ncm && (
-                      <TableCell className="px-2">
-                        <div className="min-w-[100px] truncate" title={venda.ncm || ''}>
-                          {venda.ncm || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.codigoBarras && (
-                      <TableCell className="px-2">
-                        <div className="font-mono text-sm min-w-[120px] truncate" title={venda.codigo_barras || ''}>
-                          {venda.codigo_barras || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    {colunasVisiveis.cpfCnpj && (
-                      <TableCell className="px-2">
-                        <div className="font-mono text-sm min-w-[120px] truncate" title={venda.cpf_cnpj || ''}>
-                          {venda.cpf_cnpj || '-'}
-                        </div>
-                      </TableCell>
-                    )}
-                    
-                    <TableCell className="px-2 min-w-[100px]">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onEditarVenda(venda)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => onExcluirVenda(venda.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  )}
+                  {colunasVisiveis.uf && (
+                    <TableCell className="text-center">
+                      {venda.uf || '-'}
                     </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {/* Paginação */}
-            {totalPaginas > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-muted-foreground">
-                  Página {paginaAtual} de {totalPaginas}
-                </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={onPaginaAnterior}
-                        className={paginaAtual <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    
-                    {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
-                      let pageNumber;
-                      if (totalPaginas <= 5) {
-                        pageNumber = i + 1;
-                      } else if (paginaAtual <= 3) {
-                        pageNumber = i + 1;
-                      } else if (paginaAtual >= totalPaginas - 2) {
-                        pageNumber = totalPaginas - 4 + i;
-                      } else {
-                        pageNumber = paginaAtual - 2 + i;
-                      }
-                      
-                      return (
-                        <PaginationItem key={pageNumber}>
-                          <PaginationLink
-                            onClick={() => onPaginaChange(pageNumber)}
-                            isActive={pageNumber === paginaAtual}
-                            className="cursor-pointer"
-                          >
-                            {pageNumber}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    })}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={onProximaPagina}
-                        className={paginaAtual >= totalPaginas ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </div>
+                  )}
+                  {colunasVisiveis.situacao && (
+                    <TableCell>
+                      {getSituacaoBadge(venda.situacao)}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.numeroVenda && (
+                    <TableCell className="font-mono text-sm">
+                      {venda.numero_venda || '-'}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.skuEstoque && (
+                    <TableCell className="font-mono text-sm">
+                      {venda.sku_estoque || '-'}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.skuKit && (
+                    <TableCell className="font-mono text-sm">
+                      {venda.sku_kit || '-'}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.qtdKit && (
+                    <TableCell className="text-center">
+                      {venda.qtd_kit || '-'}
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onEditarVenda(venda)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Editar venda</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onExcluirVenda(venda.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Excluir venda</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Mostrando {itemInicial} até {itemFinal} de {totalItens} vendas
+            </div>
+            <Pagination>
+              <PaginationContent>
+                {paginaAtual > 1 && (
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={onPaginaAnterior}
+                      className="cursor-pointer"
+                    />
+                  </PaginationItem>
+                )}
+                
+                {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                  const pageNumber = Math.max(1, Math.min(totalPaginas - 4, paginaAtual - 2)) + i;
+                  if (pageNumber <= totalPaginas) {
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          onClick={() => onPaginaChange(pageNumber)}
+                          isActive={pageNumber === paginaAtual}
+                          className="cursor-pointer"
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  return null;
+                })}
+
+                {paginaAtual < totalPaginas && (
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={onProximaPagina}
+                      className="cursor-pointer"
+                    />
+                  </PaginationItem>
+                )}
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

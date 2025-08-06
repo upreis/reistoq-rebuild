@@ -7,18 +7,17 @@ interface HistoricoVenda {
   id_unico: string;
   numero_pedido: string;
   sku_produto: string;
-  descricao: string | null; // renomeado de nome_produto
-  quantidade: number; // renomeado de quantidade_vendida
+  descricao: string | null;
+  quantidade: number;
   valor_unitario: number;
   valor_total: number;
   cliente_nome: string | null;
   cliente_documento: string | null;
   status: string;
   observacoes: string | null;
-  data_pedido: string; // renomeado de data_venda
+  data_pedido: string;
   created_at: string;
   updated_at: string;
-  // Novas colunas adicionadas
   ncm: string | null;
   codigo_barras: string | null;
   pedido_id: string | null;
@@ -34,6 +33,11 @@ interface HistoricoVenda {
   codigo_rastreamento: string | null;
   numero_ecommerce: string | null;
   valor_desconto: number | null;
+  // Novas colunas para as especificações do usuário
+  numero_venda: string | null;
+  sku_estoque: string | null;
+  sku_kit: string | null;
+  qtd_kit: number | null;
 }
 
 interface HistoricoVendasMetricas {
@@ -81,7 +85,7 @@ export function useHistoricoVendas() {
 
       // Aplicar filtros
       if (filtros.termo_busca) {
-        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,descricao.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%,cliente_nome.ilike.%${filtros.termo_busca}%,cliente_documento.ilike.%${filtros.termo_busca}%,cidade.ilike.%${filtros.termo_busca}%,uf.ilike.%${filtros.termo_busca}%,situacao.ilike.%${filtros.termo_busca}%`);
+        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,descricao.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%,cliente_nome.ilike.%${filtros.termo_busca}%,cliente_documento.ilike.%${filtros.termo_busca}%,cidade.ilike.%${filtros.termo_busca}%,uf.ilike.%${filtros.termo_busca}%,situacao.ilike.%${filtros.termo_busca}%,numero_venda.ilike.%${filtros.termo_busca}%,sku_estoque.ilike.%${filtros.termo_busca}%,sku_kit.ilike.%${filtros.termo_busca}%,id_unico.ilike.%${filtros.termo_busca}%`);
       }
 
       if (filtros.data_inicio) {

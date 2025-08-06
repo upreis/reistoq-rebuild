@@ -118,12 +118,16 @@ export type Database = {
           ncm: string | null
           numero_ecommerce: string | null
           numero_pedido: string
+          numero_venda: string | null
           obs: string | null
           obs_interna: string | null
           observacoes: string | null
           pedido_id: string | null
+          qtd_kit: number | null
           quantidade: number
           situacao: string | null
+          sku_estoque: string | null
+          sku_kit: string | null
           sku_produto: string
           status: string
           uf: string | null
@@ -150,12 +154,16 @@ export type Database = {
           ncm?: string | null
           numero_ecommerce?: string | null
           numero_pedido: string
+          numero_venda?: string | null
           obs?: string | null
           obs_interna?: string | null
           observacoes?: string | null
           pedido_id?: string | null
+          qtd_kit?: number | null
           quantidade?: number
           situacao?: string | null
+          sku_estoque?: string | null
+          sku_kit?: string | null
           sku_produto: string
           status?: string
           uf?: string | null
@@ -182,12 +190,16 @@ export type Database = {
           ncm?: string | null
           numero_ecommerce?: string | null
           numero_pedido?: string
+          numero_venda?: string | null
           obs?: string | null
           obs_interna?: string | null
           observacoes?: string | null
           pedido_id?: string | null
+          qtd_kit?: number | null
           quantidade?: number
           situacao?: string | null
+          sku_estoque?: string | null
+          sku_kit?: string | null
           sku_produto?: string
           status?: string
           uf?: string | null
