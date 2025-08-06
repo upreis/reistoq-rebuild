@@ -39,10 +39,8 @@ export function Pedidos() {
     dataInicio: filtrosBase.dataInicio,
     dataFinal: filtrosBase.dataFinal,
     situacoes: filtrosBase.situacoes,
-    statusEstoque: [],
     valorMinimo: 0,
     valorMaximo: 0,
-    urgencia: [],
     clienteVip: false
   };
 

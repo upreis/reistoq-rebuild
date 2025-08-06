@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, RotateCcw, Calendar as CalendarIcon, ChevronDown, Play, Star, AlertTriangle, Save, X } from "lucide-react";
+import { Search, Filter, RotateCcw, Calendar as CalendarIcon, ChevronDown, Play, Star, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,8 @@ export interface FiltrosAvancados {
   dataInicio: string;
   dataFinal: string;
   situacoes: string[];
-  statusEstoque: string[];
   valorMinimo: number;
   valorMaximo: number;
-  urgencia: string[];
   clienteVip: boolean;
 }
 
@@ -108,40 +106,11 @@ export function FiltrosAvancadosPedidos({
     { value: 'Cancelado', label: 'Cancelado' }
   ];
 
-  const statusEstoqueOpcoes = [
-    { value: 'disponivel', label: '🔵 Pronto p/ baixar', color: 'bg-blue-600' },
-    { value: 'sem-estoque', label: '🔴 Sem estoque', color: 'bg-red-600' },
-    { value: 'processado', label: '✅ Estoque baixado', color: 'bg-green-600' },
-    { value: 'sem-mapeamento', label: '📋 Sem mapear', color: 'bg-gray-600' },
-    { value: 'processando', label: '🟡 Baixando estoque', color: 'bg-yellow-500' }
-  ];
-
-  const urgenciaOpcoes = [
-    { value: '1dia', label: 'Há mais de 1 dia' },
-    { value: '3dias', label: 'Há mais de 3 dias' },
-    { value: '1semana', label: 'Há mais de 1 semana' },
-    { value: '1mes', label: 'Há mais de 1 mês' }
-  ];
-
   const handleSituacaoChange = (situacao: string, checked: boolean) => {
     const novasSituacoes = checked
       ? [...filtros.situacoes, situacao]
       : filtros.situacoes.filter(s => s !== situacao);
     onFiltroChange({ situacoes: novasSituacoes });
-  };
-
-  const handleStatusEstoqueChange = (status: string, checked: boolean) => {
-    const novosStatus = checked
-      ? [...filtros.statusEstoque, status]
-      : filtros.statusEstoque.filter(s => s !== status);
-    onFiltroChange({ statusEstoque: novosStatus });
-  };
-
-  const handleUrgenciaChange = (urgencia: string, checked: boolean) => {
-    const novasUrgencias = checked
-      ? [...filtros.urgencia, urgencia]
-      : filtros.urgencia.filter(u => u !== urgencia);
-    onFiltroChange({ urgencia: novasUrgencias });
   };
 
   const handleDataInicioChange = (date: Date | undefined) => {
@@ -186,9 +155,7 @@ export function FiltrosAvancadosPedidos({
     if (filtros.busca) count++;
     if (filtros.dataInicio || filtros.dataFinal) count++;
     if (filtros.situacoes.length > 0) count++;
-    if (filtros.statusEstoque.length > 0) count++;
     if (filtros.valorMinimo > 0 || filtros.valorMaximo > 0) count++;
-    if (filtros.urgencia.length > 0) count++;
     if (filtros.clienteVip) count++;
     return count;
   };
@@ -385,34 +352,6 @@ export function FiltrosAvancadosPedidos({
 
             <Separator />
 
-            {/* Status do Estoque */}
-            <div>
-              <Label className="text-sm font-medium mb-3 block">
-                Status do Estoque
-                {filtros.statusEstoque.length > 0 && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ({filtros.statusEstoque.length} selecionado{filtros.statusEstoque.length > 1 ? 's' : ''})
-                  </span>
-                )}
-              </Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {statusEstoqueOpcoes.map((status) => (
-                  <div key={status.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`estoque-${status.value}`}
-                      checked={filtros.statusEstoque.includes(status.value)}
-                      onCheckedChange={(checked) => handleStatusEstoqueChange(status.value, checked as boolean)}
-                    />
-                    <Label htmlFor={`estoque-${status.value}`} className="text-sm font-normal cursor-pointer">
-                      {status.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
             {/* Filtro por Valor */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -432,35 +371,6 @@ export function FiltrosAvancadosPedidos({
                   value={filtros.valorMaximo || ''}
                   onChange={(e) => onFiltroChange({ valorMaximo: parseFloat(e.target.value) || 0 })}
                 />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Urgência */}
-            <div>
-              <Label className="text-sm font-medium mb-3 block flex items-center">
-                <AlertTriangle className="mr-1 h-4 w-4 text-orange-500" />
-                Urgência por Tempo
-                {filtros.urgencia.length > 0 && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ({filtros.urgencia.length} selecionado{filtros.urgencia.length > 1 ? 's' : ''})
-                  </span>
-                )}
-              </Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {urgenciaOpcoes.map((urgencia) => (
-                  <div key={urgencia.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`urgencia-${urgencia.value}`}
-                      checked={filtros.urgencia.includes(urgencia.value)}
-                      onCheckedChange={(checked) => handleUrgenciaChange(urgencia.value, checked as boolean)}
-                    />
-                    <Label htmlFor={`urgencia-${urgencia.value}`} className="text-sm font-normal cursor-pointer">
-                      {urgencia.label}
-                    </Label>
-                  </div>
-                ))}
               </div>
             </div>
 
