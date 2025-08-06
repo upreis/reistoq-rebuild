@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Scan } from "lucide-react";
+import { ImageUploadScanner } from "./ImageUploadScanner";
 
 interface ScannedProduct {
   id?: string;
@@ -20,6 +21,7 @@ interface ScannedProduct {
   categoria?: string;
   preco_venda?: number;
   ultima_movimentacao?: string;
+  url_imagem?: string;
 }
 
 interface ProdutoScannerModalProps {
@@ -49,7 +51,8 @@ export function ProdutoScannerModal({
     preco_venda: 0,
     codigo_barras: codigoEscaneado,
     localizacao: '',
-    status: 'ativo'
+    status: 'ativo',
+    url_imagem: ''
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -71,14 +74,16 @@ export function ProdutoScannerModal({
         preco_venda: produtoEncontrado.preco_venda || 0,
         codigo_barras: produtoEncontrado.codigo_barras || codigoEscaneado,
         localizacao: '',
-        status: produtoEncontrado.status || 'ativo'
+        status: produtoEncontrado.status || 'ativo',
+        url_imagem: produtoEncontrado.url_imagem || ''
       });
     } else {
       setFormData(prev => ({
         ...prev,
         codigo_barras: codigoEscaneado,
         sku_interno: codigoEscaneado || '',
-        nome: ''
+        nome: '',
+        url_imagem: ''
       }));
     }
   }, [produtoEncontrado, codigoEscaneado]);
@@ -122,7 +127,8 @@ export function ProdutoScannerModal({
           status: data.status,
           categoria: data.categoria,
           preco_venda: data.preco_venda,
-          ultima_movimentacao: data.ultima_movimentacao
+          ultima_movimentacao: data.ultima_movimentacao,
+          url_imagem: data.url_imagem
         };
 
         toast({
@@ -152,7 +158,8 @@ export function ProdutoScannerModal({
           status: data.status,
           categoria: data.categoria,
           preco_venda: data.preco_venda,
-          ultima_movimentacao: data.ultima_movimentacao
+          ultima_movimentacao: data.ultima_movimentacao,
+          url_imagem: data.url_imagem
         };
 
         toast({
@@ -188,7 +195,8 @@ export function ProdutoScannerModal({
       preco_venda: 0,
       codigo_barras: '',
       localizacao: '',
-      status: 'ativo'
+      status: 'ativo',
+      url_imagem: ''
     });
     onClose();
   };
@@ -361,6 +369,13 @@ export function ProdutoScannerModal({
               />
             </div>
           </div>
+
+          {/* Upload de Imagem */}
+          <ImageUploadScanner
+            imageUrl={formData.url_imagem}
+            onImageChange={(url) => updateFormData('url_imagem', url)}
+            produtoId={produtoEncontrado?.id}
+          />
 
           {/* Botões */}
           <div className="flex gap-2 pt-4">

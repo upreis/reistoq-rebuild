@@ -14,6 +14,7 @@ interface ScannedProduct {
   categoria?: string;
   preco_venda?: number;
   ultima_movimentacao?: string;
+  url_imagem?: string;
 }
 
 interface ScanHistory {
@@ -145,7 +146,8 @@ export function useWebBarcodeScanner() {
           status,
           categoria,
           preco_venda,
-          ultima_movimentacao
+          ultima_movimentacao,
+          url_imagem
         `)
         .eq('codigo_barras', codigo)
         .eq('ativo', true)
