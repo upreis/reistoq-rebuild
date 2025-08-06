@@ -258,7 +258,13 @@ export function Pedidos() {
             descricao: item.descricao,
             nome_cliente: item.nome_cliente,
             data_pedido: item.data_pedido,
-            valor_total: item.valor_total
+            valor_total: item.valor_total,
+            valor_unitario: item.valor_unitario,
+            numero_ecommerce: item.numero_ecommerce,
+            situacao: item.situacao,
+            cidade: item.cidade,
+            uf: item.uf,
+            cpf_cnpj: item.cpf_cnpj
           }))
         }
       });
@@ -345,7 +351,13 @@ export function Pedidos() {
                 descricao: item.descricao,
                 nome_cliente: item.nome_cliente,
                 data_pedido: item.data_pedido,
-                valor_total: item.valor_total
+                valor_total: item.valor_total,
+                valor_unitario: item.valor_unitario,
+                numero_ecommerce: item.numero_ecommerce,
+                situacao: item.situacao,
+                cidade: item.cidade,
+                uf: item.uf,
+                cpf_cnpj: item.cpf_cnpj
               }))},
             });
             await recarregarDados();

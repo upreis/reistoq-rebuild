@@ -17,6 +17,12 @@ interface ItemParaBaixaEstoque {
   nome_cliente: string;
   data_pedido: string;
   valor_total: number;
+  valor_unitario: number;
+  numero_ecommerce?: string;
+  situacao?: string;
+  cidade?: string;
+  uf?: string;
+  cpf_cnpj?: string;
 }
 
 serve(async (req) => {
@@ -124,11 +130,19 @@ serve(async (req) => {
             id_unico: `${item.numero_pedido}-${item.sku_pedido}`,
             numero_pedido: item.numero_pedido,
             sku_produto: item.sku_kit,
+            sku_estoque: item.sku_kit,
+            sku_kit: item.sku_kit,
+            qtd_kit: item.quantidade_kit,
             descricao: item.descricao,
             quantidade: item.quantidade_kit,
-            valor_unitario: item.valor_total / item.quantidade_pedido,
-            valor_total: (item.valor_total / item.quantidade_pedido) * item.quantidade_kit,
+            valor_unitario: item.valor_unitario || (item.valor_total / item.quantidade_pedido),
+            valor_total: item.valor_total,
             cliente_nome: item.nome_cliente,
+            cliente_documento: item.cpf_cnpj,
+            cidade: item.cidade,
+            uf: item.uf,
+            situacao: item.situacao,
+            numero_ecommerce: item.numero_ecommerce,
             data_pedido: item.data_pedido,
             status: 'estoque_baixado',
             observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}`
