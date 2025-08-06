@@ -225,7 +225,7 @@ export function FiltrosAvancadosPedidos({
       {/* Filtros Compactos */}
       <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/30 rounded-lg border">
         {/* Campo de Busca */}
-        <div className="relative flex-1 min-w-[280px]">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Pesquise por cliente ou número"
@@ -242,7 +242,7 @@ export function FiltrosAvancadosPedidos({
               <Button
                 variant="outline"
                 className={cn(
-                  "min-w-[140px] justify-start text-left font-normal bg-background",
+                  "min-w-[120px] justify-start text-left font-normal bg-background",
                   !dataInicio && "text-muted-foreground"
                 )}
               >
@@ -267,7 +267,7 @@ export function FiltrosAvancadosPedidos({
               <Button
                 variant="outline"
                 className={cn(
-                  "min-w-[140px] justify-start text-left font-normal bg-background",
+                  "min-w-[120px] justify-start text-left font-normal bg-background",
                   !dataFim && "text-muted-foreground"
                 )}
               >

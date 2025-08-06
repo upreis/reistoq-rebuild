@@ -78,7 +78,7 @@ export function DashboardMiniPedidos({ itens, obterStatusEstoque }: DashboardMin
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 mb-6">
       {/* Card de Problemas */}
       <Card className={`${metricas.comProblema > 0 ? 'border-red-200 bg-red-50 dark:bg-red-900/10' : ''}`}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
