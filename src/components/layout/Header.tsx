@@ -1,8 +1,8 @@
-import { Bell, User, LogOut, Search, Plus, Settings } from "lucide-react";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Input } from "@/components/ui/input";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,35 +59,10 @@ export function Header() {
           )}
         </div>
 
-        {/* Center Section - Search Bar */}
-        <div className="flex-1 max-w-md mx-4 hidden sm:block">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar produtos, pedidos..."
-              className="pl-10 bg-muted/50 border-muted-foreground/20 focus:border-accent transition-colors"
-            />
-          </div>
-        </div>
-
         {/* Right Section - Actions */}
-        <div className="flex items-center gap-2">
-          {/* Search button for mobile */}
-          <Button variant="ghost" size="icon" className="sm:hidden">
-            <Search className="h-4 w-4" />
-          </Button>
-
+        <div className="flex items-center gap-3">
           {/* Theme Toggle */}
           <ThemeToggle />
-          
-          {/* New Button */}
-          <Button 
-            className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium hidden sm:flex"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo
-          </Button>
 
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
