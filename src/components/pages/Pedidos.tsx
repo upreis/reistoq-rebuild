@@ -14,7 +14,7 @@ import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
 import { Button } from "@/components/ui/button";
-import { Download, TrendingDown, Loader2 } from "lucide-react";
+import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 
 // Force rebuild to clear cache
 export function Pedidos() {
@@ -335,106 +335,113 @@ export function Pedidos() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      {/* Área Fixa Superior - Ultra Compacta */}
+      {/* Header Fixo - Padrão ERP */}
       <div className="flex-none bg-background border-b">
-        <div className="px-6 py-2 space-y-2">
-          {/* Header Ultra Compacto */}
+        <div className="max-w-7xl mx-auto px-6 py-3 space-y-3">
+          {/* Título e Controles Principais */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-foreground">Pedidos</h1>
               <p className="text-xs text-muted-foreground">Gestão completa de pedidos</p>
             </div>
-            <div className="flex items-center gap-2">
-              <PedidosControleSincronizacao
-                onSincronizar={recarregarDados}
-                loading={loading}
-                ultimaSincronizacao={new Date().toISOString()}
-              />
-            </div>
+            <PedidosControleSincronizacao
+              onSincronizar={recarregarDados}
+              loading={loading}
+              ultimaSincronizacao={new Date().toISOString()}
+            />
           </div>
 
-          {/* Cards Compactos em linha única */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Resumo Executivo - Cards Compactos */}
+          <div className="grid grid-cols-3 gap-3 max-w-2xl">
             <DashboardMiniPedidos 
               itens={itensEnriquecidos}
               obterStatusEstoque={obterStatusEstoque}
             />
-          </div>
-
-          {/* Filtros Compactos */}
-          <div className="space-y-1">
-            <FiltrosAvancadosPedidos
-              filtros={filtros}
-              onFiltroChange={atualizarFiltros}
-              onLimparFiltros={limparFiltros}
-              onBuscarPedidos={handleBuscarPedidos}
-              loading={loading}
-            />
-
-            {/* Barra de Status abaixo dos filtros */}
-            <PedidosBarraStatus metricas={metricas} />
-
-            <div className="flex items-center justify-between">
-              <PedidosBarraAcoes
-                itens={itensEnriquecidos}
-                itensSelecionados={itensSelecionados}
-                obterStatusEstoque={obterStatusEstoque}
-                processandoBaixaEstoque={processandoBaixaEstoque}
-                onBaixarEstoqueLote={async (itens) => {
-                  setProcessandoBaixaEstoque(true);
-                  try {
-                    await supabase.functions.invoke('processar-baixa-estoque', {
-                      body: { itens: itens.map(item => ({
-                        id: item.id,
-                        numero_pedido: item.numero_pedido,
-                        sku_pedido: item.sku,
-                        sku_kit: item.mapeamento_aplicado?.sku_simples || item.sku,
-                        quantidade_kit: (item.mapeamento_aplicado?.quantidade || 1) * item.quantidade,
-                        quantidade_pedido: item.quantidade,
-                        qtd_kit: item.mapeamento_aplicado?.quantidade || 1,
-                        descricao: item.descricao,
-                        nome_cliente: item.nome_cliente,
-                        data_pedido: item.data_pedido,
-                        valor_total: item.valor_total || (item.valor_unitario * item.quantidade),
-                        valor_unitario: item.valor_unitario,
-                        numero_ecommerce: item.numero_ecommerce,
-                        situacao: item.situacao,
-                        cidade: item.cidade,
-                        uf: item.uf,
-                        cpf_cnpj: item.cpf_cnpj,
-                        // Campos adicionais para completar o histórico
-                        pedido_id: item.pedido_id,
-                        ncm: item.ncm,
-                        codigo_barras: item.codigo_barras,
-                        valor_frete: item.valor_frete,
-                        valor_desconto: item.valor_desconto,
-                        data_prevista: item.data_prevista,
-                        obs: item.obs,
-                        obs_interna: item.obs_interna,
-                        url_rastreamento: item.url_rastreamento,
-                        codigo_rastreamento: item.codigo_rastreamento
-                      }))},
-                    });
-                    await recarregarDados();
-                    await verificarEstoqueDisponivel();
-                    toast({ title: "Baixa em lote realizada", description: `${itens.length} itens processados.` });
-                  } catch (error) {
-                    toast({ title: "Erro", description: "Erro ao processar lote.", variant: "destructive" });
-                  } finally {
-                    setProcessandoBaixaEstoque(false);
-                  }
-                }}
-              />
+            {/* Card Total */}
+            <div className="bg-card border rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-lg font-bold">{itensEnriquecidos.length}</div>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </div>
             </div>
           </div>
+
+          {/* Filtros e Pesquisa */}
+          <FiltrosAvancadosPedidos
+            filtros={filtros}
+            onFiltroChange={atualizarFiltros}
+            onLimparFiltros={limparFiltros}
+            onBuscarPedidos={handleBuscarPedidos}
+            loading={loading}
+          />
+
+          {/* Barra de Status - Limitada em largura */}
+          <div className="max-w-4xl">
+            <PedidosBarraStatus metricas={metricas} />
+          </div>
+
+          {/* Ações de Lote */}
+          <PedidosBarraAcoes
+            itens={itensEnriquecidos}
+            itensSelecionados={itensSelecionados}
+            obterStatusEstoque={obterStatusEstoque}
+            processandoBaixaEstoque={processandoBaixaEstoque}
+            onBaixarEstoqueLote={async (itens) => {
+              setProcessandoBaixaEstoque(true);
+              try {
+                await supabase.functions.invoke('processar-baixa-estoque', {
+                  body: { itens: itens.map(item => ({
+                    id: item.id,
+                    numero_pedido: item.numero_pedido,
+                    sku_pedido: item.sku,
+                    sku_kit: item.mapeamento_aplicado?.sku_simples || item.sku,
+                    quantidade_kit: (item.mapeamento_aplicado?.quantidade || 1) * item.quantidade,
+                    quantidade_pedido: item.quantidade,
+                    qtd_kit: item.mapeamento_aplicado?.quantidade || 1,
+                    descricao: item.descricao,
+                    nome_cliente: item.nome_cliente,
+                    data_pedido: item.data_pedido,
+                    valor_total: item.valor_total || (item.valor_unitario * item.quantidade),
+                    valor_unitario: item.valor_unitario,
+                    numero_ecommerce: item.numero_ecommerce,
+                    situacao: item.situacao,
+                    cidade: item.cidade,
+                    uf: item.uf,
+                    cpf_cnpj: item.cpf_cnpj,
+                    // Campos adicionais para completar o histórico
+                    pedido_id: item.pedido_id,
+                    ncm: item.ncm,
+                    codigo_barras: item.codigo_barras,
+                    valor_frete: item.valor_frete,
+                    valor_desconto: item.valor_desconto,
+                    data_prevista: item.data_prevista,
+                    obs: item.obs,
+                    obs_interna: item.obs_interna,
+                    url_rastreamento: item.url_rastreamento,
+                    codigo_rastreamento: item.codigo_rastreamento
+                  }))},
+                });
+                await recarregarDados();
+                await verificarEstoqueDisponivel();
+                toast({ title: "Baixa em lote realizada", description: `${itens.length} itens processados.` });
+              } catch (error) {
+                toast({ title: "Erro", description: "Erro ao processar lote.", variant: "destructive" });
+              } finally {
+                setProcessandoBaixaEstoque(false);
+              }
+            }}
+          />
         </div>
       </div>
 
-      {/* Área da Tabela com Scroll Horizontal Independente */}
+      {/* Área da Tabela - Padrão ERP com container */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
           <div className="min-w-max">
-            <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4">
+            <div className="max-w-7xl mx-auto px-6 py-4">
               <PedidosTabelaAvancada
                 itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
                 itensSelecionados={itensSelecionados}
