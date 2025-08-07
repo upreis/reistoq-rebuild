@@ -98,8 +98,9 @@ export function PedidosTabelaItens({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    const skuKit = item.mapeamento_aplicado?.sku_simples || item.sku;
-    return `${skuKit}-${item.numero_venda || 'SV'}`;
+    const skuKit = item.mapeamento_aplicado?.sku_simples || '';
+    const numeroVenda = item.numero_venda || 'SV';
+    return { skuKit, numeroVenda };
   };
 
   const getStatusProcessamentoComEstoque = (item: ItemPedidoEnriquecido) => {
@@ -243,7 +244,19 @@ export function PedidosTabelaItens({
               {itens.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono text-xs w-32">
-                    <div className="truncate">{gerarIdUnico(item)}</div>
+                    {(() => {
+                      const { skuKit, numeroVenda } = gerarIdUnico(item);
+                      return (
+                        <div className="space-y-1">
+                          <div className="truncate text-xs">
+                            {skuKit || <span className="text-muted-foreground italic">Sem mapeamento</span>}
+                          </div>
+                          <div className="truncate text-xs font-semibold">
+                            {numeroVenda}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="font-medium w-24">
                     <div className="truncate">#{item.numero_pedido}</div>
