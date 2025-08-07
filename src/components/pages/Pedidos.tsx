@@ -334,119 +334,121 @@ export function Pedidos() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header Fixo - Controles principais */}
-      <div className="bg-background border-b sticky top-0 z-10">
-        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 space-y-6 max-w-screen-2xl">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">Pedidos</h1>
-          <p className="text-muted-foreground">Gestão completa de pedidos</p>
-        </div>
-        <div className="lg:max-w-md">
-          <PedidosControleSincronizacao
-            onSincronizar={recarregarDados}
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Área Fixa Superior - Controles e Filtros */}
+      <div className="flex-none bg-background border-b">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 space-y-4">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-foreground">Pedidos</h1>
+              <p className="text-sm text-muted-foreground">Gestão completa de pedidos</p>
+            </div>
+            <div className="lg:max-w-md">
+              <PedidosControleSincronizacao
+                onSincronizar={recarregarDados}
+                loading={loading}
+                ultimaSincronizacao={new Date().toISOString()}
+              />
+            </div>
+          </div>
+
+          {/* Dashboard Mini */}
+          <DashboardMiniPedidos 
+            itens={itensEnriquecidos}
+            obterStatusEstoque={obterStatusEstoque}
+          />
+
+          {/* Barra de Status */}
+          <PedidosBarraStatus metricas={metricas} />
+
+          {/* Filtros Avançados */}
+          <FiltrosAvancadosPedidos
+            filtros={filtros}
+            onFiltroChange={atualizarFiltros}
+            onLimparFiltros={limparFiltros}
+            onBuscarPedidos={handleBuscarPedidos}
             loading={loading}
-            ultimaSincronizacao={new Date().toISOString()}
+          />
+
+          {/* Barra de Ações Automática */}
+          <PedidosBarraAcoes
+            itens={itensEnriquecidos}
+            itensSelecionados={itensSelecionados}
+            obterStatusEstoque={obterStatusEstoque}
+            processandoBaixaEstoque={processandoBaixaEstoque}
+            onBaixarEstoqueLote={async (itens) => {
+              setProcessandoBaixaEstoque(true);
+              try {
+                await supabase.functions.invoke('processar-baixa-estoque', {
+                  body: { itens: itens.map(item => ({
+                    id: item.id,
+                    numero_pedido: item.numero_pedido,
+                    sku_pedido: item.sku,
+                    sku_kit: item.mapeamento_aplicado?.sku_simples || item.sku,
+                    quantidade_kit: (item.mapeamento_aplicado?.quantidade || 1) * item.quantidade,
+                    quantidade_pedido: item.quantidade,
+                    qtd_kit: item.mapeamento_aplicado?.quantidade || 1,
+                    descricao: item.descricao,
+                    nome_cliente: item.nome_cliente,
+                    data_pedido: item.data_pedido,
+                    valor_total: item.valor_total || (item.valor_unitario * item.quantidade),
+                    valor_unitario: item.valor_unitario,
+                    numero_ecommerce: item.numero_ecommerce,
+                    situacao: item.situacao,
+                    cidade: item.cidade,
+                    uf: item.uf,
+                    cpf_cnpj: item.cpf_cnpj,
+                    // Campos adicionais para completar o histórico
+                    pedido_id: item.pedido_id,
+                    ncm: item.ncm,
+                    codigo_barras: item.codigo_barras,
+                    valor_frete: item.valor_frete,
+                    valor_desconto: item.valor_desconto,
+                    data_prevista: item.data_prevista,
+                    obs: item.obs,
+                    obs_interna: item.obs_interna,
+                    url_rastreamento: item.url_rastreamento,
+                    codigo_rastreamento: item.codigo_rastreamento
+                  }))},
+                });
+                await recarregarDados();
+                await verificarEstoqueDisponivel();
+                toast({ title: "Baixa em lote realizada", description: `${itens.length} itens processados.` });
+              } catch (error) {
+                toast({ title: "Erro", description: "Erro ao processar lote.", variant: "destructive" });
+              } finally {
+                setProcessandoBaixaEstoque(false);
+              }
+            }}
           />
         </div>
       </div>
 
-      {/* Dashboard Mini */}
-      <DashboardMiniPedidos 
-        itens={itensEnriquecidos}
-        obterStatusEstoque={obterStatusEstoque}
-      />
-
-      {/* Barra de Status */}
-      <PedidosBarraStatus metricas={metricas} />
-
-      {/* Filtros Avançados */}
-      <FiltrosAvancadosPedidos
-        filtros={filtros}
-        onFiltroChange={atualizarFiltros}
-        onLimparFiltros={limparFiltros}
-        onBuscarPedidos={handleBuscarPedidos}
-        loading={loading}
-      />
-
-      {/* Barra de Ações Automática */}
-      <PedidosBarraAcoes
-        itens={itensEnriquecidos}
-        itensSelecionados={itensSelecionados}
-        obterStatusEstoque={obterStatusEstoque}
-        processandoBaixaEstoque={processandoBaixaEstoque}
-        onBaixarEstoqueLote={async (itens) => {
-          setProcessandoBaixaEstoque(true);
-          try {
-            await supabase.functions.invoke('processar-baixa-estoque', {
-              body: { itens: itens.map(item => ({
-                id: item.id,
-                numero_pedido: item.numero_pedido,
-                sku_pedido: item.sku,
-                sku_kit: item.mapeamento_aplicado?.sku_simples || item.sku,
-                quantidade_kit: (item.mapeamento_aplicado?.quantidade || 1) * item.quantidade,
-                quantidade_pedido: item.quantidade,
-                qtd_kit: item.mapeamento_aplicado?.quantidade || 1,
-                descricao: item.descricao,
-                nome_cliente: item.nome_cliente,
-                data_pedido: item.data_pedido,
-                valor_total: item.valor_total || (item.valor_unitario * item.quantidade),
-                valor_unitario: item.valor_unitario,
-                numero_ecommerce: item.numero_ecommerce,
-                situacao: item.situacao,
-                cidade: item.cidade,
-                uf: item.uf,
-                cpf_cnpj: item.cpf_cnpj,
-                // Campos adicionais para completar o histórico
-                pedido_id: item.pedido_id,
-                ncm: item.ncm,
-                codigo_barras: item.codigo_barras,
-                valor_frete: item.valor_frete,
-                valor_desconto: item.valor_desconto,
-                data_prevista: item.data_prevista,
-                obs: item.obs,
-                obs_interna: item.obs_interna,
-                url_rastreamento: item.url_rastreamento,
-                codigo_rastreamento: item.codigo_rastreamento
-              }))},
-            });
-            await recarregarDados();
-            await verificarEstoqueDisponivel();
-            toast({ title: "Baixa em lote realizada", description: `${itens.length} itens processados.` });
-          } catch (error) {
-            toast({ title: "Erro", description: "Erro ao processar lote.", variant: "destructive" });
-          } finally {
-            setProcessandoBaixaEstoque(false);
-          }
-        }}
-      />
-        </div>
-      </div>
-
-      {/* Área da Tabela com Scroll Horizontal */}
+      {/* Área da Tabela com Scroll Horizontal Independente */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-x-auto">
-          <div className="min-w-max px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
-            <PedidosTabelaAvancada
-              itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
-              itensSelecionados={itensSelecionados}
-              onSelecaoChange={setItensSelecionados}
-              loading={loading}
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalItens={totalItens}
-              itemInicial={itemInicial}
-              itemFinal={itemFinal}
-              onPaginaChange={irParaPagina}
-              onProximaPagina={proximaPagina}
-              onPaginaAnterior={paginaAnterior}
-              onVerDetalhes={handleVerDetalhes}
-              onEditarPedido={handleEditarPedido}
-              onProcessarPedido={handleProcessarPedido}
-              obterStatusEstoque={obterStatusEstoque}
-            />
+        <div className="h-full overflow-x-auto overflow-y-auto">
+          <div className="min-w-max">
+            <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4">
+              <PedidosTabelaAvancada
+                itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
+                itensSelecionados={itensSelecionados}
+                onSelecaoChange={setItensSelecionados}
+                loading={loading}
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalItens={totalItens}
+                itemInicial={itemInicial}
+                itemFinal={itemFinal}
+                onPaginaChange={irParaPagina}
+                onProximaPagina={proximaPagina}
+                onPaginaAnterior={paginaAnterior}
+                onVerDetalhes={handleVerDetalhes}
+                onEditarPedido={handleEditarPedido}
+                onProcessarPedido={handleProcessarPedido}
+                obterStatusEstoque={obterStatusEstoque}
+              />
+            </div>
           </div>
         </div>
       </div>
