@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -340,69 +340,33 @@ export function PedidosTabelaAvancada({
           </div>
           
           <div className="max-h-64 overflow-y-auto">
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, idUnico: !prev.idUnico }))}>
-              <Checkbox 
-                checked={colunasTemporarias.idUnico} 
-                className="mr-2" 
-              />
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.idUnico} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, idUnico: !!checked }))}>
               ID Único
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, cliente: !prev.cliente }))}>
-              <Checkbox 
-                checked={colunasTemporarias.cliente} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.cliente} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, cliente: !!checked }))}>
               Cliente
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, descricao: !prev.descricao }))}>
-              <Checkbox 
-                checked={colunasTemporarias.descricao} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.descricao} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, descricao: !!checked }))}>
               Descrição
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, tempoDecorrido: !prev.tempoDecorrido }))}>
-              <Checkbox 
-                checked={colunasTemporarias.tempoDecorrido} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.tempoDecorrido} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, tempoDecorrido: !!checked }))}>
               Tempo Decorrido
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, prioridade: !prev.prioridade }))}>
-              <Checkbox 
-                checked={colunasTemporarias.prioridade} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.prioridade} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, prioridade: !!checked }))}>
               Prioridade
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, numeroVenda: !prev.numeroVenda }))}>
-              <Checkbox 
-                checked={colunasTemporarias.numeroVenda} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.numeroVenda} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, numeroVenda: !!checked }))}>
               Número da Venda
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, cidade: !prev.cidade }))}>
-              <Checkbox 
-                checked={colunasTemporarias.cidade} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.cidade} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, cidade: !!checked }))}>
               Cidade
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, uf: !prev.uf }))}>
-              <Checkbox 
-                checked={colunasTemporarias.uf} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.uf} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, uf: !!checked }))}>
               UF
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, empresa: !prev.empresa }))}>
-              <Checkbox 
-                checked={colunasTemporarias.empresa} 
-                className="mr-2" 
-              />
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={colunasTemporarias.empresa} onCheckedChange={(checked) => setColunasTemporarias(prev => ({ ...prev, empresa: !!checked }))}>
               Empresa
-            </DropdownMenuItem>
+            </DropdownMenuCheckboxItem>
           </div>
 
           <div className="border-t p-2 flex gap-2">
