@@ -428,11 +428,11 @@ export function PedidosTabelaAvancada({
         </DropdownMenu>
       </CardHeader>
       
-      <CardContent>
-        <div className="overflow-x-auto">
-          <div className="w-full">
-            <Table>
-            <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
+      
+      {/* Tabela com header sticky - fora do Card para permitir sticky global */}
+      <div className="overflow-x-auto bg-background border rounded-lg">
+        <Table>
+            <TableHeader className="sticky top-0 bg-background z-50 border-b shadow-sm backdrop-blur-sm">
               <TableRow>
                  <TableHead className="px-2">
                    <Checkbox
@@ -712,10 +712,11 @@ export function PedidosTabelaAvancada({
                 );
               })}
             </TableBody>
-          </Table>
-          </div>
-        </div>
+        </Table>
+      </div>
 
+      {/* Informações de paginação - dentro do Card */}
+      <CardContent>
         {/* Informações da paginação */}
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="text-sm text-muted-foreground">
