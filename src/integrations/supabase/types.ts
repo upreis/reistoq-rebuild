@@ -609,6 +609,16 @@ export type Database = {
         Args: { data: string }
         Returns: string
       }
+      complete_onboarding: {
+        Args: {
+          org_nome: string
+          org_cnpj: string
+          user_nome: string
+          user_cargo: string
+          tiny_token: string
+        }
+        Returns: Json
+      }
       http: {
         Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
         Returns: Database["public"]["CompositeTypes"]["http_response"]

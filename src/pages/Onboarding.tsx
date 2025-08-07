@@ -59,81 +59,45 @@ export function OnboardingPage() {
     try {
       console.log('📊 Dados do onboarding:', data);
       
-      // 1. Criar organização
-      console.log('🏢 Criando organização...');
-      const { data: organizacao, error: orgError } = await supabase
-        .from('organizacoes')
-        .insert({
-          nome: data.organizacao.nome,
-          cnpj: data.organizacao.cnpj,
-          plano: 'basico'
-        })
-        .select()
-        .single();
+      // Usar a função do banco de dados para completar o onboarding
+      console.log('🏢 Executando função complete_onboarding...');
+      const { data: result, error } = await supabase.rpc('complete_onboarding', {
+        org_nome: data.organizacao.nome,
+        org_cnpj: data.organizacao.cnpj || '',
+        user_nome: data.usuario.nome,
+        user_cargo: data.usuario.cargo,
+        tiny_token: data.configuracoes.tiny_token || ''
+      });
 
-      if (orgError) {
-        console.error('❌ Erro ao criar organização:', orgError);
-        throw orgError;
+      if (error) {
+        console.error('❌ Erro na função de onboarding:', error);
+        throw error;
       }
-      console.log('✅ Organização criada:', organizacao);
 
-      // 2. Atualizar profile do usuário
-      console.log('👤 Atualizando profile...');
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          nome_completo: data.usuario.nome,
-          cargo: data.usuario.cargo,
-          organizacao_id: organizacao.id
-        })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
-
-      if (profileError) {
-        console.error('❌ Erro ao atualizar profile:', profileError);
-        throw profileError;
+      const resultObj = result as any;
+      if (resultObj?.error) {
+        console.error('❌ Erro retornado pela função:', resultObj.error);
+        throw new Error(resultObj.error);
       }
-      console.log('✅ Profile atualizado');
 
-      // 3. Criar configurações iniciais
-      console.log('⚙️ Criando configurações...');
-      const configuracoes = [
-        { chave: 'tiny_token', valor: data.configuracoes.tiny_token },
-        { chave: 'alertas_email', valor: data.configuracoes.alertas_email.toString() },
-        { chave: 'onboarding_completo', valor: 'true' }
-      ];
-
-      const { error: configError } = await supabase
-        .from('configuracoes')
-        .insert(configuracoes);
-
-      if (configError) {
-        console.error('❌ Erro ao criar configurações:', configError);
-        throw configError;
-      }
-      console.log('✅ Configurações criadas');
-
-      // Forçar recarregamento do auth para detectar onboarding completo
-      console.log('🔄 Preparando navegação para dashboard...');
-      console.log('👤 User auth:', auth.user?.id);
+      console.log('✅ Onboarding completo:', result);
       
       toast({
         title: "Bem-vindo ao REISTOQ!",
         description: "Sua conta foi configurada com sucesso.",
       });
 
-      if (auth.user) {
-        console.log('🚀 Navegando via window.location...');
-        // Pequeno delay para garantir que os dados foram salvos
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.href = '/dashboard';
-      } else {
-        console.log('🚀 Navegando via navigate...');
-        navigate('/dashboard');
-      }
+      // Pequeno delay para garantir que os dados foram salvos
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Forçar recarregamento completo da página para atualizar o contexto de auth
+      window.location.href = '/dashboard';
+      
     } catch (error: any) {
+      console.error('❌ Erro completo:', error);
       toast({
         title: "Erro no onboarding",
-        description: error.message,
+        description: error.message || "Erro interno do sistema",
         variant: "destructive"
       });
     } finally {
