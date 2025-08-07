@@ -338,8 +338,26 @@ export function Pedidos() {
       {/* Header Fixo - Padrão ERP */}
       <div className="flex-none bg-background border-b">
         <div className="px-4 py-2 space-y-2">
-          {/* Controles Principais */}
-          <div className="flex items-center justify-end">
+          {/* Controles Principais e Cards */}
+          <div className="flex items-center justify-between">
+            {/* Resumo Executivo - Cards Compactos */}
+            <div className="grid grid-cols-3 gap-2 max-w-xl">
+              <DashboardMiniPedidos 
+                itens={itensEnriquecidos}
+                obterStatusEstoque={obterStatusEstoque}
+              />
+              {/* Card Total */}
+              <div className="bg-card border rounded-lg p-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-lg font-bold">{itensEnriquecidos.length}</div>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                  </div>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+            </div>
+
             <PedidosControleSincronizacao
               onSincronizar={recarregarDados}
               loading={loading}
@@ -347,23 +365,6 @@ export function Pedidos() {
             />
           </div>
 
-          {/* Resumo Executivo - Cards Compactos */}
-          <div className="grid grid-cols-3 gap-2 max-w-xl">
-            <DashboardMiniPedidos 
-              itens={itensEnriquecidos}
-              obterStatusEstoque={obterStatusEstoque}
-            />
-            {/* Card Total */}
-            <div className="bg-card border rounded-lg p-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-lg font-bold">{itensEnriquecidos.length}</div>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                </div>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-          </div>
 
           {/* Filtros e Pesquisa */}
           <FiltrosAvancadosPedidos
