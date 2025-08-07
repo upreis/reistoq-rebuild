@@ -11,7 +11,11 @@ import { Historico } from '@/components/pages/Historico';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 import DePara from '@/components/pages/DePara';
 
-export function MainLayout() {
+interface MainLayoutProps {
+  children?: React.ReactNode;
+}
+
+export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -19,15 +23,17 @@ export function MainLayout() {
         <SidebarInset className="flex flex-col flex-1">
           <Header />
           <main className="flex-1 p-6 overflow-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/estoque" element={<Estoque />} />
-              <Route path="/pedidos" element={<Pedidos />} />
-              <Route path="/depara" element={<DePara />} />
-              <Route path="/scanner" element={<Scanner />} />
-              <Route path="/historico" element={<Historico />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-            </Routes>
+            {children || (
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/estoque" element={<Estoque />} />
+                <Route path="/pedidos" element={<Pedidos />} />
+                <Route path="/depara" element={<DePara />} />
+                <Route path="/scanner" element={<Scanner />} />
+                <Route path="/historico" element={<Historico />} />
+                <Route path="/configuracoes" element={<Configuracoes />} />
+              </Routes>
+            )}
           </main>
         </SidebarInset>
       </div>

@@ -91,45 +91,59 @@ const App = () => {
                   />
                   
                   {/* Rotas protegidas com layout */}
-                  <Route path="/dashboard/*" element={
+                  <Route path="/dashboard" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <Dashboard />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/estoque/*" element={
+                  <Route path="/estoque" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <Estoque />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/pedidos/*" element={
+                  <Route path="/pedidos" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <Pedidos />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/depara/*" element={
+                  <Route path="/depara" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <DePara />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/historico/*" element={
+                  <Route path="/historico" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <Historico />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/scanner/*" element={
+                  <Route path="/scanner" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <Scanner />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/configuracoes/*" element={
+                  <Route path="/configuracoes" element={
                     <ProtectedRoute>
-                      <MainLayout />
+                      <MainLayout>
+                        <Configuracoes />
+                      </MainLayout>
                     </ProtectedRoute>
                   } />
                   
