@@ -106,7 +106,6 @@ export function useHistoricoVendas() {
       setVendas(data || []);
       calcularMetricas(data || []);
     } catch (error: any) {
-      console.error('Erro ao buscar histórico de vendas:', error);
       setError(error.message);
       toast({
         title: "Erro ao carregar histórico",
@@ -174,7 +173,7 @@ export function useHistoricoVendas() {
           .single();
 
         if (produtoError) {
-          console.warn('Produto não encontrado para reversão:', venda.sku_kit);
+          // Produto não encontrado para reversão
         } else {
           // Atualizar quantidade atual somando a quantidade revertida
           const novaQuantidade = produto.quantidade_atual + quantidadeReverter;
@@ -185,9 +184,9 @@ export function useHistoricoVendas() {
             .eq('id', produto.id);
 
           if (updateError) {
-            console.error('Erro ao reverter estoque:', updateError);
+            // Erro silencioso
           } else {
-            console.log(`Estoque revertido: ${produto.nome} (+${quantidadeReverter}) = ${novaQuantidade}`);
+            // Sucesso silencioso
           }
         }
       }
@@ -207,7 +206,6 @@ export function useHistoricoVendas() {
 
       buscarVendas();
     } catch (error: any) {
-      console.error('Erro ao excluir venda:', error);
       toast({
         title: "Erro ao excluir",
         description: error.message,
@@ -239,7 +237,7 @@ export function useHistoricoVendas() {
             .single();
 
           if (produtoError) {
-            console.warn('Produto não encontrado para reversão:', venda.sku_kit);
+            // Produto não encontrado para reversão
           } else {
             // Atualizar quantidade atual somando a quantidade revertida
             const novaQuantidade = produto.quantidade_atual + quantidadeReverter;
@@ -250,9 +248,9 @@ export function useHistoricoVendas() {
               .eq('id', produto.id);
 
             if (updateError) {
-              console.error('Erro ao reverter estoque:', updateError);
+              // Erro silencioso
             } else {
-              console.log(`Estoque revertido: ${produto.nome} (+${quantidadeReverter}) = ${novaQuantidade}`);
+              // Sucesso silencioso
             }
           }
         }
@@ -273,7 +271,6 @@ export function useHistoricoVendas() {
 
       buscarVendas();
     } catch (error: any) {
-      console.error('Erro ao excluir vendas:', error);
       toast({
         title: "Erro ao excluir",
         description: error.message,
@@ -297,7 +294,6 @@ export function useHistoricoVendas() {
 
       buscarVendas();
     } catch (error: any) {
-      console.error('Erro ao adicionar venda:', error);
       toast({
         title: "Erro ao adicionar",
         description: error.message,
@@ -322,7 +318,6 @@ export function useHistoricoVendas() {
 
       buscarVendas();
     } catch (error: any) {
-      console.error('Erro ao atualizar venda:', error);
       toast({
         title: "Erro ao atualizar",
         description: error.message,

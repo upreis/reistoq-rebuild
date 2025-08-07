@@ -79,7 +79,6 @@ export function useItensPedidos() {
       try {
         return JSON.parse(dadosSalvos);
       } catch (error) {
-        console.warn('Erro ao carregar dados salvos:', error);
         return [];
       }
     }
@@ -92,7 +91,6 @@ export function useItensPedidos() {
       try {
         return JSON.parse(metricasSalvas);
       } catch (error) {
-        console.warn('Erro ao carregar métricas salvas:', error);
         return {
           totalItens: 0,
           totalPedidos: 0,
@@ -125,7 +123,7 @@ export function useItensPedidos() {
       try {
         return JSON.parse(filtrosSalvos);
       } catch (error) {
-        console.warn('Erro ao carregar filtros salvos:', error);
+        // Ignorar erro ao carregar filtros
       }
     }
     // ✅ CORRIGIDO: Usar 2024 (onde estão os dados reais) - hoje é 05/08/2025
@@ -159,21 +157,13 @@ export function useItensPedidos() {
     try {
       setLoading(true);
       setError(null);
-
-      console.log('🚀 Buscando pedidos com filtros aplicados...');
       
-      // ✅ SOLUÇÃO 1: VERIFICAR DADOS LOCAIS PRIMEIRO para evitar condição de corrida
-      console.log('📋 Verificando dados locais primeiro...');
-      
+      // Verificar dados locais primeiro para evitar condição de corrida
       const dadosLocais = await buscarDadosLocais();
       const temDadosLocais = dadosLocais && dadosLocais.length > 0;
       
-      console.log(`📊 Dados locais encontrados: ${dadosLocais?.length || 0} itens`);
-      
-      // ✅ SOLUÇÃO 2: Se há dados locais, usá-los imediatamente e sincronizar em background
+      // Se há dados locais, usá-los imediatamente e sincronizar em background
       if (temDadosLocais) {
-        console.log('⚡ Usando dados locais para resposta imediata');
-        
         // Aplicar mapeamentos aos dados locais
         const itensProcessadosLocais = await aplicarMapeamentos(dadosLocais);
         
@@ -190,8 +180,7 @@ export function useItensPedidos() {
         return;
       }
       
-      // ✅ SOLUÇÃO 3: Se não há dados locais, tentar edge function com fallback robusto
-      console.log('🔄 Dados locais vazios, tentando sincronização...');
+      // Se não há dados locais, tentar edge function com fallback robusto
       await sincronizarComFallback();
       
     } catch (error) {
@@ -295,13 +284,11 @@ export function useItensPedidos() {
         .limit(5000); // Limite menor para busca rápida inicial
 
       if (error) {
-        console.warn('⚠️ Erro ao buscar dados locais:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.warn('⚠️ Erro na busca local:', error);
       return [];
     }
   };
@@ -336,8 +323,6 @@ export function useItensPedidos() {
       clearTimeout(timeoutId);
 
       if (!syncError && syncData?.itens && syncData?.pedidos) {
-        console.log(`🔄 Background sync: ${syncData.itens.length} itens atualizados`);
-        
         // Atualizar dados apenas se a sincronização trouxe mais resultados
         if (syncData.itens.length > itens.length) {
           const itensEnriquecidos = syncData.itens.map((item: any) => {
@@ -407,11 +392,9 @@ export function useItensPedidos() {
             description: `${itensProcessados.length} itens atualizados`,
           });
         }
-      } else {
-        console.warn('❌ Edge function background falhou:', syncError?.message || 'Sem dados retornados');
       }
     } catch (edgeFunctionError) {
-      console.warn('❌ Erro na edge function background:', edgeFunctionError);
+      // Error handling silencioso para background sync
     }
   };
 
@@ -438,7 +421,6 @@ export function useItensPedidos() {
         });
 
         if (!syncError && syncData?.itens && syncData?.pedidos) {
-          console.log(`🎯 Edge function: ${syncData.itens.length} itens e ${syncData.pedidos.length} pedidos`);
           
           // Enriquecer itens com dados dos pedidos
           const itensComPedidos = syncData.itens.map((item: any) => {
@@ -534,7 +516,7 @@ export function useItensPedidos() {
         .from('historico_vendas')
         .select('id_unico, status, sku_kit, qtd_kit, numero_pedido, sku_produto');
 
-      console.log(`Aplicando mapeamentos: ${mapeamentos?.length || 0} mapeamentos, ${produtos?.length || 0} produtos, ${historicoVendas?.length || 0} histórico`);
+      
 
       return itensRaw.map(item => {
         const pedidoData = item.pedidos;
@@ -554,7 +536,6 @@ export function useItensPedidos() {
         );
         const jaProcessado = historicoItem?.status === 'estoque_baixado';
 
-        console.log(`Item ${item.sku}: mapeamento=${!!mapeamento}, produto=${!!produto}, jaProcessado=${jaProcessado}, historicoItem=${!!historicoItem}`);
 
         return {
           id: item.id,

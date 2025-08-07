@@ -13,7 +13,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log('🚀 App iniciando...');
   
   try {
     return (
@@ -44,7 +43,7 @@ const App = () => {
       </QueryClientProvider>
     );
   } catch (error) {
-    console.error('❌ Erro fatal no App:', error);
+    console.error('❌ Erro fatal no App:', error); // Manter este por ser crítico
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
