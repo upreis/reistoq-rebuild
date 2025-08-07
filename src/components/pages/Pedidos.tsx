@@ -354,14 +354,11 @@ export function Pedidos() {
           </div>
 
           {/* Cards Compactos em linha única */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <DashboardMiniPedidos 
               itens={itensEnriquecidos}
               obterStatusEstoque={obterStatusEstoque}
             />
-            <div className="col-span-2 lg:col-span-2">
-              <PedidosBarraStatus metricas={metricas} />
-            </div>
           </div>
 
           {/* Filtros Compactos */}
@@ -373,6 +370,9 @@ export function Pedidos() {
               onBuscarPedidos={handleBuscarPedidos}
               loading={loading}
             />
+
+            {/* Barra de Status abaixo dos filtros */}
+            <PedidosBarraStatus metricas={metricas} />
 
             <div className="flex items-center justify-between">
               <PedidosBarraAcoes
