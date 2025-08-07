@@ -100,7 +100,10 @@ export function Historico() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex flex-col">
+      {/* Header Fixo */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 space-y-6 max-w-screen-2xl">
       <VendasHeader
         vendasSelecionadas={vendasSelecionadas}
         loading={loading}
@@ -120,22 +123,32 @@ export function Historico() {
 
       <VendasMetricas metricas={metricas} loading={loading} />
 
-      <HistoricoVendasTabela
-        vendas={vendasPaginadas}
-        vendasSelecionadas={vendasSelecionadas}
-        onSelecaoChange={setVendasSelecionadas}
-        loading={loading}
-        paginaAtual={paginaAtual}
-        totalPaginas={totalPaginas}
-        totalItens={totalItens}
-        itemInicial={itemInicial}
-        itemFinal={itemFinal}
-        onPaginaChange={irParaPagina}
-        onProximaPagina={proximaPagina}
-        onPaginaAnterior={paginaAnterior}
-        onEditarVenda={editarVenda}
-        onExcluirVenda={excluirVendaAction}
-      />
+        </div>
+      </div>
+
+      {/* Área da Tabela com Scroll Horizontal */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-x-auto">
+          <div className="min-w-max px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
+            <HistoricoVendasTabela
+              vendas={vendasPaginadas}
+              vendasSelecionadas={vendasSelecionadas}
+              onSelecaoChange={setVendasSelecionadas}
+              loading={loading}
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalItens={totalItens}
+              itemInicial={itemInicial}
+              itemFinal={itemFinal}
+              onPaginaChange={irParaPagina}
+              onProximaPagina={proximaPagina}
+              onPaginaAnterior={paginaAnterior}
+              onEditarVenda={editarVenda}
+              onExcluirVenda={excluirVendaAction}
+            />
+          </div>
+        </div>
+      </div>
 
       <NovaVendaModal
         open={showNovaModal}

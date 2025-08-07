@@ -71,7 +71,10 @@ const recentActivities = [
 
 export function Dashboard() {
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex flex-col">
+      {/* Header Fixo */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 space-y-6 max-w-screen-2xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -221,6 +224,8 @@ export function Dashboard() {
           <DashboardMonitoramento />
         </TabsContent>
         </Tabs>
+      </div>
+        </div>
       </div>
     </div>
   );

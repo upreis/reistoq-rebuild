@@ -113,7 +113,10 @@ export default function DePara() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex flex-col">
+      {/* Header Fixo */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 space-y-6 max-w-screen-2xl">
       {/* Header */}
       <DeParaHeader
         mapeamentosSelecionados={mapeamentosSelecionados}
@@ -134,33 +137,43 @@ export default function DePara() {
       {/* Summary Cards */}
       <DeParaMetricasAvancadas metricas={metricas} loading={loading} />
 
-      <DeParaTabela
-        mapeamentos={mapeamentosPaginados}
-        loading={loading}
-        mapeamentosSelecionados={mapeamentosSelecionados}
-        todosSeleccionados={todosSeleccionados}
-        paginaAtual={paginaAtual}
-        totalPaginas={totalPaginas}
-        itemInicial={itemInicial}
-        itemFinal={itemFinal}
-        totalItens={totalItens}
-        onSelecionarMapeamento={selecionarMapeamento}
-        onSelecionarTodos={selecionarTodos}
-        onAbrirEdicao={abrirEdicao}
-        onExcluirMapeamento={abrirExclusao}
-        onPaginar={irParaPagina}
-        onPaginaAnterior={paginaAnterior}
-        onProximaPagina={proximaPagina}
-      />
+        </div>
+      </div>
 
-      {/* Operações em Lote */}
-      <DeParaOperacoesLote 
-        mapeamentosSelecionados={mapeamentosSelecionados}
-        onRecarregarDados={recarregarDados}
-      />
+      {/* Área da Tabela com Scroll Horizontal */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-x-auto">
+          <div className="min-w-max px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
+            <DeParaTabela
+              mapeamentos={mapeamentosPaginados}
+              loading={loading}
+              mapeamentosSelecionados={mapeamentosSelecionados}
+              todosSeleccionados={todosSeleccionados}
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              itemInicial={itemInicial}
+              itemFinal={itemFinal}
+              totalItens={totalItens}
+              onSelecionarMapeamento={selecionarMapeamento}
+              onSelecionarTodos={selecionarTodos}
+              onAbrirEdicao={abrirEdicao}
+              onExcluirMapeamento={abrirExclusao}
+              onPaginar={irParaPagina}
+              onPaginaAnterior={paginaAnterior}
+              onProximaPagina={proximaPagina}
+            />
 
-      {/* Histórico */}
-      <DeParaHistorico />
+            {/* Operações em Lote */}
+            <DeParaOperacoesLote 
+              mapeamentosSelecionados={mapeamentosSelecionados}
+              onRecarregarDados={recarregarDados}
+            />
+
+            {/* Histórico */}
+            <DeParaHistorico />
+          </div>
+        </div>
+      </div>
 
       <NovoMapeamentoModal
         open={showNovoModal}

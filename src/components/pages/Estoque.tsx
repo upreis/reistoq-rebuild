@@ -199,7 +199,10 @@ export function Estoque() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-h-screen flex flex-col">
+      {/* Header Fixo */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 space-y-6 max-w-screen-2xl">
       {/* Header */}
       <EstoqueHeader 
         produtosSelecionados={produtosSelecionados}
@@ -237,28 +240,38 @@ export function Estoque() {
         </div>
       </div>
 
-      {/* Tabela ocupando toda largura */}
-      <EstoqueTabela 
-        produtos={produtosPaginados}
-        loading={loading}
-        produtosSelecionados={produtosSelecionados}
-        todosSeleccionados={todosSeleccionados}
-        paginaAtual={paginaAtual}
-        totalPaginas={totalPaginas}
-        itemInicial={itemInicial}
-        itemFinal={itemFinal}
-        totalItens={totalItens}
-        onSelecionarProduto={toggleSelecionarProduto}
-        onSelecionarTodos={toggleSelecionarTodos}
-        onAbrirDetalhes={abrirDetalhes}
-        onAbrirEdicao={abrirEdicao}
-        onMovimentar={abrirMovimentacao}
-        onImageUploaded={handleImageUploaded}
-        onPaginar={irParaPagina}
-        onPaginaAnterior={paginaAnterior}
-        onProximaPagina={proximaPagina}
-        onAbrirPrevisao={abrirPrevisao}
-      />
+        </div>
+      </div>
+
+      {/* Área da Tabela com Scroll Horizontal */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-x-auto">
+          <div className="min-w-max px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
+            {/* Tabela ocupando toda largura */}
+            <EstoqueTabela 
+              produtos={produtosPaginados}
+              loading={loading}
+              produtosSelecionados={produtosSelecionados}
+              todosSeleccionados={todosSeleccionados}
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              itemInicial={itemInicial}
+              itemFinal={itemFinal}
+              totalItens={totalItens}
+              onSelecionarProduto={toggleSelecionarProduto}
+              onSelecionarTodos={toggleSelecionarTodos}
+              onAbrirDetalhes={abrirDetalhes}
+              onAbrirEdicao={abrirEdicao}
+              onMovimentar={abrirMovimentacao}
+              onImageUploaded={handleImageUploaded}
+              onPaginar={irParaPagina}
+              onPaginaAnterior={paginaAnterior}
+              onProximaPagina={proximaPagina}
+              onAbrirPrevisao={abrirPrevisao}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Modais */}
       <ProdutoDetalhesModal
