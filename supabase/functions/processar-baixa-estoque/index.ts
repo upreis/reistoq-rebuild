@@ -19,8 +19,9 @@ interface ItemParaBaixaEstoque {
   numero_pedido: string;
   sku_pedido: string;
   sku_kit: string;
-  quantidade_kit: number;
+  quantidade_kit: number; // QTD KIT x Qtd (já calculado)
   quantidade_pedido: number;
+  qtd_kit: number; // QTD KIT original
   descricao: string;
   nome_cliente: string;
   data_pedido: string;
@@ -61,7 +62,8 @@ serve(async (req) => {
 
     for (const item of itens) {
       try {
-        // 1. Verificar se o produto existe no estoque
+        // 1. Verificar se o produto existe no estoque usando sku_kit
+        console.log(`🔍 Buscando produto no estoque com SKU: ${item.sku_kit}`);
         const { data: produto, error: produtoError } = await supabase
           .from('produtos')
           .select('id, sku_interno, nome, quantidade_atual')
@@ -141,7 +143,7 @@ serve(async (req) => {
             sku_produto: item.sku_kit,
             sku_estoque: item.sku_kit,
             sku_kit: item.sku_kit,
-            qtd_kit: item.quantidade_kit,
+            qtd_kit: item.qtd_kit,
             descricao: item.descricao,
             quantidade: item.quantidade_kit,
             valor_unitario: item.valor_unitario || (item.valor_total / item.quantidade_pedido),
@@ -172,6 +174,7 @@ serve(async (req) => {
               sku_pedido: item.sku_pedido,
               sku_estoque: item.sku_kit,
               quantidade_baixada: item.quantidade_kit,
+              qtd_kit_original: item.qtd_kit,
               produto_nome: produto.nome,
               cliente: item.nome_cliente,
               estoque_anterior: produto.quantidade_atual,
@@ -192,7 +195,7 @@ serve(async (req) => {
           status: 'sucesso'
         });
 
-        console.log(`✅ Baixa realizada: ${item.numero_pedido} - ${item.sku_kit} (${item.quantidade_kit} unidades)`);
+        console.log(`✅ Baixa realizada: ${item.numero_pedido} - ${item.sku_kit} (${item.quantidade_kit} unidades = ${item.qtd_kit} kit x ${item.quantidade_pedido} qtd)`);
 
       } catch (error) {
         console.error(`Erro ao processar item ${item.numero_pedido}:`, error);

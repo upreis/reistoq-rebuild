@@ -74,8 +74,9 @@ export function Pedidos() {
     if (itensEnriquecidos.length === 0) return;
     
     try {
+      // ✅ CORRIGIDO: Usar sku_kit para verificar estoque
       const skusParaVerificar = itensEnriquecidos
-        .map(item => item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples)
+        .map(item => item.sku_kit || item.sku)
         .filter(Boolean);
       
       if (skusParaVerificar.length > 0) {
@@ -102,11 +103,13 @@ export function Pedidos() {
     if (item.ja_processado) return 'processado';
     if (processandoBaixaEstoque) return 'processando';
     
-    const skuProduto = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+    // ✅ CORRIGIDO: Usar sku_kit para verificar estoque
+    const skuProduto = item.sku_kit || item.sku;
     if (!skuProduto) return 'sem-mapeamento';
     
     const estoqueAtual = estoqueDisponivel[skuProduto] || 0;
-    const quantidadeNecessaria = item.mapeamento_aplicado?.quantidade || item.quantidade;
+    // ✅ CORRIGIDO: Quantidade necessária = QTD KIT x Qtd
+    const quantidadeNecessaria = (item.qtd_kit || 1) * item.quantidade;
     
     if (estoqueAtual < quantidadeNecessaria) return 'sem-estoque';
     return 'disponivel';
@@ -222,10 +225,10 @@ export function Pedidos() {
         description: "Processando itens...",
       });
 
-      // Filtrar apenas itens que têm mapeamento, estoque disponível e estão em situação de baixar estoque
+      // ✅ CORRIGIDO: Filtrar itens com sku_kit válido
       const itensComEstoque = itensEnriquecidos.filter(item => {
-        const temMapeamento = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
-        const temQuantidade = item.mapeamento_aplicado?.quantidade && item.mapeamento_aplicado.quantidade > 0;
+        const temSkuKit = item.sku_kit || item.sku;
+        const temQuantidade = item.qtd_kit && item.qtd_kit > 0;
         
         // Verificar se está em situação de baixar estoque
         const situacaoLower = item.situacao?.toLowerCase() || '';
@@ -241,13 +244,13 @@ export function Pedidos() {
         // Não processar se já foi baixado
         const jaProcessado = item.ja_processado;
         
-        // Verificar se tem estoque suficiente
-        const skuProduto = item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples;
+        // ✅ CORRIGIDO: Verificar estoque usando sku_kit
+        const skuProduto = item.sku_kit || item.sku;
         const estoqueAtual = estoqueDisponivel[skuProduto || ''] || 0;
-        const quantidadeNecessaria = item.mapeamento_aplicado?.quantidade || item.quantidade;
+        const quantidadeNecessaria = (item.qtd_kit || 1) * item.quantidade;
         const temEstoque = estoqueAtual >= quantidadeNecessaria;
         
-        return temMapeamento && (temQuantidade || item.quantidade > 0) && 
+        return temSkuKit && (temQuantidade || item.quantidade > 0) && 
                situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado && temEstoque;
       });
 
@@ -274,9 +277,12 @@ export function Pedidos() {
             id: item.id,
             numero_pedido: item.numero_pedido,
             sku_pedido: item.sku,
-            sku_kit: item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples,
-            quantidade_kit: item.mapeamento_aplicado?.quantidade || item.quantidade,
+            // ✅ CORRIGIDO: Usar sku_kit dos dados originais (historico_vendas)
+            sku_kit: item.sku_kit || item.sku,
+            // ✅ CORRIGIDO: Quantidade = QTD KIT x Qtd
+            quantidade_kit: (item.qtd_kit || 1) * item.quantidade,
             quantidade_pedido: item.quantidade,
+            qtd_kit: item.qtd_kit || 1,
             descricao: item.descricao,
             nome_cliente: item.nome_cliente,
             data_pedido: item.data_pedido,
@@ -367,9 +373,12 @@ export function Pedidos() {
                 id: item.id,
                 numero_pedido: item.numero_pedido,
                 sku_pedido: item.sku,
-                sku_kit: item.mapeamento_aplicado?.sku_correspondente || item.mapeamento_aplicado?.sku_simples,
-                quantidade_kit: item.mapeamento_aplicado?.quantidade || item.quantidade,
+                // ✅ CORRIGIDO: Usar sku_kit dos dados originais
+                sku_kit: item.sku_kit || item.sku,
+                // ✅ CORRIGIDO: Quantidade = QTD KIT x Qtd
+                quantidade_kit: (item.qtd_kit || 1) * item.quantidade,
                 quantidade_pedido: item.quantidade,
+                qtd_kit: item.qtd_kit || 1,
                 descricao: item.descricao,
                 nome_cliente: item.nome_cliente,
                 data_pedido: item.data_pedido,

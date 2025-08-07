@@ -36,6 +36,9 @@ export interface ItemPedido {
   // ✅ NOVAS COLUNAS SOLICITADAS
   canal_venda?: string;
   nome_ecommerce?: string;
+  // ✅ CAMPOS PARA BAIXA DE ESTOQUE
+  sku_kit?: string;
+  qtd_kit?: number;
   // Dados enriquecidos do pedido
   valor_total_pedido?: number;
   valor_frete_pedido?: number;
@@ -526,11 +529,10 @@ export function useItensPedidos() {
         .from('produtos')
         .select('sku_interno, nome, categoria, quantidade_atual');
 
-      // Buscar histórico de vendas para verificar itens já processados
+      // Buscar histórico de vendas para verificar itens já processados e obter sku_kit/qtd_kit
       const { data: historicoVendas } = await supabase
         .from('historico_vendas')
-        .select('id_unico, status')
-        .eq('status', 'estoque_baixado');
+        .select('id_unico, status, sku_kit, qtd_kit, numero_pedido, sku_produto');
 
       console.log(`Aplicando mapeamentos: ${mapeamentos?.length || 0} mapeamentos, ${produtos?.length || 0} produtos, ${historicoVendas?.length || 0} histórico`);
 
@@ -545,11 +547,14 @@ export function useItensPedidos() {
         // Buscar dados do produto no estoque
         const produto = produtos?.find(p => p.sku_interno === skuCorrespondente);
 
-        // Verificar se já foi processado no histórico
+        // Verificar se já foi processado no histórico e obter dados sku_kit/qtd_kit
         const idUnico = `${item.numero_pedido}-${item.sku}`;
-        const jaProcessado = historicoVendas?.some(h => h.id_unico === idUnico);
+        const historicoItem = historicoVendas?.find(h => 
+          h.numero_pedido === item.numero_pedido && h.sku_produto === item.sku
+        );
+        const jaProcessado = historicoItem?.status === 'estoque_baixado';
 
-        console.log(`Item ${item.sku}: mapeamento=${!!mapeamento}, produto=${!!produto}, jaProcessado=${jaProcessado}`);
+        console.log(`Item ${item.sku}: mapeamento=${!!mapeamento}, produto=${!!produto}, jaProcessado=${jaProcessado}, historicoItem=${!!historicoItem}`);
 
         return {
           id: item.id,
@@ -583,6 +588,9 @@ export function useItensPedidos() {
           nome_ecommerce: pedidoData.nome_ecommerce,
           created_at: item.created_at,
           updated_at: item.updated_at,
+          // ✅ CAMPOS PARA BAIXA DE ESTOQUE (obtidos do historico_vendas ou mapeamento)
+          sku_kit: historicoItem?.sku_kit || skuCorrespondente,
+          qtd_kit: historicoItem?.qtd_kit || 1,
           // Dados do mapeamento e produto
           sku_correspondente: skuCorrespondente !== item.sku ? skuCorrespondente : undefined,
           sku_simples: skuSimples,

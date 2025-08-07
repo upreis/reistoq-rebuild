@@ -51,6 +51,9 @@ export interface ItemPedidoEnriquecido {
   // ✅ NOVAS COLUNAS SOLICITADAS
   canal_venda?: string;
   nome_ecommerce?: string;
+  // ✅ CAMPOS PARA BAIXA DE ESTOQUE
+  sku_kit?: string;
+  qtd_kit?: number;
   // Campos do estoque
   produto_nome?: string;
   estoque_atual?: number;
