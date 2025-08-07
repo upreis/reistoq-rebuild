@@ -590,7 +590,7 @@ export function useItensPedidos() {
           updated_at: item.updated_at,
           // ✅ CAMPOS PARA BAIXA DE ESTOQUE (obtidos do historico_vendas ou mapeamento)
           sku_kit: historicoItem?.sku_kit || skuCorrespondente,
-          qtd_kit: historicoItem?.qtd_kit || mapeamento?.quantidade || 1,
+          qtd_kit: historicoItem?.qtd_kit || 1,
           // Dados do mapeamento e produto
           sku_correspondente: skuCorrespondente !== item.sku ? skuCorrespondente : undefined,
           sku_simples: skuSimples,
