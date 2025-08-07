@@ -255,7 +255,21 @@ export function PedidosTabelaItens({
                 <TableRow key={item.id}>
                   <TableCell className="font-mono text-xs w-48">
                     <div className="truncate font-medium">
-                      {gerarIdUnico(item)}
+                      {(() => {
+                        // SKU KIT da coluna "SKU KIT Mapeado"
+                        const skuKit = item.mapeamento_aplicado?.sku_simples || '';
+                        // Número da Venda da coluna "Número da Venda"
+                        const numeroVenda = item.numero_ecommerce || '';
+                        
+                        // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
+                        if (skuKit && numeroVenda) {
+                          return `${skuKit}-${numeroVenda}`;
+                        } else if (numeroVenda) {
+                          return `-${numeroVenda}`;
+                        } else {
+                          return 'SV';
+                        }
+                      })()}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium w-24">
