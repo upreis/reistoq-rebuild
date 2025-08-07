@@ -99,7 +99,9 @@ export function PedidosTabelaItens({
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
     const skuKit = item.mapeamento_aplicado?.sku_simples || '';
-    const numeroVenda = item.numero_venda || 'SV';
+    // Verifica vários campos possíveis para o número da venda
+    const numeroVenda = item.numero_venda || item.numero_ecommerce || item.numero_pedido || 'SV';
+    console.log('Item:', item.id, 'numero_venda:', item.numero_venda, 'numero_ecommerce:', item.numero_ecommerce, 'numero_pedido:', item.numero_pedido);
     return { skuKit, numeroVenda };
   };
 
@@ -220,7 +222,7 @@ export function PedidosTabelaItens({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32">ID Único</TableHead>
+                <TableHead className="w-48">ID Único</TableHead>
                 <TableHead className="w-24">Pedido</TableHead>
                 <TableHead className="w-28">Data Pedido</TableHead>
                 <TableHead className="w-40">Cliente</TableHead>
@@ -243,7 +245,7 @@ export function PedidosTabelaItens({
             <TableBody>
               {itens.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono text-xs w-32">
+                  <TableCell className="font-mono text-xs w-48">
                     {(() => {
                       const { skuKit, numeroVenda } = gerarIdUnico(item);
                       return (
