@@ -54,9 +54,13 @@ export function OnboardingPage() {
   };
 
   const handleFinish = async () => {
+    console.log('🚀 Iniciando handleFinish');
     setLoading(true);
     try {
+      console.log('📊 Dados do onboarding:', data);
+      
       // 1. Criar organização
+      console.log('🏢 Criando organização...');
       const { data: organizacao, error: orgError } = await supabase
         .from('organizacoes')
         .insert({
@@ -67,9 +71,14 @@ export function OnboardingPage() {
         .select()
         .single();
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('❌ Erro ao criar organização:', orgError);
+        throw orgError;
+      }
+      console.log('✅ Organização criada:', organizacao);
 
       // 2. Atualizar profile do usuário
+      console.log('👤 Atualizando profile...');
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -79,9 +88,14 @@ export function OnboardingPage() {
         })
         .eq('id', (await supabase.auth.getUser()).data.user?.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('❌ Erro ao atualizar profile:', profileError);
+        throw profileError;
+      }
+      console.log('✅ Profile atualizado');
 
       // 3. Criar configurações iniciais
+      console.log('⚙️ Criando configurações...');
       const configuracoes = [
         { chave: 'tiny_token', valor: data.configuracoes.tiny_token },
         { chave: 'alertas_email', valor: data.configuracoes.alertas_email.toString() },
@@ -92,21 +106,30 @@ export function OnboardingPage() {
         .from('configuracoes')
         .insert(configuracoes);
 
-      if (configError) throw configError;
+      if (configError) {
+        console.error('❌ Erro ao criar configurações:', configError);
+        throw configError;
+      }
+      console.log('✅ Configurações criadas');
 
       // Forçar recarregamento do auth para detectar onboarding completo
-      if (auth.user) {
-        // Pequeno delay para garantir que os dados foram salvos
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.href = '/dashboard';
-      } else {
-        navigate('/dashboard');
-      }
-
+      console.log('🔄 Preparando navegação para dashboard...');
+      console.log('👤 User auth:', auth.user?.id);
+      
       toast({
         title: "Bem-vindo ao REISTOQ!",
         description: "Sua conta foi configurada com sucesso.",
       });
+
+      if (auth.user) {
+        console.log('🚀 Navegando via window.location...');
+        // Pequeno delay para garantir que os dados foram salvos
+        await new Promise(resolve => setTimeout(resolve, 500));
+        window.location.href = '/dashboard';
+      } else {
+        console.log('🚀 Navegando via navigate...');
+        navigate('/dashboard');
+      }
     } catch (error: any) {
       toast({
         title: "Erro no onboarding",
