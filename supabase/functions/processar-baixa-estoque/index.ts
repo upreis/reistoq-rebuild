@@ -32,6 +32,17 @@ interface ItemParaBaixaEstoque {
   cidade?: string;
   uf?: string;
   cpf_cnpj?: string;
+  // Campos adicionais para completar o histórico
+  pedido_id?: string;
+  ncm?: string;
+  codigo_barras?: string;
+  valor_frete?: number;
+  valor_desconto?: number;
+  data_prevista?: string;
+  obs?: string;
+  obs_interna?: string;
+  url_rastreamento?: string;
+  codigo_rastreamento?: string;
 }
 
 serve(async (req) => {
@@ -139,25 +150,36 @@ serve(async (req) => {
           .insert({
             id_unico: `${item.numero_pedido}-${item.sku_pedido}`,
             numero_pedido: item.numero_pedido,
-            numero_venda: item.numero_ecommerce || item.numero_pedido, // ✅ ADICIONADO: número da venda
-            sku_produto: item.sku_kit,
-            sku_estoque: item.sku_kit,
-            sku_kit: item.sku_kit,
-            qtd_kit: item.qtd_kit,
-            total_itens: item.quantidade_kit, // ✅ ADICIONADO: total de itens (QTD KIT x Qtd)
+            numero_venda: item.numero_ecommerce || item.numero_pedido,
+            sku_produto: item.sku_pedido, // SKU original do pedido
+            sku_estoque: item.sku_kit, // SKU do estoque/mapeado
+            sku_kit: item.sku_kit, // SKU KIT (mesmo que sku_estoque)
+            qtd_kit: item.qtd_kit, // QTD KIT original
+            total_itens: item.quantidade_kit, // Total de itens (QTD KIT x Qtd)
             descricao: item.descricao,
-            quantidade: item.quantidade_kit,
+            quantidade: item.quantidade_pedido, // Quantidade original do pedido
             valor_unitario: item.valor_unitario || (item.valor_total / item.quantidade_pedido),
-            valor_total: item.valor_total, // ✅ JÁ INCLUÍDO: valor total
+            valor_total: item.valor_total,
             cliente_nome: item.nome_cliente,
             cliente_documento: item.cpf_cnpj,
+            cpf_cnpj: item.cpf_cnpj,
             cidade: item.cidade,
             uf: item.uf,
             situacao: item.situacao,
             numero_ecommerce: item.numero_ecommerce,
+            pedido_id: item.pedido_id,
+            ncm: item.ncm,
+            codigo_barras: item.codigo_barras,
+            valor_frete: item.valor_frete,
+            valor_desconto: item.valor_desconto,
             data_pedido: item.data_pedido,
+            data_prevista: item.data_prevista,
+            obs: item.obs,
+            obs_interna: item.obs_interna,
+            url_rastreamento: item.url_rastreamento,
+            codigo_rastreamento: item.codigo_rastreamento,
             status: 'estoque_baixado',
-            observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}. Valor: ${formatarMoeda(item.valor_total)}. Total de Itens: ${item.quantidade_kit}`
+            observacoes: `Baixa automática - SKU Pedido: ${item.sku_pedido} → SKU Kit: ${item.sku_kit}. QTD Kit: ${item.qtd_kit}. Total de Itens: ${item.quantidade_kit}. Valor: ${formatarMoeda(item.valor_total)}`
           });
 
         if (historicoError) {

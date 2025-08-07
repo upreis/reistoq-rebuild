@@ -277,12 +277,10 @@ export function Pedidos() {
             id: item.id,
             numero_pedido: item.numero_pedido,
             sku_pedido: item.sku,
-            // ✅ CORRIGIDO: Usar sku_kit dos dados originais (historico_vendas)
-            sku_kit: item.sku_kit || item.sku,
-            // ✅ CORRIGIDO: Quantidade = QTD KIT x Qtd
-            quantidade_kit: (item.qtd_kit || 1) * item.quantidade,
+            sku_kit: item.mapeamento_aplicado?.sku_simples || item.sku,
+            quantidade_kit: (item.mapeamento_aplicado?.quantidade || 1) * item.quantidade,
             quantidade_pedido: item.quantidade,
-            qtd_kit: item.qtd_kit || 1,
+            qtd_kit: item.mapeamento_aplicado?.quantidade || 1,
             descricao: item.descricao,
             nome_cliente: item.nome_cliente,
             data_pedido: item.data_pedido,
@@ -292,7 +290,18 @@ export function Pedidos() {
             situacao: item.situacao,
             cidade: item.cidade,
             uf: item.uf,
-            cpf_cnpj: item.cpf_cnpj
+            cpf_cnpj: item.cpf_cnpj,
+            // Campos adicionais para completar o histórico
+            pedido_id: item.pedido_id,
+            ncm: item.ncm,
+            codigo_barras: item.codigo_barras,
+            valor_frete: item.valor_frete,
+            valor_desconto: item.valor_desconto,
+            data_prevista: item.data_prevista,
+            obs: item.obs,
+            obs_interna: item.obs_interna,
+            url_rastreamento: item.url_rastreamento,
+            codigo_rastreamento: item.codigo_rastreamento
           }))
         }
       });
@@ -373,12 +382,10 @@ export function Pedidos() {
                 id: item.id,
                 numero_pedido: item.numero_pedido,
                 sku_pedido: item.sku,
-                // ✅ CORRIGIDO: Usar sku_kit dos dados originais
-                sku_kit: item.sku_kit || item.sku,
-                // ✅ CORRIGIDO: Quantidade = QTD KIT x Qtd
-                quantidade_kit: (item.qtd_kit || 1) * item.quantidade,
+                sku_kit: item.mapeamento_aplicado?.sku_simples || item.sku,
+                quantidade_kit: (item.mapeamento_aplicado?.quantidade || 1) * item.quantidade,
                 quantidade_pedido: item.quantidade,
-                qtd_kit: item.qtd_kit || 1,
+                qtd_kit: item.mapeamento_aplicado?.quantidade || 1,
                 descricao: item.descricao,
                 nome_cliente: item.nome_cliente,
                 data_pedido: item.data_pedido,
@@ -388,7 +395,18 @@ export function Pedidos() {
                 situacao: item.situacao,
                 cidade: item.cidade,
                 uf: item.uf,
-                cpf_cnpj: item.cpf_cnpj
+                cpf_cnpj: item.cpf_cnpj,
+                // Campos adicionais para completar o histórico
+                pedido_id: item.pedido_id,
+                ncm: item.ncm,
+                codigo_barras: item.codigo_barras,
+                valor_frete: item.valor_frete,
+                valor_desconto: item.valor_desconto,
+                data_prevista: item.data_prevista,
+                obs: item.obs,
+                obs_interna: item.obs_interna,
+                url_rastreamento: item.url_rastreamento,
+                codigo_rastreamento: item.codigo_rastreamento
               }))},
             });
             await recarregarDados();
