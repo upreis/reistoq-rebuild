@@ -98,11 +98,17 @@ export function PedidosTabelaItens({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
+    // SKU KIT Mapeado da tabela
     const skuKit = item.mapeamento_aplicado?.sku_simples || '';
-    // Verifica vários campos possíveis para o número da venda
-    const numeroVenda = item.numero_venda || item.numero_ecommerce || item.numero_pedido || 'SV';
-    console.log('Item:', item.id, 'numero_venda:', item.numero_venda, 'numero_ecommerce:', item.numero_ecommerce, 'numero_pedido:', item.numero_pedido);
-    return { skuKit, numeroVenda };
+    // Número da Venda da tabela  
+    const numeroVenda = item.numero_ecommerce || '';
+    
+    // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
+    if (skuKit) {
+      return `${skuKit}-${numeroVenda}`;
+    } else {
+      return `-${numeroVenda}`;
+    }
   };
 
   const getStatusProcessamentoComEstoque = (item: ItemPedidoEnriquecido) => {
@@ -246,23 +252,9 @@ export function PedidosTabelaItens({
               {itens.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono text-xs w-48">
-                    {(() => {
-                      const { skuKit, numeroVenda } = gerarIdUnico(item);
-                      return (
-                        <div className="space-y-1">
-                          <div className="truncate text-xs">
-                            {skuKit ? (
-                              <span className="font-medium">{skuKit}</span>
-                            ) : (
-                              <span className="text-muted-foreground italic">Sem mapeamento</span>
-                            )}
-                          </div>
-                          <div className="truncate text-xs font-bold">
-                            {numeroVenda}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <div className="truncate font-medium">
+                      {gerarIdUnico(item)}
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium w-24">
                     <div className="truncate">#{item.numero_pedido}</div>
