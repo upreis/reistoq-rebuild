@@ -324,6 +324,7 @@ export function PedidosTabelaAvancada({
   }
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>
@@ -428,10 +429,14 @@ export function PedidosTabelaAvancada({
         </DropdownMenu>
       </CardHeader>
       
-      
-      {/* Tabela com header sticky - fora do Card para permitir sticky global */}
-      <div className="overflow-x-auto bg-background border rounded-lg">
-        <Table>
+      <CardContent>
+        {/* Tabela com header sticky - fora do CardContent para permitir sticky global */}
+      </CardContent>
+    </Card>
+
+    {/* Tabela com header sticky - independente do Card */}
+    <div className="overflow-x-auto bg-background border rounded-lg">
+      <Table>
             <TableHeader className="sticky top-0 bg-background z-50 border-b shadow-sm backdrop-blur-sm">
               <TableRow>
                  <TableHead className="px-2">
@@ -712,10 +717,11 @@ export function PedidosTabelaAvancada({
                 );
               })}
             </TableBody>
-        </Table>
-      </div>
+      </Table>
+    </div>
 
-      {/* Informações de paginação - dentro do Card */}
+    {/* Card separado para informações de paginação */}
+    <Card>
       <CardContent>
         {/* Informações da paginação */}
         <div className="flex items-center justify-between space-x-2 py-4">
@@ -776,5 +782,6 @@ export function PedidosTabelaAvancada({
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
