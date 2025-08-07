@@ -153,9 +153,13 @@ export function Historico() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão da venda</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta venda? 
+              <br />
+              <strong>⚠️ O estoque será automaticamente extornado/revertido com base no SKU Kit e Total de Itens.</strong>
+              <br />
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -173,6 +177,9 @@ export function Historico() {
             <AlertDialogTitle>Confirmar exclusão múltipla</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir {vendasSelecionadas.length} venda(s) selecionada(s)? 
+              <br />
+              <strong>⚠️ O estoque será automaticamente extornado/revertido para todas as vendas com SKU Kit válido.</strong>
+              <br />
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
