@@ -436,7 +436,7 @@ export function PedidosTabelaAvancada({
 
     {/* Tabela com header sticky - independente do Card */}
     <div className="overflow-x-auto bg-background border rounded-lg">
-      <Table>
+        <Table className="min-w-[1400px]">
             <TableHeader className="sticky top-0 bg-background z-50 border-b shadow-sm backdrop-blur-sm">
               <TableRow>
                  <TableHead className="px-2">

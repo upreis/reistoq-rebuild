@@ -158,7 +158,7 @@ export function EstoqueTabela({
                 Mostrando {itemInicial} a {itemFinal} de {totalItens} produtos
               </span>
             </div>
-      <Table>
+      <Table className="min-w-[1200px]">
         <TableHeader>
           <TableRow className="border-border">
             <TableHead className="text-muted-foreground w-12">

@@ -291,7 +291,7 @@ export function HistoricoVendasTabela({
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
-          <Table>
+          <Table className="min-w-[1400px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
