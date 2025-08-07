@@ -361,6 +361,36 @@ export type Database = {
           },
         ]
       }
+      organizacoes: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          created_at: string
+          id: string
+          nome: string
+          plano: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          plano?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          plano?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pedidos: {
         Row: {
           cidade: string | null
@@ -501,6 +531,7 @@ export type Database = {
           id: string
           nome_completo: string | null
           nome_exibicao: string | null
+          organizacao_id: string | null
           telefone: string | null
           updated_at: string
         }
@@ -514,6 +545,7 @@ export type Database = {
           id: string
           nome_completo?: string | null
           nome_exibicao?: string | null
+          organizacao_id?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -527,10 +559,19 @@ export type Database = {
           id?: string
           nome_completo?: string | null
           nome_exibicao?: string | null
+          organizacao_id?: string | null
           telefone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organizacao_id_fkey"
+            columns: ["organizacao_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sync_control: {
         Row: {
