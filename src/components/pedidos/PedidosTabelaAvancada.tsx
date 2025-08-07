@@ -409,11 +409,15 @@ export function PedidosTabelaAvancada({
                    <span className="text-blue-900 dark:text-blue-100 font-medium">SKU KIT</span>
                    <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
                  </TableHead>
-                 <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
-                   <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
-                   <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
-                 </TableHead>
-                 {colunasVisiveis.tempoDecorrido && <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>}
+                  <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
+                    <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
+                    <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
+                  </TableHead>
+                  <TableHead className="px-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 w-24">
+                    <span className="text-orange-900 dark:text-orange-100 font-medium">Total de Itens</span>
+                    <div className="text-xs text-orange-700 dark:text-orange-200">QTD KIT × Qtd</div>
+                  </TableHead>
+                  {colunasVisiveis.tempoDecorrido && <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>}
                  {colunasVisiveis.prioridade && <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>}
                  
                  <TableHead className="px-2 min-w-[120px]">Status</TableHead>
@@ -543,13 +547,22 @@ export function PedidosTabelaAvancada({
                        </div>
                      </TableCell>
 
-                     <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
-                       <div className="font-medium text-blue-900 dark:text-blue-100">
-                         {item.mapeamento_aplicado?.quantidade || '-'}
-                       </div>
-                     </TableCell>
-                     
-                     {colunasVisiveis.tempoDecorrido && (
+                      <TableCell className="px-2 text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 w-20">
+                        <div className="font-medium text-blue-900 dark:text-blue-100">
+                          {item.mapeamento_aplicado?.quantidade || '-'}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-2 text-center bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 w-24">
+                        <div className="font-bold text-orange-900 dark:text-orange-100">
+                          {item.mapeamento_aplicado?.quantidade && item.quantidade 
+                            ? (item.mapeamento_aplicado.quantidade * item.quantidade).toLocaleString('pt-BR')
+                            : '-'
+                          }
+                        </div>
+                      </TableCell>
+                      
+                      {colunasVisiveis.tempoDecorrido && (
                        <TableCell className="px-2">
                          <div className={`text-sm ${obterCorTempoDecorrido(item.data_pedido)} min-w-[80px]`}>
                            {calcularTempoDecorrido(item.data_pedido)}
