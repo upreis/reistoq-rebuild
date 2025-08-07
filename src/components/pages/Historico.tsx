@@ -129,7 +129,8 @@ export function Historico() {
       {/* Área da Tabela com Scroll Horizontal */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
-          <div className="min-w-max px-4 py-2">
+          <div className="min-w-max">
+            <div className="max-w-7xl mx-auto px-4 py-2">
             <HistoricoVendasTabela
               vendas={vendasPaginadas}
               vendasSelecionadas={vendasSelecionadas}
@@ -146,6 +147,7 @@ export function Historico() {
               onEditarVenda={editarVenda}
               onExcluirVenda={excluirVendaAction}
             />
+            </div>
           </div>
         </div>
       </div>
