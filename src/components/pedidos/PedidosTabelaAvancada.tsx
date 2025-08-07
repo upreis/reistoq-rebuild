@@ -325,114 +325,106 @@ export function PedidosTabelaAvancada({
 
   return (
     <>
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>
-          Itens de Pedidos ({totalItens} {totalItens === 1 ? 'item' : 'itens'})
-        </CardTitle>
-        <DropdownMenu open={dropdownAberto} onOpenChange={setDropdownAberto}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Colunas
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-background border shadow-lg z-50">
-            <div className="p-2 border-b">
-              <h4 className="font-medium text-sm mb-2">Selecionar Colunas</h4>
-            </div>
-            
-            <div className="max-h-64 overflow-y-auto">
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, idUnico: !prev.idUnico }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.idUnico} 
-                  className="mr-2" 
-                />
-                ID Único
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, cliente: !prev.cliente }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.cliente} 
-                  className="mr-2" 
-                />
-                Cliente
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, descricao: !prev.descricao }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.descricao} 
-                  className="mr-2" 
-                />
-                Descrição
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, tempoDecorrido: !prev.tempoDecorrido }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.tempoDecorrido} 
-                  className="mr-2" 
-                />
-                Tempo Decorrido
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, prioridade: !prev.prioridade }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.prioridade} 
-                  className="mr-2" 
-                />
-                Prioridade
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, numeroVenda: !prev.numeroVenda }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.numeroVenda} 
-                  className="mr-2" 
-                />
-                Número da Venda
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, cidade: !prev.cidade }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.cidade} 
-                  className="mr-2" 
-                />
-                Cidade
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, uf: !prev.uf }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.uf} 
-                  className="mr-2" 
-                />
-                UF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setColunasTemporarias(prev => ({ ...prev, empresa: !prev.empresa }))}>
-                <Checkbox 
-                  checked={colunasTemporarias.empresa} 
-                  className="mr-2" 
-                />
-                Empresa
-              </DropdownMenuItem>
-            </div>
+    {/* Toolbar apenas com Configurações de Colunas */}
+    <div className="flex justify-end mb-2">
+      <DropdownMenu open={dropdownAberto} onOpenChange={setDropdownAberto}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            Colunas
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 bg-background border shadow-lg z-50">
+          <div className="p-2 border-b">
+            <h4 className="font-medium text-sm mb-2">Selecionar Colunas</h4>
+          </div>
+          
+          <div className="max-h-64 overflow-y-auto">
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, idUnico: !prev.idUnico }))}>
+              <Checkbox 
+                checked={colunasTemporarias.idUnico} 
+                className="mr-2" 
+              />
+              ID Único
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, cliente: !prev.cliente }))}>
+              <Checkbox 
+                checked={colunasTemporarias.cliente} 
+                className="mr-2" 
+              />
+              Cliente
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, descricao: !prev.descricao }))}>
+              <Checkbox 
+                checked={colunasTemporarias.descricao} 
+                className="mr-2" 
+              />
+              Descrição
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, tempoDecorrido: !prev.tempoDecorrido }))}>
+              <Checkbox 
+                checked={colunasTemporarias.tempoDecorrido} 
+                className="mr-2" 
+              />
+              Tempo Decorrido
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, prioridade: !prev.prioridade }))}>
+              <Checkbox 
+                checked={colunasTemporarias.prioridade} 
+                className="mr-2" 
+              />
+              Prioridade
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, numeroVenda: !prev.numeroVenda }))}>
+              <Checkbox 
+                checked={colunasTemporarias.numeroVenda} 
+                className="mr-2" 
+              />
+              Número da Venda
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, cidade: !prev.cidade }))}>
+              <Checkbox 
+                checked={colunasTemporarias.cidade} 
+                className="mr-2" 
+              />
+              Cidade
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, uf: !prev.uf }))}>
+              <Checkbox 
+                checked={colunasTemporarias.uf} 
+                className="mr-2" 
+              />
+              UF
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setColunasTemporarias(prev => ({ ...prev, empresa: !prev.empresa }))}>
+              <Checkbox 
+                checked={colunasTemporarias.empresa} 
+                className="mr-2" 
+              />
+              Empresa
+            </DropdownMenuItem>
+          </div>
 
-            <div className="border-t p-2 flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={cancelarMudancas}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={aplicarMudancas}
-                className="flex-1"
-              >
-                Aplicar
-              </Button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardHeader>
-      
-      <CardContent>
-        {/* Tabela com header sticky - fora do CardContent para permitir sticky global */}
-      </CardContent>
-    </Card>
+          <div className="border-t p-2 flex gap-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={cancelarMudancas}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={aplicarMudancas}
+              className="flex-1"
+            >
+              Aplicar
+            </Button>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
 
     {/* Tabela com header sticky - independente do Card */}
     <div className="overflow-x-auto bg-background border rounded-lg">
