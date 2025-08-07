@@ -162,9 +162,9 @@ export function useHistoricoVendas() {
 
       if (fetchError) throw fetchError;
 
-      // Se tem sku_kit, reverter o estoque
-      if (venda?.sku_kit && venda?.qtd_kit && venda?.quantidade) {
-        const quantidadeReverter = venda.qtd_kit * venda.quantidade;
+      // Se tem sku_kit e total_itens, reverter o estoque
+      if (venda?.sku_kit && venda?.total_itens) {
+        const quantidadeReverter = venda.total_itens;
         
         // Buscar o produto pelo sku_kit na coluna sku_interno
         const { data: produto, error: produtoError } = await supabase
@@ -228,8 +228,8 @@ export function useHistoricoVendas() {
 
       // Processar reversão de estoque para cada venda
       for (const venda of vendas || []) {
-        if (venda?.sku_kit && venda?.qtd_kit && venda?.quantidade) {
-          const quantidadeReverter = venda.qtd_kit * venda.quantidade;
+        if (venda?.sku_kit && venda?.total_itens) {
+          const quantidadeReverter = venda.total_itens;
           
           // Buscar o produto pelo sku_kit na coluna sku_interno
           const { data: produto, error: produtoError } = await supabase
