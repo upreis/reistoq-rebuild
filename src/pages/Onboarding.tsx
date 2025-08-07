@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ export function OnboardingPage() {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const auth = useAuth();
 
   const steps = [
     { id: 1, title: 'Empresa', icon: Building2 },
@@ -92,12 +94,19 @@ export function OnboardingPage() {
 
       if (configError) throw configError;
 
+      // Forçar recarregamento do auth para detectar onboarding completo
+      if (auth.user) {
+        // Pequeno delay para garantir que os dados foram salvos
+        await new Promise(resolve => setTimeout(resolve, 500));
+        window.location.href = '/dashboard';
+      } else {
+        navigate('/dashboard');
+      }
+
       toast({
         title: "Bem-vindo ao REISTOQ!",
         description: "Sua conta foi configurada com sucesso.",
       });
-
-      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Erro no onboarding",
