@@ -100,8 +100,19 @@ export function PedidosTabelaItens({
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
     // SKU KIT Mapeado da tabela
     const skuKit = item.mapeamento_aplicado?.sku_simples || '';
-    // Número da Venda da tabela  
-    const numeroVenda = item.numero_ecommerce || '';
+    
+    // Log para identificar qual campo tem o Número da Venda correto
+    console.log('Debug item:', {
+      id: item.id,
+      numero_venda: item.numero_venda,
+      numero_ecommerce: item.numero_ecommerce,
+      numero_pedido: item.numero_pedido,
+      sku: item.sku,
+      skuKit: skuKit
+    });
+    
+    // Número da Venda da tabela (precisa identificar o campo correto)
+    const numeroVenda = item.numero_ecommerce || item.numero_venda || item.numero_pedido || 'SV';
     
     // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
     if (skuKit) {
