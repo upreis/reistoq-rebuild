@@ -78,47 +78,43 @@ export function DashboardMiniPedidos({ itens, obterStatusEstoque }: DashboardMin
   };
 
   return (
-    <div className="grid gap-2 grid-cols-2">
-      {/* Card de Problemas - Ultra Compacto */}
-      <Card className={`${metricas.comProblema > 0 ? 'border-red-200 bg-red-50 dark:bg-red-900/10' : ''}`}>
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-lg font-bold text-red-600">{metricas.comProblema}</div>
-              <p className="text-xs text-muted-foreground">Problemas</p>
-            </div>
-            <AlertTriangle className={`h-4 w-4 ${metricas.comProblema > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
+    <>
+      {/* Card de Problemas */}
+      <div className={`bg-card border rounded-lg p-2 ${metricas.comProblema > 0 ? 'border-red-200 bg-red-50 dark:bg-red-900/10' : ''}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold text-red-600">{metricas.comProblema}</div>
+            <p className="text-xs text-muted-foreground">Problemas</p>
           </div>
-          {metricas.comProblema > 0 && (
-            <div className="flex gap-1 mt-1">
-              <Badge variant="destructive" className="text-xs py-0 px-1">
-                {metricas.semEstoque} sem estoque
-              </Badge>
-              <Badge variant="destructive" className="text-xs py-0 px-1">
-                {metricas.semMapeamento} sem mapear
-              </Badge>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Card de Urgentes - Ultra Compacto */}
-      <Card className={`${metricas.urgentes > 0 ? 'border-orange-200 bg-orange-50 dark:bg-orange-900/10' : ''}`}>
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-lg font-bold text-orange-600">{metricas.urgentes}</div>
-              <p className="text-xs text-muted-foreground">Urgentes</p>
-            </div>
-            <Clock className={`h-4 w-4 ${metricas.urgentes > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
-          </div>
-          {metricas.urgentes > 0 && (
-            <Badge variant="outline" className="text-xs py-0 px-1 mt-1 border-orange-300 text-orange-700">
-              Precisam atenção
+          <AlertTriangle className={`h-4 w-4 ${metricas.comProblema > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
+        </div>
+        {metricas.comProblema > 0 && (
+          <div className="flex gap-1 mt-1">
+            <Badge variant="destructive" className="text-xs py-0 px-1">
+              {metricas.semEstoque} sem estoque
             </Badge>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            <Badge variant="destructive" className="text-xs py-0 px-1">
+              {metricas.semMapeamento} sem mapear
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Card de Urgentes */}
+      <div className={`bg-card border rounded-lg p-2 ${metricas.urgentes > 0 ? 'border-orange-200 bg-orange-50 dark:bg-orange-900/10' : ''}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold text-orange-600">{metricas.urgentes}</div>
+            <p className="text-xs text-muted-foreground">Urgentes</p>
+          </div>
+          <Clock className={`h-4 w-4 ${metricas.urgentes > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
+        </div>
+        {metricas.urgentes > 0 && (
+          <Badge variant="outline" className="text-xs py-0 px-1 mt-1 border-orange-300 text-orange-700">
+            Precisam atenção
+          </Badge>
+        )}
+      </div>
+    </>
   );
 }
