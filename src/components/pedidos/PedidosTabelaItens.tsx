@@ -255,31 +255,7 @@ export function PedidosTabelaItens({
                 <TableRow key={item.id}>
                   <TableCell className="font-mono text-xs w-48">
                     <div className="truncate font-medium">
-                      {(() => {
-                        // Debug: vamos ver todos os campos disponíveis
-                        console.log('=== DEBUG ID ÚNICO ===');
-                        console.log('Item completo:', item);
-                        console.log('mapeamento_aplicado:', item.mapeamento_aplicado);
-                        console.log('sku_simples:', item.mapeamento_aplicado?.sku_simples);
-                        console.log('numero_ecommerce:', item.numero_ecommerce);
-                        console.log('numero_pedido:', item.numero_pedido);
-                        console.log('sku:', item.sku);
-                        console.log('====================');
-                        
-                        // SKU KIT da coluna "SKU KIT Mapeado"
-                        const skuKit = item.mapeamento_aplicado?.sku_simples || '';
-                        // Número da Venda da coluna "Número da Venda"
-                        const numeroVenda = item.numero_ecommerce || '';
-                        
-                        // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
-                        if (skuKit && numeroVenda) {
-                          return `${skuKit}-${numeroVenda}`;
-                        } else if (numeroVenda) {
-                          return `-${numeroVenda}`;
-                        } else {
-                          return 'SV';
-                        }
-                      })()}
+                      {gerarIdUnico(item)}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium w-24">
