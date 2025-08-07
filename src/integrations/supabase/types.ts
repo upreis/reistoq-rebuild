@@ -116,6 +116,7 @@ export type Database = {
           empresa: string | null
           id: string
           id_unico: string
+          integration_account_id: string | null
           ncm: string | null
           numero_ecommerce: string | null
           numero_pedido: string
@@ -154,6 +155,7 @@ export type Database = {
           empresa?: string | null
           id?: string
           id_unico: string
+          integration_account_id?: string | null
           ncm?: string | null
           numero_ecommerce?: string | null
           numero_pedido: string
@@ -192,6 +194,7 @@ export type Database = {
           empresa?: string | null
           id?: string
           id_unico?: string
+          integration_account_id?: string | null
           ncm?: string | null
           numero_ecommerce?: string | null
           numero_pedido?: string
@@ -216,7 +219,62 @@ export type Database = {
           valor_total?: number
           valor_unitario?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "historico_vendas_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_accounts: {
+        Row: {
+          account_identifier: string | null
+          auth_data: Json | null
+          cnpj: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          updated_at: string
+        }
+        Insert: {
+          account_identifier?: string | null
+          auth_data?: Json | null
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          updated_at?: string
+        }
+        Update: {
+          account_identifier?: string | null
+          auth_data?: Json | null
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_accounts_org_fk"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       itens_pedidos: {
         Row: {
@@ -225,6 +283,7 @@ export type Database = {
           descricao: string
           empresa: string | null
           id: string
+          integration_account_id: string | null
           ncm: string | null
           numero_pedido: string
           numero_venda: string | null
@@ -242,6 +301,7 @@ export type Database = {
           descricao: string
           empresa?: string | null
           id?: string
+          integration_account_id?: string | null
           ncm?: string | null
           numero_pedido: string
           numero_venda?: string | null
@@ -259,6 +319,7 @@ export type Database = {
           descricao?: string
           empresa?: string | null
           id?: string
+          integration_account_id?: string | null
           ncm?: string | null
           numero_pedido?: string
           numero_venda?: string | null
@@ -270,7 +331,15 @@ export type Database = {
           valor_total?: number
           valor_unitario?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "itens_pedidos_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mapeamentos_depara: {
         Row: {
@@ -410,6 +479,7 @@ export type Database = {
           data_prevista: string | null
           empresa: string | null
           id: string
+          integration_account_id: string | null
           nome_cliente: string
           numero: string
           numero_ecommerce: string | null
@@ -433,6 +503,7 @@ export type Database = {
           data_prevista?: string | null
           empresa?: string | null
           id?: string
+          integration_account_id?: string | null
           nome_cliente: string
           numero: string
           numero_ecommerce?: string | null
@@ -456,6 +527,7 @@ export type Database = {
           data_prevista?: string | null
           empresa?: string | null
           id?: string
+          integration_account_id?: string | null
           nome_cliente?: string
           numero?: string
           numero_ecommerce?: string | null
@@ -470,7 +542,15 @@ export type Database = {
           valor_frete?: number
           valor_total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtos: {
         Row: {
@@ -482,6 +562,7 @@ export type Database = {
           estoque_maximo: number
           estoque_minimo: number
           id: string
+          integration_account_id: string | null
           localizacao: string | null
           nome: string
           preco_custo: number | null
@@ -502,6 +583,7 @@ export type Database = {
           estoque_maximo?: number
           estoque_minimo?: number
           id?: string
+          integration_account_id?: string | null
           localizacao?: string | null
           nome: string
           preco_custo?: number | null
@@ -522,6 +604,7 @@ export type Database = {
           estoque_maximo?: number
           estoque_minimo?: number
           id?: string
+          integration_account_id?: string | null
           localizacao?: string | null
           nome?: string
           preco_custo?: number | null
@@ -533,7 +616,15 @@ export type Database = {
           updated_at?: string
           url_imagem?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produtos_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -695,7 +786,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      integration_provider: "tiny" | "shopee" | "mercadolivre"
     }
     CompositeTypes: {
       http_header: {
@@ -838,6 +929,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      integration_provider: ["tiny", "shopee", "mercadolivre"],
+    },
   },
 } as const
