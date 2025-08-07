@@ -27,6 +27,8 @@ export interface ItemPedidoEnriquecido {
   ncm?: string;
   codigo_barras?: string;
   observacoes?: string;
+  empresa?: string;
+  numero_venda?: string;
   linha_destacada?: boolean; // Quando não tem mapeamento
   mapeamento_aplicado?: MapeamentoItem;
   // Campos do pedido principal

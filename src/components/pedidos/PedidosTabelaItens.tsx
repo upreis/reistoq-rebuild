@@ -98,7 +98,7 @@ export function PedidosTabelaItens({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    return `${item.numero_pedido}-${item.sku}`;
+    return `${item.sku}-${item.numero_venda || 'SV'}`;
   };
 
   const getStatusProcessamentoComEstoque = (item: ItemPedidoEnriquecido) => {
@@ -233,7 +233,7 @@ export function PedidosTabelaItens({
                 <TableHead className="w-32">SKU KIT</TableHead>
                 <TableHead className="w-20 text-center">Qtd KIT</TableHead>
                 <TableHead className="w-36">Nome E-commerce</TableHead>
-                <TableHead className="w-32">Canal de Venda</TableHead>
+                <TableHead className="w-32">Empresa</TableHead>
                 <TableHead className="w-28">Status</TableHead>
                 <TableHead className="w-24">Ações</TableHead>
               </TableRow>
@@ -319,8 +319,8 @@ export function PedidosTabelaItens({
                      </div>
                    </TableCell>
                    <TableCell className="w-32">
-                     <div className="truncate text-sm">
-                       {'-'}
+                     <div className="truncate text-sm" title={item.empresa}>
+                       {item.empresa || '-'}
                      </div>
                    </TableCell>
                      <TableCell className="w-28">

@@ -20,6 +20,7 @@ export interface Pedido {
   obs_interna?: string;
   codigo_rastreamento?: string;
   url_rastreamento?: string;
+  empresa?: string;
   created_at: string;
   updated_at: string;
 }

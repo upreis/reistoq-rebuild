@@ -16,6 +16,8 @@ export interface ItemPedido {
   ncm?: string;
   codigo_barras?: string;
   observacoes?: string;
+  empresa?: string;
+  numero_venda?: string;
   // Dados do pedido (joined)
   numero_ecommerce?: string;
   nome_cliente: string;

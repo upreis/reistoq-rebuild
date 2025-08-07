@@ -80,7 +80,8 @@ export function PedidosTabelaAvancada({
       prioridade: false,
       numeroVenda: true,
       cidade: true,
-      uf: true
+      uf: true,
+      empresa: true
     };
   });
 
@@ -189,7 +190,7 @@ export function PedidosTabelaAvancada({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    return `${item.numero_pedido}-${item.sku}`;
+    return `${item.sku}-${item.numero_venda || 'SV'}`;
   };
 
   const copiarParaClipboard = (texto: string, tipo: string) => {
@@ -364,6 +365,13 @@ export function PedidosTabelaAvancada({
               />
               UF
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, empresa: !prev.empresa }))}>
+              <Checkbox 
+                checked={colunasVisiveis.empresa} 
+                className="mr-2" 
+              />
+              Empresa
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -401,6 +409,7 @@ export function PedidosTabelaAvancada({
                  {colunasVisiveis.uf && <TableHead className="px-2 min-w-[60px]">UF</TableHead>}
                  <TableHead className="px-2 min-w-[100px]">Situação</TableHead>
                  {colunasVisiveis.numeroVenda && <TableHead className="px-2 min-w-[140px]">Número da Venda</TableHead>}
+                 {colunasVisiveis.empresa && <TableHead className="px-2 min-w-[120px]">Empresa</TableHead>}
                  <TableHead className="px-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 min-w-[120px]">
                    <span className="text-blue-900 dark:text-blue-100 font-medium">SKU Estoque</span>
                    <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
@@ -530,6 +539,14 @@ export function PedidosTabelaAvancada({
                        <TableCell className="px-2">
                          <div className="font-mono text-xs min-w-[140px] truncate" title={item.numero_ecommerce}>
                            {item.numero_ecommerce || '-'}
+                         </div>
+                       </TableCell>
+                     )}
+
+                     {colunasVisiveis.empresa && (
+                       <TableCell className="px-2">
+                         <div className="text-sm min-w-[120px] truncate" title={item.empresa}>
+                           {item.empresa || '-'}
                          </div>
                        </TableCell>
                      )}
