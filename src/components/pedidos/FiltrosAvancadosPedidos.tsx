@@ -54,17 +54,19 @@ export function FiltrosAvancadosPedidos({
   
   // Estados para datas
   const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
-    if (filtros.dataInicio) {
+    if (filtros.dataInicio && filtros.dataInicio.trim()) {
       const [ano, mes, dia] = filtros.dataInicio.split('-');
-      return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      const date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      return !isNaN(date.getTime()) ? date : undefined;
     }
     return undefined;
   });
   
   const [dataFim, setDataFim] = useState<Date | undefined>(() => {
-    if (filtros.dataFinal) {
+    if (filtros.dataFinal && filtros.dataFinal.trim()) {
       const [ano, mes, dia] = filtros.dataFinal.split('-');
-      return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      const date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      return !isNaN(date.getTime()) ? date : undefined;
     }
     return undefined;
   });
@@ -79,16 +81,18 @@ export function FiltrosAvancadosPedidos({
 
   // Sincronizar datas com filtros
   useEffect(() => {
-    if (filtros.dataInicio) {
+    if (filtros.dataInicio && filtros.dataInicio.trim()) {
       const [ano, mes, dia] = filtros.dataInicio.split('-');
-      setDataInicio(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
+      const date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      setDataInicio(!isNaN(date.getTime()) ? date : undefined);
     } else {
       setDataInicio(undefined);
     }
     
-    if (filtros.dataFinal) {
+    if (filtros.dataFinal && filtros.dataFinal.trim()) {
       const [ano, mes, dia] = filtros.dataFinal.split('-');
-      setDataFim(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
+      const date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      setDataFim(!isNaN(date.getTime()) ? date : undefined);
     } else {
       setDataFim(undefined);
     }
@@ -207,8 +211,8 @@ export function FiltrosAvancadosPedidos({
                   !dataInicio && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dataInicio ? format(dataInicio, 'dd/MM/yyyy') : 'Data Inicial'}
+                 <CalendarIcon className="mr-2 h-4 w-4" />
+                 {dataInicio && !isNaN(dataInicio.getTime()) ? format(dataInicio, 'dd/MM/yyyy') : 'Data Inicial'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -232,8 +236,8 @@ export function FiltrosAvancadosPedidos({
                   !dataFim && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dataFim ? format(dataFim, 'dd/MM/yyyy') : 'Data Final'}
+                 <CalendarIcon className="mr-2 h-4 w-4" />
+                 {dataFim && !isNaN(dataFim.getTime()) ? format(dataFim, 'dd/MM/yyyy') : 'Data Final'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
