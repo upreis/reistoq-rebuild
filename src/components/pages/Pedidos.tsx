@@ -337,7 +337,7 @@ export function Pedidos() {
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header Fixo - Padrão ERP */}
       <div className="flex-none bg-background border-b">
-        <div className="max-w-7xl mx-auto px-6 py-3 space-y-3">
+        <div className="px-4 py-2 space-y-2">
           {/* Título e Controles Principais */}
           <div className="flex items-center justify-between">
             <div>
@@ -352,13 +352,13 @@ export function Pedidos() {
           </div>
 
           {/* Resumo Executivo - Cards Compactos */}
-          <div className="grid grid-cols-3 gap-3 max-w-2xl">
+          <div className="grid grid-cols-3 gap-2 max-w-xl">
             <DashboardMiniPedidos 
               itens={itensEnriquecidos}
               obterStatusEstoque={obterStatusEstoque}
             />
             {/* Card Total */}
-            <div className="bg-card border rounded-lg p-3">
+            <div className="bg-card border rounded-lg p-2">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-lg font-bold">{itensEnriquecidos.length}</div>
@@ -379,7 +379,7 @@ export function Pedidos() {
           />
 
           {/* Barra de Status - Limitada em largura */}
-          <div className="max-w-4xl">
+          <div className="max-w-3xl">
             <PedidosBarraStatus metricas={metricas} />
           </div>
 
@@ -441,7 +441,7 @@ export function Pedidos() {
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
           <div className="min-w-max">
-            <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="px-4 py-2">
               <PedidosTabelaAvancada
                 itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
                 itensSelecionados={itensSelecionados}
