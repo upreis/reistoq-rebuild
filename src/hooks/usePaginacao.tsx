@@ -16,7 +16,6 @@ interface UsePaginacaoReturn<T> {
   irParaPagina: (pagina: number) => void;
   proximaPagina: () => void;
   paginaAnterior: () => void;
-  setPaginaAtual: (pagina: number) => void;
 }
 
 /**
@@ -79,6 +78,5 @@ export function usePaginacao<T>({
     irParaPagina,
     proximaPagina,
     paginaAnterior,
-    setPaginaAtual,
   };
 }
