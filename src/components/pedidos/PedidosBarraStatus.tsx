@@ -66,14 +66,14 @@ export function PedidosBarraStatus({ metricas }: PedidosBarraStatusProps) {
   ];
 
   return (
-    <div className="bg-card/50 border border-border rounded-lg p-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+    <div className="bg-card/50 border border-border rounded-lg p-2">
+      <div className="grid grid-cols-3 lg:grid-cols-7 gap-2">
         {itensStatus.map((item, index) => (
-          <div key={index} className="flex items-center gap-2 min-w-0">
-            <item.icone className={`h-4 w-4 ${item.cor} flex-shrink-0`} />
+          <div key={index} className="flex items-center gap-1 min-w-0">
+            <item.icone className={`h-3 w-3 ${item.cor} flex-shrink-0`} />
             <div className="min-w-0">
               <div className="text-xs text-muted-foreground truncate">{item.label}</div>
-              <div className="text-sm font-semibold text-foreground truncate">{item.valor}</div>
+              <div className="text-xs font-semibold text-foreground truncate">{item.valor}</div>
             </div>
           </div>
         ))}
