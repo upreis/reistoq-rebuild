@@ -91,45 +91,45 @@ const App = () => {
                   />
                   
                   {/* Rotas protegidas com layout */}
-                  <Route path="/dashboard" element={
+                  <Route path="/dashboard/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<Dashboard />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/estoque" element={
+                  <Route path="/estoque/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<Estoque />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/pedidos" element={
+                  <Route path="/pedidos/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<Pedidos />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/depara" element={
+                  <Route path="/depara/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<DePara />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/historico" element={
+                  <Route path="/historico/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<Historico />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/scanner" element={
+                  <Route path="/scanner/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<Scanner />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/configuracoes" element={
+                  <Route path="/configuracoes/*" element={
                     <ProtectedRoute>
-                      <MainLayout children={<Configuracoes />} />
+                      <MainLayout />
                     </ProtectedRoute>
                   } />
                   
