@@ -53,6 +53,7 @@ interface HistoricoVenda {
   sku_estoque: string | null;
   sku_kit: string | null;
   qtd_kit: number | null;
+  total_itens: number | null;
 }
 
 interface HistoricoVendasTabelaProps {
@@ -106,6 +107,7 @@ export function HistoricoVendasTabela({
       skuEstoque: false,
       skuKit: false,
       qtdKit: false,
+      totalItens: true,
     };
   });
 
@@ -280,6 +282,10 @@ export function HistoricoVendasTabela({
               <Checkbox checked={colunasVisiveis.qtdKit} className="mr-2" />
               QTD KIT
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setColunasVisiveis(prev => ({ ...prev, totalItens: !prev.totalItens }))}>
+              <Checkbox checked={colunasVisiveis.totalItens} className="mr-2" />
+              Total de Itens
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -309,6 +315,11 @@ export function HistoricoVendasTabela({
                 {colunasVisiveis.skuEstoque && <TableHead>SKU Estoque</TableHead>}
                 {colunasVisiveis.skuKit && <TableHead>SKU KIT</TableHead>}
                 {colunasVisiveis.qtdKit && <TableHead>QTD KIT</TableHead>}
+                {colunasVisiveis.totalItens && (
+                  <TableHead className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                    <span className="text-orange-900 dark:text-orange-100 font-medium">Total de Itens</span>
+                  </TableHead>
+                )}
                 <TableHead className="w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -403,6 +414,13 @@ export function HistoricoVendasTabela({
                   {colunasVisiveis.qtdKit && (
                     <TableCell className="text-center">
                       {venda.qtd_kit || '-'}
+                    </TableCell>
+                  )}
+                  {colunasVisiveis.totalItens && (
+                    <TableCell className="text-center bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                      <span className="font-bold text-orange-900 dark:text-orange-100">
+                        {venda.total_itens ? venda.total_itens.toLocaleString('pt-BR') : '-'}
+                      </span>
                     </TableCell>
                   )}
                   <TableCell>

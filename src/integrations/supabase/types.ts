@@ -130,6 +130,7 @@ export type Database = {
           sku_kit: string | null
           sku_produto: string
           status: string
+          total_itens: number | null
           uf: string | null
           updated_at: string
           url_rastreamento: string | null
@@ -166,6 +167,7 @@ export type Database = {
           sku_kit?: string | null
           sku_produto: string
           status?: string
+          total_itens?: number | null
           uf?: string | null
           updated_at?: string
           url_rastreamento?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           sku_kit?: string | null
           sku_produto?: string
           status?: string
+          total_itens?: number | null
           uf?: string | null
           updated_at?: string
           url_rastreamento?: string | null

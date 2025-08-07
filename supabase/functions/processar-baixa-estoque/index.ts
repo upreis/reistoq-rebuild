@@ -144,6 +144,7 @@ serve(async (req) => {
             sku_estoque: item.sku_kit,
             sku_kit: item.sku_kit,
             qtd_kit: item.qtd_kit,
+            total_itens: item.quantidade_kit, // ✅ ADICIONADO: total de itens (QTD KIT x Qtd)
             descricao: item.descricao,
             quantidade: item.quantidade_kit,
             valor_unitario: item.valor_unitario || (item.valor_total / item.quantidade_pedido),
@@ -156,7 +157,7 @@ serve(async (req) => {
             numero_ecommerce: item.numero_ecommerce,
             data_pedido: item.data_pedido,
             status: 'estoque_baixado',
-            observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}. Valor: ${formatarMoeda(item.valor_total)}`
+            observacoes: `Baixa automática via sistema. SKU Original: ${item.sku_pedido}. Valor: ${formatarMoeda(item.valor_total)}. Total de Itens: ${item.quantidade_kit}`
           });
 
         if (historicoError) {

@@ -35,6 +35,7 @@ interface HistoricoVenda {
   sku_estoque: string | null;
   sku_kit: string | null;
   qtd_kit: number | null;
+  total_itens: number | null;
 }
 
 interface UseHistoricoVendasPaginadoProps {
