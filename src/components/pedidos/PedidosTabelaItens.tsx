@@ -249,9 +249,13 @@ export function PedidosTabelaItens({
                       return (
                         <div className="space-y-1">
                           <div className="truncate text-xs">
-                            {skuKit || <span className="text-muted-foreground italic">Sem mapeamento</span>}
+                            {skuKit ? (
+                              <span className="font-medium">{skuKit}</span>
+                            ) : (
+                              <span className="text-muted-foreground italic">Sem mapeamento</span>
+                            )}
                           </div>
-                          <div className="truncate text-xs font-semibold">
+                          <div className="truncate text-xs font-bold">
                             {numeroVenda}
                           </div>
                         </div>
