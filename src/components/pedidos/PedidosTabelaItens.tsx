@@ -97,21 +97,6 @@ export function PedidosTabelaItens({
     }
   };
 
-  const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    // SKU KIT da coluna "SKU KIT Mapeado"
-    const skuKit = item.mapeamento_aplicado?.sku_simples || '';
-    // Número da Venda da coluna "Número da Venda"
-    const numeroVenda = item.numero_venda || '';
-    
-    // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
-    if (skuKit && numeroVenda) {
-      return `${skuKit}-${numeroVenda}`;
-    } else if (numeroVenda) {
-      return `-${numeroVenda}`;
-    } else {
-      return 'SV'; // fallback
-    }
-  };
 
   const getStatusProcessamentoComEstoque = (item: ItemPedidoEnriquecido) => {
     // Se a função obterStatusEstoque foi passada, usar a nova lógica
@@ -255,7 +240,21 @@ export function PedidosTabelaItens({
                 <TableRow key={item.id}>
                   <TableCell className="font-mono text-xs w-48">
                     <div className="truncate font-medium">
-                      {gerarIdUnico(item)}
+                      {(() => {
+                        // SKU KIT do mapeamento
+                        const skuKit = item.mapeamento_aplicado?.sku_simples || '';
+                        // Número da Venda (vem da tabela pedidos)
+                        const numeroVenda = item.numero_ecommerce || '';
+                        
+                        // Regra: SKU_KIT-NUMERO_VENDA ou apenas -NUMERO_VENDA se não tem mapeamento
+                        if (skuKit && numeroVenda) {
+                          return `${skuKit}-${numeroVenda}`;
+                        } else if (numeroVenda) {
+                          return `-${numeroVenda}`;
+                        } else {
+                          return 'SV';
+                        }
+                      })()}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium w-24">
