@@ -70,6 +70,16 @@ export function useDeParaIntegration() {
   const carregarMapeamentos = async () => {
     try {
       setLoading(true);
+      
+      // Cache check - avoid unnecessary API calls
+      const cached = sessionStorage.getItem('mapeamentos-cache');
+      const cacheTime = sessionStorage.getItem('mapeamentos-cache-time');
+      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 300000) { // 5 min cache
+        setMapeamentos(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('mapeamentos_depara')
         .select('*')
@@ -77,7 +87,13 @@ export function useDeParaIntegration() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMapeamentos(data || []);
+      
+      const mappings = data || [];
+      setMapeamentos(mappings);
+      
+      // Cache the results
+      sessionStorage.setItem('mapeamentos-cache', JSON.stringify(mappings));
+      sessionStorage.setItem('mapeamentos-cache-time', Date.now().toString());
     } catch (error) {
       console.error('Erro ao carregar mapeamentos:', error);
       toast({

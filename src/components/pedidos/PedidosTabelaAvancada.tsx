@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Eye, Edit, Play, MoreHorizontal, ExternalLink, Copy, 
   Clock, TrendingUp, TrendingDown, AlertTriangle, Download, CheckSquare, Square, Settings
@@ -323,7 +323,7 @@ export function PedidosTabelaAvancada({
     );
   }
 
-  return (
+  return useMemo(() => (
     <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -783,5 +783,5 @@ export function PedidosTabelaAvancada({
       </CardContent>
     </Card>
     </>
-  );
+  ), [itens, loading, colunasVisiveis, itensSelecionados, paginaAtual, totalPaginas, totalItens, itemInicial, itemFinal]);
 }
