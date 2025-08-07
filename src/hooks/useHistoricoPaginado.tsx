@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { usePaginacao } from '@/hooks/usePaginacao';
 
 interface MovimentacaoHistorico {
   id: string;
@@ -26,42 +26,21 @@ export function useHistoricoPaginado({
   movimentacoes, 
   itensPorPagina = 20 
 }: UseHistoricoPaginadoProps) {
-  const [paginaAtual, setPaginaAtual] = useState(1);
-
-  const totalItens = movimentacoes.length;
-  const totalPaginas = Math.ceil(totalItens / itensPorPagina);
-
-  const movimentacoesPaginadas = useMemo(() => {
-    const inicio = (paginaAtual - 1) * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    return movimentacoes.slice(inicio, fim);
-  }, [movimentacoes, paginaAtual, itensPorPagina]);
-
-  const itemInicial = totalItens === 0 ? 0 : (paginaAtual - 1) * itensPorPagina + 1;
-  const itemFinal = Math.min(paginaAtual * itensPorPagina, totalItens);
-
-  const irParaPagina = (pagina: number) => {
-    if (pagina >= 1 && pagina <= totalPaginas) {
-      setPaginaAtual(pagina);
-    }
-  };
-
-  const proximaPagina = () => {
-    if (paginaAtual < totalPaginas) {
-      setPaginaAtual(prev => prev + 1);
-    }
-  };
-
-  const paginaAnterior = () => {
-    if (paginaAtual > 1) {
-      setPaginaAtual(prev => prev - 1);
-    }
-  };
-
-  // Reset para página 1 quando os dados mudarem
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [movimentacoes.length]);
+  const {
+    itemsPaginados: movimentacoesPaginadas,
+    paginaAtual,
+    totalPaginas,
+    totalItens,
+    itemInicial,
+    itemFinal,
+    irParaPagina,
+    proximaPagina,
+    paginaAnterior,
+  } = usePaginacao({
+    items: movimentacoes,
+    itensPorPagina,
+    resetWhenItemsChange: true,
+  });
 
   return {
     movimentacoesPaginadas,

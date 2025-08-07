@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
 import { ItemPedido } from '@/hooks/useItensPedidos';
+import { usePaginacao } from '@/hooks/usePaginacao';
 
 interface UsePedidosPaginadoProps {
   pedidos: ItemPedido[];
@@ -7,48 +7,31 @@ interface UsePedidosPaginadoProps {
 }
 
 export function usePedidosPaginado({ pedidos, itensPorPagina = 100 }: UsePedidosPaginadoProps) {
-  const [paginaAtual, setPaginaAtual] = useState(1);
-
-  const totalPaginas = Math.ceil(pedidos.length / itensPorPagina);
-
-  const pedidosPaginados = useMemo(() => {
-    const inicio = (paginaAtual - 1) * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    return pedidos.slice(inicio, fim);
-  }, [pedidos, paginaAtual, itensPorPagina]);
-
-  const irParaPagina = (pagina: number) => {
-    if (pagina >= 1 && pagina <= totalPaginas) {
-      setPaginaAtual(pagina);
-    }
-  };
-
-  const proximaPagina = () => {
-    if (paginaAtual < totalPaginas) {
-      setPaginaAtual(paginaAtual + 1);
-    }
-  };
-
-  const paginaAnterior = () => {
-    if (paginaAtual > 1) {
-      setPaginaAtual(paginaAtual - 1);
-    }
-  };
-
-  // Reset para página 1 quando os pedidos mudam
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [pedidos.length]);
+  const {
+    itemsPaginados: pedidosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalItens,
+    itemInicial,
+    itemFinal,
+    irParaPagina,
+    proximaPagina,
+    paginaAnterior,
+  } = usePaginacao({
+    items: pedidos,
+    itensPorPagina,
+    resetWhenItemsChange: true,
+  });
 
   return {
     pedidosPaginados,
     paginaAtual,
     totalPaginas,
+    totalItens,
+    itemInicial,
+    itemFinal,
     irParaPagina,
     proximaPagina,
     paginaAnterior,
-    totalItens: pedidos.length,
-    itemInicial: (paginaAtual - 1) * itensPorPagina + 1,
-    itemFinal: Math.min(paginaAtual * itensPorPagina, pedidos.length)
   };
 }
