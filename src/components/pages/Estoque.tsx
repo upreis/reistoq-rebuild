@@ -199,9 +199,9 @@ export function Estoque() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen">
       {/* Header Fixo */}
-      <div className="flex-none bg-background border-b">
+      <div className="bg-background border-b">
         <div className="max-w-7xl px-4 py-2 space-y-2">
       {/* Header */}
       <EstoqueHeader 
@@ -243,33 +243,33 @@ export function Estoque() {
         </div>
       </div>
 
-      {/* Área da Tabela com Scroll Horizontal */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-x-auto overflow-y-auto">
-          <div className="min-w-max">
-            <div className="max-w-7xl px-4 py-2">
-            {/* Tabela ocupando toda largura */}
-            <EstoqueTabela 
-              produtos={produtosPaginados}
-              loading={loading}
-              produtosSelecionados={produtosSelecionados}
-              todosSeleccionados={todosSeleccionados}
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              itemInicial={itemInicial}
-              itemFinal={itemFinal}
-              totalItens={totalItens}
-              onSelecionarProduto={toggleSelecionarProduto}
-              onSelecionarTodos={toggleSelecionarTodos}
-              onAbrirDetalhes={abrirDetalhes}
-              onAbrirEdicao={abrirEdicao}
-              onMovimentar={abrirMovimentacao}
-              onImageUploaded={handleImageUploaded}
-              onPaginar={irParaPagina}
-              onPaginaAnterior={paginaAnterior}
-              onProximaPagina={proximaPagina}
-              onAbrirPrevisao={abrirPrevisao}
-            />
+      {/* Área da Tabela - Scroll normal */}
+      <div className="bg-background">
+        <div className="max-w-7xl px-4 py-2">
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              {/* Tabela ocupando toda largura */}
+              <EstoqueTabela 
+                produtos={produtosPaginados}
+                loading={loading}
+                produtosSelecionados={produtosSelecionados}
+                todosSeleccionados={todosSeleccionados}
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                itemInicial={itemInicial}
+                itemFinal={itemFinal}
+                totalItens={totalItens}
+                onSelecionarProduto={toggleSelecionarProduto}
+                onSelecionarTodos={toggleSelecionarTodos}
+                onAbrirDetalhes={abrirDetalhes}
+                onAbrirEdicao={abrirEdicao}
+                onMovimentar={abrirMovimentacao}
+                onImageUploaded={handleImageUploaded}
+                onPaginar={irParaPagina}
+                onPaginaAnterior={paginaAnterior}
+                onProximaPagina={proximaPagina}
+                onAbrirPrevisao={abrirPrevisao}
+              />
             </div>
           </div>
         </div>
