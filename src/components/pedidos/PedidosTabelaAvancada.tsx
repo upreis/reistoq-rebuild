@@ -432,7 +432,7 @@ export function PedidosTabelaAvancada({
         <div className="overflow-x-auto">
           <div className="w-full">
             <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
               <TableRow>
                  <TableHead className="px-2">
                    <Checkbox

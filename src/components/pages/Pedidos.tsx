@@ -334,9 +334,9 @@ export function Pedidos() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header Fixo - Padrão ERP */}
-      <div className="flex-none bg-background border-b">
+    <div className="min-h-screen">
+      {/* Header - Permite scroll */}
+      <div className="bg-background border-b">
         <div className="max-w-7xl px-4 py-2 space-y-2">
           {/* Controles Principais e Cards */}
           <div className="flex items-center justify-between gap-6">
@@ -434,12 +434,10 @@ export function Pedidos() {
         </div>
       </div>
 
-      {/* Área da Tabela - Padrão ERP com container */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-x-auto overflow-y-auto">
-          <div className="min-w-max">
-            <div className="max-w-7xl px-4 py-2">
-              <PedidosTabelaAvancada
+      {/* Área da Tabela - Scroll normal com sticky header */}
+      <div className="bg-background">
+        <div className="max-w-7xl px-4 py-2">
+          <PedidosTabelaAvancada
                 itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
                 itensSelecionados={itensSelecionados}
                 onSelecaoChange={setItensSelecionados}
@@ -455,10 +453,8 @@ export function Pedidos() {
                 onVerDetalhes={handleVerDetalhes}
                 onEditarPedido={handleEditarPedido}
                 onProcessarPedido={handleProcessarPedido}
-                obterStatusEstoque={obterStatusEstoque}
-              />
-            </div>
-          </div>
+            obterStatusEstoque={obterStatusEstoque}
+          />
         </div>
       </div>
 
