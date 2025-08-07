@@ -19,7 +19,7 @@ export function Stepper({ currentStep, steps }: StepperProps) {
         const IconComponent = step.icon;
         
         return (
-          <React.Fragment key={step.id}>
+          <div key={step.id} className="flex items-center">
             <div className="flex flex-col items-center">
               <div
                 className={cn(
@@ -50,7 +50,7 @@ export function Stepper({ currentStep, steps }: StepperProps) {
                 )}
               />
             )}
-          </React.Fragment>
+          </div>
         );
       })}
     </div>
