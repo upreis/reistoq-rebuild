@@ -190,7 +190,19 @@ export function PedidosTabelaAvancada({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    return `${item.sku}-${item.numero_venda || 'SV'}`;
+    // SKU KIT do mapeamento
+    const skuKit = item.mapeamento_aplicado?.sku_simples || '';
+    // Número da Venda (número do e-commerce)
+    const numeroVenda = item.numero_ecommerce || '';
+    
+    // Regra: SKU_KIT-NUMERO_VENDA ou apenas -NUMERO_VENDA se não tem mapeamento
+    if (skuKit && numeroVenda) {
+      return `${skuKit}-${numeroVenda}`;
+    } else if (numeroVenda) {
+      return `-${numeroVenda}`;
+    } else {
+      return 'SV';
+    }
   };
 
   const copiarParaClipboard = (texto: string, tipo: string) => {
