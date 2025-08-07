@@ -1,5 +1,8 @@
 project_id = "tdjyfqnxvjgossuncpwm"
 
+[functions.testar-tiny-conexao]
+verify_jwt = false
+
 [functions.alertas-estoque]
 verify_jwt = false
 

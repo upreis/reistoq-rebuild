@@ -13,32 +13,22 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Buscar token do Tiny das configurações
-    const { data: config, error: configError } = await supabase
-      .from('configuracoes')
-      .select('valor')
-      .eq('chave', 'tiny_token')
-      .single()
-
-    if (configError || !config?.valor) {
-      console.log('Token do Tiny não encontrado')
+    // Obter token do Supabase Secrets (modo seguro)
+    const tinyToken = Deno.env.get('TINY_TOKEN');
+    
+    if (!tinyToken) {
+      console.error('Token Tiny ERP não configurado nos secrets');
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          error: 'Token do Tiny ERP não configurado' 
+          error: 'Token Tiny ERP não configurado. Configure o secret TINY_TOKEN.',
+          success: false 
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
-      )
+      );
     }
-
-    const tinyToken = config.valor
     console.log('Testando conexão com Tiny ERP...')
 
     // Testar conexão com API do Tiny - endpoint de info da empresa
