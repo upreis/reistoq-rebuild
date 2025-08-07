@@ -98,9 +98,9 @@ export function PedidosTabelaItens({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    // SKU KIT Mapeado da tabela
+    // SKU KIT da coluna "SKU KIT Mapeado"
     const skuKit = item.mapeamento_aplicado?.sku_simples || '';
-    // Número da Venda da tabela (campo correto identificado nas requisições de rede)
+    // Número da Venda da coluna "Número da Venda"
     const numeroVenda = item.numero_ecommerce || '';
     
     // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
@@ -109,7 +109,7 @@ export function PedidosTabelaItens({
     } else if (numeroVenda) {
       return `-${numeroVenda}`;
     } else {
-      return 'SV'; // fallback se não tiver nenhum dos dois
+      return 'SV'; // fallback
     }
   };
 
