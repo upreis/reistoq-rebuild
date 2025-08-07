@@ -227,6 +227,7 @@ export type Database = {
           id: string
           ncm: string | null
           numero_pedido: string
+          numero_venda: string | null
           observacoes: string | null
           pedido_id: string
           quantidade: number
@@ -243,6 +244,7 @@ export type Database = {
           id?: string
           ncm?: string | null
           numero_pedido: string
+          numero_venda?: string | null
           observacoes?: string | null
           pedido_id: string
           quantidade?: number
@@ -259,6 +261,7 @@ export type Database = {
           id?: string
           ncm?: string | null
           numero_pedido?: string
+          numero_venda?: string | null
           observacoes?: string | null
           pedido_id?: string
           quantidade?: number
