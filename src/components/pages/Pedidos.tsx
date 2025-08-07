@@ -441,7 +441,7 @@ export function Pedidos() {
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
           <div className="min-w-max">
-            <div className="px-4 py-2">
+            <div className="max-w-7xl mx-auto px-4 py-2">
               <PedidosTabelaAvancada
                 itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
                 itensSelecionados={itensSelecionados}
