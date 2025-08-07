@@ -103,8 +103,6 @@ export function useDeParaIntegration() {
       return {
         ...item,
         sku_estoque: mapeamento?.sku_correspondente || item.sku,
-        sku_kit: mapeamento?.sku_correspondente || item.sku,
-        qtd_kit: mapeamento?.quantidade || 1, // ✅ CORRIGIDO: usar quantidade do mapeamento
         linha_destacada: !mapeamento,
         mapeamento_aplicado: mapeamento,
       };

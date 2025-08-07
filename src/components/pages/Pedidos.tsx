@@ -282,7 +282,7 @@ export function Pedidos() {
             // ✅ CORRIGIDO: Quantidade = QTD KIT x Qtd
             quantidade_kit: (item.qtd_kit || 1) * item.quantidade,
             quantidade_pedido: item.quantidade,
-            qtd_kit: item.qtd_kit, // ✅ USAR VALOR EXATO DO MAPEAMENTO
+            qtd_kit: item.qtd_kit || 1,
             descricao: item.descricao,
             nome_cliente: item.nome_cliente,
             data_pedido: item.data_pedido,
@@ -378,7 +378,7 @@ export function Pedidos() {
                 // ✅ CORRIGIDO: Quantidade = QTD KIT x Qtd
                 quantidade_kit: (item.qtd_kit || 1) * item.quantidade,
                 quantidade_pedido: item.quantidade,
-                qtd_kit: item.qtd_kit, // ✅ USAR VALOR EXATO DO MAPEAMENTO
+                qtd_kit: item.qtd_kit || 1,
                 descricao: item.descricao,
                 nome_cliente: item.nome_cliente,
                 data_pedido: item.data_pedido,
