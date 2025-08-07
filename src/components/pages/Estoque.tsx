@@ -246,7 +246,7 @@ export function Estoque() {
       {/* Área da Tabela com Scroll Horizontal */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
-          <div className="min-w-max max-w-7xl px-4 py-2">
+          <div className="min-w-max px-4 py-2">
             {/* Tabela ocupando toda largura */}
             <EstoqueTabela 
               produtos={produtosPaginados}
