@@ -152,6 +152,46 @@ export function useHistoricoVendas() {
 
   const excluirVenda = async (id: string) => {
     try {
+      // Primeiro buscar os dados da venda para reversão de estoque
+      const { data: venda, error: fetchError } = await supabase
+        .from('historico_vendas')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Se tem sku_kit, reverter o estoque
+      if (venda?.sku_kit && venda?.qtd_kit && venda?.quantidade) {
+        const quantidadeReverter = venda.qtd_kit * venda.quantidade;
+        
+        // Buscar o produto pelo sku_kit na coluna sku_interno
+        const { data: produto, error: produtoError } = await supabase
+          .from('produtos')
+          .select('id, quantidade_atual, nome')
+          .eq('sku_interno', venda.sku_kit)
+          .single();
+
+        if (produtoError) {
+          console.warn('Produto não encontrado para reversão:', venda.sku_kit);
+        } else {
+          // Atualizar quantidade atual somando a quantidade revertida
+          const novaQuantidade = produto.quantidade_atual + quantidadeReverter;
+          
+          const { error: updateError } = await supabase
+            .from('produtos')
+            .update({ quantidade_atual: novaQuantidade })
+            .eq('id', produto.id);
+
+          if (updateError) {
+            console.error('Erro ao reverter estoque:', updateError);
+          } else {
+            console.log(`Estoque revertido: ${produto.nome} (+${quantidadeReverter}) = ${novaQuantidade}`);
+          }
+        }
+      }
+
+      // Excluir a venda
       const { error } = await supabase
         .from('historico_vendas')
         .delete()
@@ -161,7 +201,7 @@ export function useHistoricoVendas() {
 
       toast({
         title: "Venda excluída",
-        description: "A venda foi excluída com sucesso.",
+        description: "A venda foi excluída e o estoque foi revertido com sucesso.",
       });
 
       buscarVendas();
@@ -177,6 +217,47 @@ export function useHistoricoVendas() {
 
   const excluirVendasSelecionadas = async (ids: string[]) => {
     try {
+      // Primeiro buscar todas as vendas para reversão de estoque
+      const { data: vendas, error: fetchError } = await supabase
+        .from('historico_vendas')
+        .select('*')
+        .in('id', ids);
+
+      if (fetchError) throw fetchError;
+
+      // Processar reversão de estoque para cada venda
+      for (const venda of vendas || []) {
+        if (venda?.sku_kit && venda?.qtd_kit && venda?.quantidade) {
+          const quantidadeReverter = venda.qtd_kit * venda.quantidade;
+          
+          // Buscar o produto pelo sku_kit na coluna sku_interno
+          const { data: produto, error: produtoError } = await supabase
+            .from('produtos')
+            .select('id, quantidade_atual, nome')
+            .eq('sku_interno', venda.sku_kit)
+            .single();
+
+          if (produtoError) {
+            console.warn('Produto não encontrado para reversão:', venda.sku_kit);
+          } else {
+            // Atualizar quantidade atual somando a quantidade revertida
+            const novaQuantidade = produto.quantidade_atual + quantidadeReverter;
+            
+            const { error: updateError } = await supabase
+              .from('produtos')
+              .update({ quantidade_atual: novaQuantidade })
+              .eq('id', produto.id);
+
+            if (updateError) {
+              console.error('Erro ao reverter estoque:', updateError);
+            } else {
+              console.log(`Estoque revertido: ${produto.nome} (+${quantidadeReverter}) = ${novaQuantidade}`);
+            }
+          }
+        }
+      }
+
+      // Excluir as vendas
       const { error } = await supabase
         .from('historico_vendas')
         .delete()
@@ -186,7 +267,7 @@ export function useHistoricoVendas() {
 
       toast({
         title: "Vendas excluídas",
-        description: `${ids.length} venda(s) foram excluídas com sucesso.`,
+        description: `${ids.length} venda(s) foram excluídas e o estoque foi revertido com sucesso.`,
       });
 
       buscarVendas();
