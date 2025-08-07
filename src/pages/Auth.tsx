@@ -1,278 +1,237 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { Building2, Eye, EyeOff } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ReistoqLogo } from '@/components/ui/reistoq-logo';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [signupData, setSignupData] = useState({ 
+    email: '', 
+    password: '', 
+    confirmPassword: '',
+    nomeCompleto: ''
+  });
+  
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    // Check for existing session and set up auth listener
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
-    };
-    
-    checkAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (session && event === 'SIGNED_IN') {
-          navigate("/");
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao REISTOQ",
-      });
-      
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message || "Erro ao fazer login. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    setLoading(true);
+    
+    const { error } = await signIn(loginData.email, loginData.password);
+    
+    if (!error) {
+      navigate('/dashboard');
     }
+    
+    setLoading(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const nomeCompleto = formData.get("nomeCompleto") as string;
-    const nomeExibicao = formData.get("nomeExibicao") as string;
-
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            nome_completo: nomeCompleto,
-            nome_exibicao: nomeExibicao,
-          }
-        }
-      });
-
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          throw new Error("Este email já está cadastrado. Tente fazer login.");
-        }
-        throw error;
-      }
-
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro no cadastro",
-        description: error.message || "Erro ao criar conta. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    
+    if (signupData.password !== signupData.confirmPassword) {
+      return;
     }
+    
+    setLoading(true);
+    
+    const { error } = await signUp(
+      signupData.email, 
+      signupData.password,
+      { 
+        nome_completo: signupData.nomeCompleto,
+        nome_exibicao: signupData.nomeCompleto.split(' ')[0]
+      }
+    );
+    
+    if (!error) {
+      // Redirecionar para verificação de email ou login
+    }
+    
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl border-border/50">
-        <CardHeader className="text-center pb-6">
-          <div className="mx-auto w-16 h-16 gradient-primary rounded-xl flex items-center justify-center mb-4 shadow-elegant">
-            <img 
-              src="/src/assets/logo.png" 
-              alt="REISTOQ Logo" 
-              className="w-10 h-10 object-contain brightness-0 invert"
-            />
-          </div>
-          <CardTitle className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">REISTOQ</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Sistema de Gestão de Estoque Profissional
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    required
-                    className="w-full"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
-                  <div className="relative">
+    <div className="min-h-screen bg-gradient-subtle flex flex-col">
+      {/* Header */}
+      <div className="p-4">
+        <Link 
+          to="/" 
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar para home
+        </Link>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center space-y-4">
+            <div className="mx-auto">
+              <ReistoqLogo className="h-12 w-auto" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl">Acesse sua conta</CardTitle>
+              <CardDescription>
+                Entre com suas credenciais ou crie uma nova conta
+              </CardDescription>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            <Tabs defaultValue="login" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Entrar</TabsTrigger>
+                <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              </TabsList>
+              
+              {/* Login Tab */}
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
                     <Input
-                      id="login-password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Sua senha"
+                      id="login-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
                       required
-                      className="w-full pr-10"
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
                   </div>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-nomeCompleto">Nome Completo</Label>
-                  <Input
-                    id="signup-nomeCompleto"
-                    name="nomeCompleto"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    required
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="submit"
                     className="w-full"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-nomeExibicao">Nome de Exibição</Label>
-                  <Input
-                    id="signup-nomeExibicao"
-                    name="nomeExibicao"
-                    type="text"
-                    placeholder="Como você quer ser chamado"
-                    required
-                    className="w-full"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    required
-                    className="w-full"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <div className="relative">
+                    disabled={loading}
+                  >
+                    {loading ? "Entrando..." : "Entrar"}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              {/* Signup Tab */}
+              <TabsContent value="signup">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Nome Completo</Label>
                     <Input
-                      id="signup-password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Mínimo 6 caracteres"
+                      id="signup-name"
+                      type="text"
+                      placeholder="Seu nome completo"
+                      value={signupData.nomeCompleto}
+                      onChange={(e) => setSignupData(prev => ({ ...prev, nomeCompleto: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={signupData.email}
+                      onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={signupData.password}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                        minLength={6}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm">Confirmar Senha</Label>
+                    <Input
+                      id="signup-confirm"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupData.confirmPassword}
+                      onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                       required
                       minLength={6}
-                      className="w-full pr-10"
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
+                    {signupData.password !== signupData.confirmPassword && signupData.confirmPassword && (
+                      <p className="text-sm text-destructive">As senhas não coincidem</p>
+                    )}
                   </div>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Criando conta..." : "Criar conta"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || signupData.password !== signupData.confirmPassword}
+                  >
+                    {loading ? "Criando conta..." : "Criar conta"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,32 +1,42 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireOnboarding?: boolean;
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
+export function ProtectedRoute({ children, requireOnboarding = true }: ProtectedRouteProps) {
+  const { user, loading, onboardingCompleto } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
-
+  // Mostrar loading enquanto verifica autenticação
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Verificando autenticação...</p>
+        </div>
       </div>
     );
   }
 
+  // Redirecionar para login se não autenticado
   if (!user) {
-    return null;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // Redirecionar para onboarding se necessário
+  if (requireOnboarding && !onboardingCompleto && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Evitar acesso ao onboarding se já foi completo
+  if (onboardingCompleto && location.pathname === '/onboarding') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
-};
+}

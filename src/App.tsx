@@ -1,66 +1,149 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import { ThemeProvider } from "@/hooks/use-theme";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from '@/hooks/use-theme';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { MainLayout } from '@/components/layout/MainLayout';
+import Auth from '@/pages/Auth';
+import { OnboardingPage } from '@/pages/Onboarding';
+import { Index } from '@/pages/Index';
+import NotFound from '@/pages/NotFound';
+import { Dashboard } from '@/components/pages/Dashboard';
+import { Estoque } from '@/components/pages/Estoque';
+import { Pedidos } from '@/components/pages/Pedidos';
+import DePara from '@/components/pages/DePara';
+import { Historico } from '@/components/pages/Historico';
+import { Scanner } from '@/components/pages/Scanner';
+import { Configuracoes } from '@/components/pages/Configuracoes';
+import { Loader2 } from 'lucide-react';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  );
+}
+
+function ErrorFallback({ error, resetErrorBoundary }: any) {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="text-center max-w-md">
+        <h2 className="text-2xl font-bold mb-4">Oops! Algo deu errado</h2>
+        <p className="text-muted-foreground mb-4">
+          Ocorreu um erro inesperado. Tente recarregar a página.
+        </p>
+        <button 
+          onClick={resetErrorBoundary}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+        >
+          Tentar novamente
+        </button>
+        {process.env.NODE_ENV === 'development' && (
+          <details className="mt-4 text-left">
+            <summary className="cursor-pointer">Detalhes do erro</summary>
+            <pre className="mt-2 text-sm text-red-600 overflow-auto">
+              {error.message}
+            </pre>
+          </details>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const App = () => {
-  
-  try {
-    return (
+  return (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="system" storageKey="reistoq-ui-theme">
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+            <Router>
+              <Suspense fallback={<LoadingFallback />}>
                 <Routes>
+                  {/* Rotas públicas */}
+                  <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
+                  
+                  {/* Onboarding (protegido mas sem exigir onboarding completo) */}
                   <Route 
-                    path="/*" 
+                    path="/onboarding" 
                     element={
-                      <ProtectedRoute>
-                        <Index />
+                      <ProtectedRoute requireOnboarding={false}>
+                        <OnboardingPage />
                       </ProtectedRoute>
                     } 
                   />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  
+                  {/* Rotas protegidas com layout */}
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<Dashboard />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/estoque" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<Estoque />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/pedidos" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<Pedidos />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/depara" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<DePara />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/historico" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<Historico />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/scanner" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<Scanner />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/configuracoes" element={
+                    <ProtectedRoute>
+                      <MainLayout children={<Configuracoes />} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Catch all - 404 */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
+              </Suspense>
+            </Router>
+            <Toaster />
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
-    );
-  } catch (error) {
-    console.error('❌ Erro fatal no App:', error); // Manter este por ser crítico
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Erro na aplicação</h1>
-          <p className="text-muted-foreground mb-4">
-            Ocorreu um erro inesperado. Tente recarregar a página.
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
-          >
-            Recarregar
-          </button>
-        </div>
-      </div>
-    );
-  }
+    </ErrorBoundary>
+  );
 };
 
 export default App;
