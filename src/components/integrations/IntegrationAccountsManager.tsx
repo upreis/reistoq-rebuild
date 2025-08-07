@@ -70,25 +70,43 @@ export function IntegrationAccountsManager() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.from("integration_accounts").insert({
-      provider,
-      name,
-      cnpj: cnpj || null,
-      account_identifier: identifier || null,
-      is_active: active,
-      auth_data: token ? { token } : null,
-      // organization_id é atribuído indiretamente pelas policies via profiles
-      // mas como a política é WITH CHECK, o insert será permitido apenas para a org do usuário
-    } as any);
-    setLoading(false);
-    if (error) {
-      toast({ title: "Erro ao adicionar conta", description: error.message, variant: "destructive" });
-      return;
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Usuário não autenticado.");
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("organizacao_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !profile?.organizacao_id) {
+        throw new Error("Não foi possível obter a organização do usuário.");
+      }
+
+      const { error } = await supabase.from("integration_accounts").insert({
+        organization_id: profile.organizacao_id,
+        provider,
+        name,
+        cnpj: cnpj || null,
+        account_identifier: identifier || null,
+        is_active: active,
+        auth_data: token ? { token } : null,
+      } as any);
+
+      if (error) throw error;
+
+      toast({ title: "Conta adicionada", description: `${name} (${provider}) criada com sucesso.` });
+      setOpen(false);
+      resetForm();
+      await load();
+    } catch (err: any) {
+      toast({ title: "Erro ao adicionar conta", description: err.message ?? "Falha ao salvar.", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    toast({ title: "Conta adicionada", description: `${name} (${provider}) criada com sucesso.` });
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const remove = async (id: string) => {
