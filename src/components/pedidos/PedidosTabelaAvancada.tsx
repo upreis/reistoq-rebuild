@@ -496,7 +496,7 @@ export function PedidosTabelaAvancada({
                     </TableCell>
                     
                      <TableCell className="px-2">
-                       <div className="text-right min-w-[120px]">
+                       <div className="min-w-[120px]">
                          <div className="font-semibold">{formatarMoeda(item.valor_unitario * item.quantidade)}</div>
                          <div className="text-xs text-muted-foreground">
                            {formatarMoeda(item.valor_unitario)} un.
