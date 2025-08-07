@@ -100,9 +100,9 @@ export function Historico() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen">
       {/* Header Fixo */}
-      <div className="flex-none bg-background border-b">
+      <div className="bg-background border-b">
         <div className="max-w-7xl px-4 py-2 space-y-2">
       <VendasHeader
         vendasSelecionadas={vendasSelecionadas}
@@ -126,27 +126,27 @@ export function Historico() {
         </div>
       </div>
 
-      {/* Área da Tabela com Scroll Horizontal */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-x-auto overflow-y-auto">
-          <div className="min-w-max">
-            <div className="max-w-7xl px-4 py-2">
-            <HistoricoVendasTabela
-              vendas={vendasPaginadas}
-              vendasSelecionadas={vendasSelecionadas}
-              onSelecaoChange={setVendasSelecionadas}
-              loading={loading}
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalItens={totalItens}
-              itemInicial={itemInicial}
-              itemFinal={itemFinal}
-              onPaginaChange={irParaPagina}
-              onProximaPagina={proximaPagina}
-              onPaginaAnterior={paginaAnterior}
-              onEditarVenda={editarVenda}
-              onExcluirVenda={excluirVendaAction}
-            />
+      {/* Área da Tabela - Scroll normal */}
+      <div className="bg-background">
+        <div className="max-w-7xl px-4 py-2">
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              <HistoricoVendasTabela
+                vendas={vendasPaginadas}
+                vendasSelecionadas={vendasSelecionadas}
+                onSelecaoChange={setVendasSelecionadas}
+                loading={loading}
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalItens={totalItens}
+                itemInicial={itemInicial}
+                itemFinal={itemFinal}
+                onPaginaChange={irParaPagina}
+                onProximaPagina={proximaPagina}
+                onPaginaAnterior={paginaAnterior}
+                onEditarVenda={editarVenda}
+                onExcluirVenda={excluirVendaAction}
+              />
             </div>
           </div>
         </div>
