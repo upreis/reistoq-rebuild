@@ -2,6 +2,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "react-router-dom";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -16,6 +17,29 @@ import { useNavigate } from "react-router-dom";
 export function Header() {
   const { user, signOut, organizacao } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const getPageTitle = () => {
+    const path = location.pathname;
+    switch (path) {
+      case '/pedidos':
+        return { title: 'Pedidos', subtitle: 'Gestão completa de pedidos' };
+      case '/estoque':
+        return { title: 'Estoque', subtitle: 'Controle de produtos' };
+      case '/depara':
+        return { title: 'De/Para', subtitle: 'Mapeamento de SKUs' };
+      case '/scanner':
+        return { title: 'Scanner', subtitle: 'Leitura de códigos' };
+      case '/historico':
+        return { title: 'Histórico', subtitle: 'Movimentações anteriores' };
+      case '/configuracoes':
+        return { title: 'Configurações', subtitle: 'Configurações do sistema' };
+      default:
+        return { title: 'Dashboard', subtitle: 'Visão geral' };
+    }
+  };
+
+  const pageInfo = getPageTitle();
 
   const handleSignOut = async () => {
     await signOut();
@@ -30,6 +54,11 @@ export function Header() {
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
       <SidebarTrigger />
+      
+      <div className="flex flex-col">
+        <h1 className="text-lg font-bold text-foreground">{pageInfo.title}</h1>
+        <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
+      </div>
       
       <div className="w-full flex-1" />
       

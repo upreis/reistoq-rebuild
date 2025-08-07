@@ -338,12 +338,8 @@ export function Pedidos() {
       {/* Header Fixo - Padrão ERP */}
       <div className="flex-none bg-background border-b">
         <div className="px-4 py-2 space-y-2">
-          {/* Título e Controles Principais */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Pedidos</h1>
-              <p className="text-xs text-muted-foreground">Gestão completa de pedidos</p>
-            </div>
+          {/* Controles Principais */}
+          <div className="flex items-center justify-end">
             <PedidosControleSincronizacao
               onSincronizar={recarregarDados}
               loading={loading}
