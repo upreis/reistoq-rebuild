@@ -337,7 +337,7 @@ export function Pedidos() {
     <div className="min-h-screen flex flex-col">
       {/* Header Fixo - Controles principais */}
       <div className="bg-background border-b sticky top-0 z-10">
-        <div className="container mx-auto p-6 space-y-6">
+        <div className="px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 space-y-6 max-w-screen-2xl">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex-1">
@@ -428,7 +428,7 @@ export function Pedidos() {
       {/* Área da Tabela com Scroll Horizontal */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto">
-          <div className="min-w-max p-6">
+          <div className="min-w-max px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
             <PedidosTabelaAvancada
               itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
               itensSelecionados={itensSelecionados}
