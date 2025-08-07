@@ -415,7 +415,6 @@ export function PedidosTabelaAvancada({
                   </TableHead>
                   <TableHead className="px-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 w-24">
                     <span className="text-orange-900 dark:text-orange-100 font-medium">Total de Itens</span>
-                    <div className="text-xs text-orange-700 dark:text-orange-200">QTD KIT × Qtd</div>
                   </TableHead>
                   {colunasVisiveis.tempoDecorrido && <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>}
                  {colunasVisiveis.prioridade && <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>}
