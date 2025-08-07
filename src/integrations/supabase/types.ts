@@ -113,6 +113,7 @@ export type Database = {
           data_pedido: string
           data_prevista: string | null
           descricao: string | null
+          empresa: string | null
           id: string
           id_unico: string
           ncm: string | null
@@ -150,6 +151,7 @@ export type Database = {
           data_pedido: string
           data_prevista?: string | null
           descricao?: string | null
+          empresa?: string | null
           id?: string
           id_unico: string
           ncm?: string | null
@@ -187,6 +189,7 @@ export type Database = {
           data_pedido?: string
           data_prevista?: string | null
           descricao?: string | null
+          empresa?: string | null
           id?: string
           id_unico?: string
           ncm?: string | null
@@ -220,6 +223,7 @@ export type Database = {
           codigo_barras: string | null
           created_at: string
           descricao: string
+          empresa: string | null
           id: string
           ncm: string | null
           numero_pedido: string
@@ -235,6 +239,7 @@ export type Database = {
           codigo_barras?: string | null
           created_at?: string
           descricao: string
+          empresa?: string | null
           id?: string
           ncm?: string | null
           numero_pedido: string
@@ -250,6 +255,7 @@ export type Database = {
           codigo_barras?: string | null
           created_at?: string
           descricao?: string
+          empresa?: string | null
           id?: string
           ncm?: string | null
           numero_pedido?: string
@@ -399,10 +405,12 @@ export type Database = {
           created_at: string
           data_pedido: string
           data_prevista: string | null
+          empresa: string | null
           id: string
           nome_cliente: string
           numero: string
           numero_ecommerce: string | null
+          numero_venda: string | null
           obs: string | null
           obs_interna: string | null
           situacao: string
@@ -420,10 +428,12 @@ export type Database = {
           created_at?: string
           data_pedido: string
           data_prevista?: string | null
+          empresa?: string | null
           id?: string
           nome_cliente: string
           numero: string
           numero_ecommerce?: string | null
+          numero_venda?: string | null
           obs?: string | null
           obs_interna?: string | null
           situacao: string
@@ -441,10 +451,12 @@ export type Database = {
           created_at?: string
           data_pedido?: string
           data_prevista?: string | null
+          empresa?: string | null
           id?: string
           nome_cliente?: string
           numero?: string
           numero_ecommerce?: string | null
+          numero_venda?: string | null
           obs?: string | null
           obs_interna?: string | null
           situacao?: string
