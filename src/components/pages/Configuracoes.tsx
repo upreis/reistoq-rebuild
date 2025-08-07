@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { IntegrationAccountsManager } from "@/components/integrations/IntegrationAccountsManager";
 
 export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
@@ -407,6 +408,9 @@ export function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Integrações · Contas */}
+      <IntegrationAccountsManager />
 
       {/* API Configuration */}
       <Card>
