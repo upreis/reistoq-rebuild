@@ -323,7 +323,7 @@ export function PedidosTabelaAvancada({
     );
   }
 
-  return useMemo(() => (
+  return (
     <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -783,5 +783,5 @@ export function PedidosTabelaAvancada({
       </CardContent>
     </Card>
     </>
-  ), [itens, loading, colunasVisiveis, itensSelecionados, paginaAtual, totalPaginas, totalItens, itemInicial, itemFinal]);
+  );
 }
