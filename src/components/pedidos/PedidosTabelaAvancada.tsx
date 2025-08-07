@@ -232,21 +232,12 @@ export function PedidosTabelaAvancada({
 
   // Função para alternar seleção de um item
   const toggleSelecaoItem = (item: ItemPedidoEnriquecido) => {
-    console.log('=== DEBUG SELEÇÃO ===');
-    console.log('Item clicado:', item.id, item.sku);
-    console.log('Está selecionado?', isItemSelecionado(item));
-    console.log('Itens selecionados antes:', itensSelecionados.map(i => i.id));
-    
     if (isItemSelecionado(item)) {
       // Remove apenas este item dos selecionados
-      const novaSelecao = itensSelecionados.filter(itemSel => itemSel.id !== item.id);
-      console.log('Removendo item. Nova seleção:', novaSelecao.map(i => i.id));
-      onSelecaoChange(novaSelecao);
+      onSelecaoChange(itensSelecionados.filter(itemSel => itemSel.id !== item.id));
     } else {
       // Adiciona este item aos já selecionados
-      const novaSelecao = [...itensSelecionados, item];
-      console.log('Adicionando item. Nova seleção:', novaSelecao.map(i => i.id));
-      onSelecaoChange(novaSelecao);
+      onSelecaoChange([...itensSelecionados, item]);
     }
   };
 

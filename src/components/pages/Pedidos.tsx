@@ -334,7 +334,10 @@ export function Pedidos() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex flex-col">
+      {/* Header Fixo - Controles principais */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex-1">
@@ -419,26 +422,34 @@ export function Pedidos() {
           }
         }}
       />
+        </div>
+      </div>
 
-      {/* Tabela de Pedidos */}
-      <PedidosTabelaAvancada
-        itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
-        itensSelecionados={itensSelecionados}
-        onSelecaoChange={setItensSelecionados}
-        loading={loading}
-        paginaAtual={paginaAtual}
-        totalPaginas={totalPaginas}
-        totalItens={totalItens}
-        itemInicial={itemInicial}
-        itemFinal={itemFinal}
-        onPaginaChange={irParaPagina}
-        onProximaPagina={proximaPagina}
-        onPaginaAnterior={paginaAnterior}
-        onVerDetalhes={handleVerDetalhes}
-        onEditarPedido={handleEditarPedido}
-        onProcessarPedido={handleProcessarPedido}
-        obterStatusEstoque={obterStatusEstoque}
-      />
+      {/* Área da Tabela com Scroll Horizontal */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-x-auto">
+          <div className="min-w-max p-6">
+            <PedidosTabelaAvancada
+              itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
+              itensSelecionados={itensSelecionados}
+              onSelecaoChange={setItensSelecionados}
+              loading={loading}
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalItens={totalItens}
+              itemInicial={itemInicial}
+              itemFinal={itemFinal}
+              onPaginaChange={irParaPagina}
+              onProximaPagina={proximaPagina}
+              onPaginaAnterior={paginaAnterior}
+              onVerDetalhes={handleVerDetalhes}
+              onEditarPedido={handleEditarPedido}
+              onProcessarPedido={handleProcessarPedido}
+              obterStatusEstoque={obterStatusEstoque}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Modais */}
       <PedidoDetalhesModal
