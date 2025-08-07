@@ -98,7 +98,8 @@ export function PedidosTabelaItens({
   };
 
   const gerarIdUnico = (item: ItemPedidoEnriquecido) => {
-    return `${item.sku}-${item.numero_venda || 'SV'}`;
+    const skuKit = item.mapeamento_aplicado?.sku_simples || item.sku;
+    return `${skuKit}-${item.numero_venda || 'SV'}`;
   };
 
   const getStatusProcessamentoComEstoque = (item: ItemPedidoEnriquecido) => {
