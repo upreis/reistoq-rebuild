@@ -101,7 +101,7 @@ export function PedidosTabelaItens({
     // SKU KIT da coluna "SKU KIT Mapeado"
     const skuKit = item.mapeamento_aplicado?.sku_simples || '';
     // Número da Venda da coluna "Número da Venda"
-    const numeroVenda = item.numero_ecommerce || '';
+    const numeroVenda = item.numero_venda || '';
     
     // Regra: Se tem mapeamento: SKU_KIT-NUMERO_VENDA, senão: -NUMERO_VENDA
     if (skuKit && numeroVenda) {
@@ -327,11 +327,11 @@ export function PedidosTabelaItens({
                    <TableCell className="text-center w-20">
                      {item.mapeamento_aplicado?.quantidade || '-'}
                    </TableCell>
-                   <TableCell className="w-36">
-                     <div className="truncate text-sm" title={item.numero_ecommerce}>
-                       {item.numero_ecommerce || '-'}
-                     </div>
-                   </TableCell>
+                    <TableCell className="w-36">
+                      <div className="truncate text-sm" title={item.numero_venda}>
+                        {item.numero_venda || '-'}
+                      </div>
+                    </TableCell>
                    <TableCell className="w-32">
                      <div className="truncate text-sm" title={item.empresa}>
                        {item.empresa || '-'}
