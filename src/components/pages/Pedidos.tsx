@@ -335,38 +335,36 @@ export function Pedidos() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      {/* Título Principal - Próximo ao Menu */}
-      <div className="flex-none bg-background border-b px-2 py-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Pedidos</h1>
-            <p className="text-xs text-muted-foreground">Gestão completa de pedidos</p>
-          </div>
-          <PedidosControleSincronizacao
-            onSincronizar={recarregarDados}
-            loading={loading}
-            ultimaSincronizacao={new Date().toISOString()}
-          />
-        </div>
-      </div>
-
       {/* Header Fixo - Padrão ERP */}
       <div className="flex-none bg-background border-b">
-        <div className="px-2 py-3 space-y-3">
-          {/* Resumo Executivo - Cards Maiores */}
-          <div className="grid grid-cols-3 gap-4 max-w-3xl">
+        <div className="max-w-7xl mx-auto px-6 py-3 space-y-3">
+          {/* Título e Controles Principais */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Pedidos</h1>
+              <p className="text-xs text-muted-foreground">Gestão completa de pedidos</p>
+            </div>
+            <PedidosControleSincronizacao
+              onSincronizar={recarregarDados}
+              loading={loading}
+              ultimaSincronizacao={new Date().toISOString()}
+            />
+          </div>
+
+          {/* Resumo Executivo - Cards Compactos */}
+          <div className="grid grid-cols-3 gap-3 max-w-2xl">
             <DashboardMiniPedidos 
               itens={itensEnriquecidos}
               obterStatusEstoque={obterStatusEstoque}
             />
             {/* Card Total */}
-            <div className="bg-card border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xl font-bold">{itensEnriquecidos.length}</div>
-                  <p className="text-sm text-muted-foreground">Total</p>
+                  <div className="text-lg font-bold">{itensEnriquecidos.length}</div>
+                  <p className="text-xs text-muted-foreground">Total</p>
                 </div>
-                <Package className="h-5 w-5 text-muted-foreground" />
+                <Package className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -439,11 +437,11 @@ export function Pedidos() {
         </div>
       </div>
 
-      {/* Área da Tabela - Sem margens laterais */}
+      {/* Área da Tabela - Padrão ERP com container */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
           <div className="min-w-max">
-            <div className="px-2 py-2">
+            <div className="max-w-7xl mx-auto px-6 py-4">
               <PedidosTabelaAvancada
                 itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
                 itensSelecionados={itensSelecionados}
