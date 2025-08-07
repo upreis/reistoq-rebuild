@@ -103,7 +103,7 @@ export function Historico() {
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header Fixo */}
       <div className="flex-none bg-background border-b">
-        <div className="max-w-7xl mx-auto px-4 py-2 space-y-2">
+        <div className="max-w-7xl px-4 py-2 space-y-2">
       <VendasHeader
         vendasSelecionadas={vendasSelecionadas}
         loading={loading}
@@ -129,7 +129,7 @@ export function Historico() {
       {/* Área da Tabela com Scroll Horizontal */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-x-auto overflow-y-auto">
-          <div className="min-w-max max-w-7xl mx-auto px-4 py-2">
+          <div className="min-w-max max-w-7xl px-4 py-2">
             <HistoricoVendasTabela
               vendas={vendasPaginadas}
               vendasSelecionadas={vendasSelecionadas}
