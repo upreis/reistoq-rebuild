@@ -294,6 +294,45 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          organization_id: string
+          role_id: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          organization_id: string
+          role_id: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          role_id?: string
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
       itens_pedidos: {
         Row: {
           codigo_barras: string | null
@@ -859,6 +898,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: {
+        Args: { _token: string }
+        Returns: Json
+      }
       bytea_to_text: {
         Args: { data: string }
         Returns: string
@@ -872,6 +915,13 @@ export type Database = {
           tiny_token: string
         }
         Returns: Json
+      }
+      create_invitation: {
+        Args: { _email: string; _role_id: string; _expires_in_days?: number }
+        Returns: {
+          id: string
+          token: string
+        }[]
       }
       get_current_org_id: {
         Args: Record<PropertyKey, never>
@@ -935,6 +985,10 @@ export type Database = {
       http_set_curlopt: {
         Args: { curlopt: string; value: string }
         Returns: boolean
+      }
+      revoke_invitation: {
+        Args: { _id: string }
+        Returns: Json
       }
       seed_admin_role_for_org: {
         Args: { _org_id: string; _user_id: string }
