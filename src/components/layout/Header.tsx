@@ -53,8 +53,8 @@ export function Header() {
   };
 
   return (
-    <header className="border-b bg-background px-4 lg:px-6">
-      <div className="flex h-14 items-center gap-4">
+    <header className="border-b bg-background px-4 lg:px-6 pb-1">
+      <div className="flex items-center gap-4 py-2">
         <SidebarTrigger />
         
         <div className="flex flex-col">

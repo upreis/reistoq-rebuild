@@ -55,6 +55,7 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const { fetchNotifications, saveAnnouncement, removeAnnouncement, dismissNotification } = useNotifications();
   const containerCls = placement === 'sticky' ? 'sticky top-0 z-40 flex w-full justify-center' : 'w-full flex justify-center';
+  const innerWrapCls = placement === 'sticky' ? 'mx-3 mt-3 w-full max-w-4xl animate-fade-in' : 'mx-1 mt-1 w-full max-w-3xl animate-fade-in';
 
   // Buscar notificações na montagem
   React.useEffect(() => {
@@ -126,10 +127,10 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
 
   return (
     <div className={containerCls}>
-      <div className="mx-3 mt-3 w-full max-w-4xl animate-fade-in">
-        <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm`}> 
-          <div className="flex w-full items-center gap-3">
-            <Bell className="h-4 w-4 text-primary" />
+      <div className={innerWrapCls}>
+        <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm p-2 px-3`}> 
+          <div className="flex w-full items-center gap-2">
+              <Bell className="h-3 w-3 text-primary" />
             <div className="flex-1">
               <AlertDescription className="text-sm text-foreground">
                 {activeItem.message}
@@ -164,10 +165,10 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
               </PermissionGate>
 
               <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-3 w-3" />
               </Button>
               <Button variant="ghost" size="icon" onClick={onDismiss} aria-label="Fechar barra">
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           </div>
