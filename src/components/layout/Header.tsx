@@ -62,7 +62,12 @@ export function Header() {
           <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
         </div>
         
-        <div className="w-full flex-1" />
+        {/* Centro: barra de notificações entre o título e os controles */}
+        <div className="flex-1 flex justify-center">
+          <div className="w-full max-w-3xl">
+            <NotificationBar placement="header" />
+          </div>
+        </div>
         
         <div className="flex items-center gap-4">
           <ThemeToggle />
@@ -101,11 +106,6 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </div>
-      <div className="flex justify-center pb-2">
-        <div className="w-full max-w-4xl">
-          <NotificationBar placement="header" />
         </div>
       </div>
     </header>
