@@ -16,9 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { useNotifications } from "@/hooks/useNotifications";
-
 export type NotificationKind = "info" | "success" | "warning" | "destructive";
 
 export interface NotificationItem {
@@ -156,20 +156,25 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
               <PermissionGate required="system:announce">
                 <NotificationManager
                   onSave={async (item) => {
-                    await saveAnnouncement(item);
-                    // Recarregar notificações
+                    await saveAnnouncement(item as any);
+                    // Recarregar notificações filtrando pela rota atual
                     const fetchedNotifications = await fetchNotifications();
-                    setNotifications(fetchedNotifications.map(n => ({
+                    const currentPath = location.pathname;
+                    const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
+                    const mapped = fetchedNotifications.map(n => ({
                       id: n.id,
                       kind: n.kind,
                       message: n.message,
                       href: n.href,
                       linkLabel: n.link_label,
                       type: n.type,
-                    })));
+                      target_routes: (n as any).target_routes || undefined,
+                    }));
+                    setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
                   }}
                 />
-              </PermissionGate>
+              </PermissionGate
+              >
 
               <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
                 <ChevronUp className="h-[14px] w-[14px]" />
@@ -185,13 +190,15 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
 function NotificationManager({
   onSave,
 }: {
-  onSave: (n: { kind: NotificationKind; message: string; href?: string; link_label?: string }) => void
+  onSave: (n: { kind: NotificationKind; message: string; href?: string; link_label?: string; target_routes?: string[] }) => void
 }) {
   const [open, setOpen] = React.useState(false);
   const [kind, setKind] = React.useState<NotificationKind>("info");
   const [message, setMessage] = React.useState<string>("");
   const [href, setHref] = React.useState<string>("");
   const [linkLabel, setLinkLabel] = React.useState<string>("");
+  const [selectedRoutes, setSelectedRoutes] = React.useState<string[]>([]);
+  const availableRoutes = ["/dashboard", "/estoque", "/pedidos", "/depara", "/historico", "/scanner"];
 
   const handleSave = () => {
     onSave({
@@ -199,6 +206,7 @@ function NotificationManager({
       message,
       href: href || undefined,
       link_label: linkLabel || undefined,
+      target_routes: selectedRoutes.length > 0 ? selectedRoutes : undefined,
     });
     setOpen(false);
     // Limpar formulário
@@ -206,6 +214,7 @@ function NotificationManager({
     setMessage("");
     setHref("");
     setLinkLabel("");
+    setSelectedRoutes([]);
   };
 
   return (
@@ -249,6 +258,27 @@ function NotificationManager({
           <div className="grid gap-2">
             <Label htmlFor="linkLabel">Texto do link (opcional)</Label>
             <Input id="linkLabel" value={linkLabel} onChange={(e) => setLinkLabel(e.target.value)} placeholder="Ver mais" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Páginas alvo (opcional)</Label>
+            <div className="text-xs text-muted-foreground">Deixe vazio para mostrar em todas as páginas.</div>
+            <div className="grid grid-cols-2 gap-2">
+              {availableRoutes.map((route) => (
+                <label key={route} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={selectedRoutes.includes(route)}
+                    onCheckedChange={(checked) => {
+                      const isChecked = Boolean(checked);
+                      setSelectedRoutes((prev) =>
+                        isChecked ? [...prev, route] : prev.filter((r) => r !== route)
+                      );
+                    }}
+                  />
+                  <span className="text-sm">{route}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 

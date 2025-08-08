@@ -110,6 +110,7 @@ export function useNotifications() {
     message: string;
     href?: string;
     link_label?: string;
+    target_routes?: string[];
   }) => {
     if (!user) {
       toast({ 
@@ -129,6 +130,7 @@ export function useNotifications() {
           message: announcement.message,
           href: announcement.href || null,
           link_label: announcement.link_label || null,
+          target_routes: announcement.target_routes && announcement.target_routes.length > 0 ? announcement.target_routes : null,
           active: true,
         });
 
