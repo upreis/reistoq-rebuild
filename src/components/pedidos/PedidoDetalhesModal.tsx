@@ -146,7 +146,7 @@ export function PedidoDetalhesModal({
                   <div className="flex items-center gap-2">
                     <p className="text-base font-mono">{item.sku_estoque}</p>
                     {item.linha_destacada && (
-                      <Badge variant="outline" className="text-orange-600">
+                      <Badge variant="outline" className="text-yellow-700">
                         Sem Mapeamento
                       </Badge>
                     )}

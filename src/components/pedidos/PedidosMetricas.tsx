@@ -44,7 +44,7 @@ export function PedidosMetricas({ metricas }: PedidosMetricasProps) {
       titulo: "Aprovados",
       valor: metricas.pedidosAprovados.toString(),
       icone: CheckCircle,
-      cor: "text-orange-600"
+      cor: "text-yellow-600"
     },
     {
       titulo: "Enviados",

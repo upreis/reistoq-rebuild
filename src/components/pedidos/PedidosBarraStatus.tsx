@@ -43,7 +43,7 @@ export function PedidosBarraStatus({ metricas }: PedidosBarraStatusProps) {
       label: "Aprovados",
       valor: metricas.pedidosAprovados.toString(),
       icone: CheckCircle,
-      cor: "text-orange-500"
+      cor: "text-yellow-600"
     },
     {
       label: "Enviados",

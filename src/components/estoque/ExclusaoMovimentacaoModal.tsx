@@ -85,7 +85,7 @@ export function ExclusaoMovimentacaoModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            <AlertTriangle className="h-5 w-5 text-yellow-500" />
             Confirmar Exclusão de Movimentação
           </DialogTitle>
           <DialogDescription>

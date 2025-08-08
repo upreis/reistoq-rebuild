@@ -198,7 +198,7 @@ export function DeParaOperacoesLote({
                       </SelectItem>
                       <SelectItem value="alta">
                         <span className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                          <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
                           Alta
                         </span>
                       </SelectItem>

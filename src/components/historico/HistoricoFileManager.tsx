@@ -242,7 +242,7 @@ export function HistoricoFileManager({ onUploadSuccess }: HistoricoFileManagerPr
         </div>
 
         <div className="flex items-start gap-2 p-2 bg-muted/50 rounded text-xs text-muted-foreground">
-          <AlertCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
+          <AlertCircle className="h-3 w-3 text-yellow-500 mt-0.5 flex-shrink-0" />
           <div>
             <span className="font-medium">Excel (.xlsx): </span>
             produto_id, tipo_movimentacao, quantidade_anterior, quantidade_nova, quantidade_movimentada, motivo, observacoes

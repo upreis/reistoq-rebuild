@@ -74,8 +74,8 @@ export function DeParaMetricasAvancadas({ metricas, loading }: DeParaMetricasAva
       title: 'Alta Prioridade',
       value: metricasExtendidas.urgentes + metricasExtendidas.alta_prioridade,
       icon: TrendingUp,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-yellow-700',
+      bgColor: 'bg-yellow-50',
       description: 'Requer atenção imediata',
       badge: metricasExtendidas.urgentes > 0 ? 'Urgente' : undefined
     },

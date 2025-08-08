@@ -347,10 +347,10 @@ export function DashboardExecutivo() {
         <Card className="hover:shadow-elegant transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Produtos em Alerta</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-yellow-600">
               {metricas.indicadoresOperacionais.produtosAlerta}
             </div>
             <div className="text-xs text-muted-foreground">

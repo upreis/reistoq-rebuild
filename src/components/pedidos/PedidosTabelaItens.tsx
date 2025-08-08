@@ -271,7 +271,7 @@ export function PedidosTabelaItens({
                    <TableCell className={`w-32 ${item.linha_destacada ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`}>
                      <div className="font-mono text-sm truncate">{item.sku}</div>
                      {item.linha_destacada && (
-                       <div className="text-xs text-orange-600 font-medium">
+                       <div className="text-xs text-yellow-700 font-medium">
                          ⚠️ Sem mapeamento
                        </div>
                      )}
@@ -301,7 +301,7 @@ export function PedidosTabelaItens({
                         item.estoque_atual < item.quantidade 
                           ? 'text-red-600 font-semibold' 
                           : item.estoque_atual === 0 
-                            ? 'text-orange-600' 
+                            ? 'text-yellow-700' 
                             : 'text-green-600'
                       }`}>
                         {item.estoque_atual}

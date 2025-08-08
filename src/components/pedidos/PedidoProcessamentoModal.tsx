@@ -203,7 +203,7 @@ export function PedidoProcessamentoModal({
                 <div className="flex items-center gap-2">
                   <code className="text-sm bg-muted px-2 py-1 rounded">{item.sku_estoque}</code>
                   {item.linha_destacada && (
-                    <Badge variant="outline" className="text-orange-600">
+                    <Badge variant="outline" className="text-yellow-700">
                       Sem Mapeamento
                     </Badge>
                   )}
@@ -258,7 +258,7 @@ export function PedidoProcessamentoModal({
                   {simulacao.pode_processar ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : (
-                    <AlertTriangle className="h-5 w-5 text-orange-500" />
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
                   )}
                   Verificação de Condições
                 </CardTitle>

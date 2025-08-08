@@ -345,7 +345,7 @@ export const PrevisaoReposicaoModal: React.FC<PrevisaoReposicaoModalProps> = ({
                       <div className="space-y-2">
                         {(previsao.ia_insights?.sugestoes_otimizacao || []).map((sugestao, index) => (
                           <div key={index} className="flex items-start gap-2 text-sm">
-                            <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                            <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                             <span>{sugestao}</span>
                           </div>
                         ))}

@@ -75,7 +75,7 @@ export function DeParaHistorico({ mapeamentoId }: DeParaHistoricoProps) {
       edicao: { label: 'Editado', color: 'bg-blue-500' },
       exclusao: { label: 'Excluído', color: 'bg-red-500' },
       ativacao: { label: 'Ativado', color: 'bg-emerald-500' },
-      desativacao: { label: 'Desativado', color: 'bg-orange-500' }
+      desativacao: { label: 'Desativado', color: 'bg-yellow-500' }
     };
 
     return acoes[acao as keyof typeof acoes] || { label: acao, color: 'bg-gray-500' };

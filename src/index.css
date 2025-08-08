@@ -16,10 +16,10 @@
     --primary-light: 221 83% 90%;      /* Light blue background */
     --primary-glow: 221 73% 63%;       /* Glow effect */
     
-    /* Accent - REISTOQ Vibrant Orange */
-    --accent: 25 95% 53%;              /* Vibrant orange #FF6B35 */
-    --accent-foreground: 0 0% 98%;     /* White text on orange */
-    --accent-light: 25 95% 90%;        /* Light orange background */
+    /* Accent - Amarelo ReiStoq */
+    --accent: 43 96% 56%;              /* Brand yellow */
+    --accent-foreground: 222 84% 4.9%; /* Dark text on yellow */
+    --accent-light: 43 96% 90%;        /* Light yellow background */
     
     /* Cards & Surfaces */
     --card: 0 0% 100%;                 /* Pure white cards */
@@ -42,9 +42,9 @@
     --success: 142 76% 36%;            /* Fresh green */
     --success-foreground: 0 0% 98%;
     --success-light: 142 76% 90%;
-    --warning: 38 92% 50%;             /* Bright amber */
-    --warning-foreground: 0 0% 98%;
-    --warning-light: 38 92% 90%;
+    --warning: 45 96% 55%;             /* Brand yellow warning */
+    --warning-foreground: 222 84% 4.9%;
+    --warning-light: 45 96% 90%;
     --destructive: 0 84% 60%;          /* Clean red */
     --destructive-foreground: 0 0% 98%;
     --destructive-light: 0 84% 90%;
@@ -52,7 +52,7 @@
     /* Sidebar - Light Theme */
     --sidebar-background: 0 0% 100%;          /* Pure white */
     --sidebar-foreground: 222 84% 4.9%;       /* Deep charcoal */
-    --sidebar-primary: 25 95% 53%;            /* Vibrant orange */
+    --sidebar-primary: 43 96% 56%;            /* Brand yellow */
     --sidebar-primary-foreground: 0 0% 98%;   /* White text */
     --sidebar-accent: 210 40% 96%;            /* Muted background */
     --sidebar-accent-foreground: 222 84% 4.9%; /* Charcoal text */
@@ -60,8 +60,8 @@
     --sidebar-ring: 221 83% 53%;              /* Primary blue ring */
 
     /* Enhanced Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(25 95% 53%));
-    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 95% 63%));
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(43 96% 56%));
+    --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 66%));
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 96%));
     
     /* Shadows */
@@ -99,10 +99,10 @@
     --primary-light: 217 91% 20%;      /* Dark blue background */
     --primary-glow: 217 81% 70%;       /* Bright glow effect */
     
-    /* Accent - Bright Orange for dark */
-    --accent: 25 95% 58%;              /* Bright orange */
-    --accent-foreground: 222 84% 4.9%; /* Dark text on orange */
-    --accent-light: 25 95% 25%;        /* Dark orange background */
+    /* Accent - Amarelo ReiStoq (dark) */
+    --accent: 43 96% 60%;              /* Bright yellow */
+    --accent-foreground: 222 84% 4.9%; /* Dark text on yellow */
+    --accent-light: 43 96% 25%;        /* Dark yellow background */
     
     /* Cards & Surfaces - DARK CARDS FOR BETTER CONTRAST */
     --card: 215 25% 22%;               /* Dark cards for better contrast */
@@ -125,9 +125,9 @@
     --success: 142 76% 45%;
     --success-foreground: 0 0% 100%;
     --success-light: 142 76% 25%;
-    --warning: 38 92% 60%;
+    --warning: 45 96% 60%;
     --warning-foreground: 222 84% 4.9%;
-    --warning-light: 38 92% 25%;
+    --warning-light: 45 96% 25%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
     --destructive-light: 0 63% 15%;
@@ -135,7 +135,7 @@
     /* Sidebar - Dark Theme */
     --sidebar-background: 222 84% 4.9%;       /* Deep charcoal */
     --sidebar-foreground: 210 40% 98%;        /* Near white */
-    --sidebar-primary: 25 95% 58%;            /* Bright orange */
+    --sidebar-primary: 43 96% 60%;            /* Bright yellow */
     --sidebar-primary-foreground: 222 84% 4.9%; /* Dark text on orange */
     --sidebar-accent: 215 25% 27%;            /* Dark muted */
     --sidebar-accent-foreground: 210 40% 98%; /* White text */
@@ -143,8 +143,8 @@
     --sidebar-ring: 217 91% 60%;              /* Blue ring */
     
     /* Enhanced Gradients for dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(25 95% 58%));
-    --gradient-accent: linear-gradient(135deg, hsl(25 95% 58%), hsl(25 95% 68%));
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(43 96% 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(43 96% 60%), hsl(43 96% 70%));
     --gradient-subtle: linear-gradient(180deg, hsl(222 84% 4.9%), hsl(215 25% 20%));
   }
 

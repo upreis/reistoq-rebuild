@@ -140,7 +140,7 @@ export function PedidosTabelaAvancada({
     
     if (diffDays <= 1) return "text-green-600";
     if (diffDays <= 3) return "text-yellow-600";
-    if (diffDays <= 7) return "text-orange-600";
+    if (diffDays <= 7) return "text-yellow-700";
     return "text-red-600";
   };
 
@@ -435,8 +435,8 @@ export function PedidosTabelaAvancada({
                     <span className="text-blue-900 dark:text-blue-100 font-medium">QTD KIT</span>
                     <div className="text-xs text-blue-700 dark:text-blue-200">Mapeado</div>
                   </TableHead>
-                  <TableHead className="px-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 w-24">
-                    <span className="text-orange-900 dark:text-orange-100 font-medium">Total de Itens</span>
+                  <TableHead className="px-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 w-24">
+                    <span className="text-yellow-900 dark:text-yellow-100 font-medium">Total de Itens</span>
                   </TableHead>
                   {colunasVisiveis.tempoDecorrido && <TableHead className="px-2 min-w-[80px]">Tempo</TableHead>}
                  {colunasVisiveis.prioridade && <TableHead className="px-2 min-w-[100px]">Prioridade</TableHead>}
@@ -499,9 +499,9 @@ export function PedidosTabelaAvancada({
                          {item.sku}
                        </div>
                        {item.linha_destacada && (
-                         <div className="text-xs text-orange-600 font-medium">
-                           ⚠️ Sem mapeamento
-                         </div>
+                          <div className="text-xs text-yellow-700 font-medium">
+                            ⚠️ Sem mapeamento
+                          </div>
                        )}
                      </TableCell>
                      
@@ -582,8 +582,8 @@ export function PedidosTabelaAvancada({
                         </div>
                       </TableCell>
 
-                      <TableCell className="px-2 text-center bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 w-24">
-                        <div className="font-bold text-orange-900 dark:text-orange-100">
+                       <TableCell className="px-2 text-center bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 w-24">
+                         <div className="font-bold text-yellow-900 dark:text-yellow-100">
                           {item.mapeamento_aplicado?.quantidade && item.quantidade 
                             ? (item.mapeamento_aplicado.quantidade * item.quantidade).toLocaleString('pt-BR')
                             : '-'
