@@ -1,61 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Fonts are loaded via index.html for better performance */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* REISTOQ Corporate Brand Colors - Light Theme */
-    --background: 248 100% 98%;        /* Clean light gray #f8fafc */
-    --foreground: 214 100% 14%;        /* Navy blue text #1e3a8a */
-    --primary: 214 100% 14%;           /* Navy blue primary #1e3a8a */
-    --primary-foreground: 0 0% 100%;   /* White text on primary */
-    --primary-hover: 214 100% 12%;     /* Darker navy for hover */
-    --primary-light: 214 100% 95%;     /* Light navy background */
+    /* REISTOQ Enhanced Brand Colors - Light Theme */
+    --background: 0 0% 100%;           /* Pure white background */
+    --foreground: 222 84% 4.9%;        /* Deep charcoal text */
     
-    /* Accent - REISTOQ Gold */
-    --accent: 43 96% 56%;              /* REISTOQ Gold #fbbf24 */
-    --accent-foreground: 214 100% 14%; /* Navy text on gold */
+    /* Primary - Professional Blue */
+    --primary: 221 83% 53%;            /* Modern blue #4F46E5 */
+    --primary-foreground: 0 0% 98%;    /* Near white text */
+    --primary-hover: 221 83% 48%;      /* Darker blue for hover */
+    --primary-light: 221 83% 90%;      /* Light blue background */
+    --primary-glow: 221 73% 63%;       /* Glow effect */
+    
+    /* Accent - REISTOQ Vibrant Orange */
+    --accent: 25 95% 53%;              /* Vibrant orange #FF6B35 */
+    --accent-foreground: 0 0% 98%;     /* White text on orange */
+    --accent-light: 25 95% 90%;        /* Light orange background */
     
     /* Cards & Surfaces */
     --card: 0 0% 100%;                 /* Pure white cards */
-    --card-foreground: 214 100% 14%;   /* Navy text on cards */
+    --card-foreground: 222 84% 4.9%;   /* Deep charcoal text */
     --popover: 0 0% 100%;              /* White popovers */
-    --popover-foreground: 214 100% 14%; /* Navy text */
+    --popover-foreground: 222 84% 4.9%; /* Deep charcoal text */
     
     /* Secondary & Muted */
-    --secondary: 210 40% 96%;          /* Light gray secondary */
-    --secondary-foreground: 214 100% 14%; /* Navy text */
+    --secondary: 210 20% 96%;          /* Light warm gray */
+    --secondary-foreground: 222 47% 11%; /* Charcoal text */
     --muted: 210 40% 96%;              /* Muted background */
-    --muted-foreground: 214 50% 40%;   /* Medium navy text */
+    --muted-foreground: 215 16% 47%;   /* Medium gray text */
     
     /* Borders & Inputs */
     --border: 214 32% 91%;             /* Subtle borders */
-    --input: 210 40% 98%;              /* Input background */
-    --ring: 214 100% 14%;              /* Focus ring (navy) */
+    --input: 214 32% 91%;              /* Input background */
+    --ring: 221 83% 53%;               /* Primary blue focus ring */
     
-    /* Status Colors */
-    --success: 142 76% 36%;            /* Green */
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;             /* Orange */
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;          /* Red */
-    --destructive-foreground: 0 0% 100%;
+    /* Enhanced Status Colors */
+    --success: 142 76% 36%;            /* Fresh green */
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 76% 90%;
+    --warning: 38 92% 50%;             /* Bright amber */
+    --warning-foreground: 0 0% 98%;
+    --warning-light: 38 92% 90%;
+    --destructive: 0 84% 60%;          /* Clean red */
+    --destructive-foreground: 0 0% 98%;
+    --destructive-light: 0 84% 90%;
     
     /* Sidebar - Light Theme */
-    --sidebar-background: 248 100% 98%;        /* Same as background */
-    --sidebar-foreground: 214 100% 14%;        /* Same as foreground (navy) */
-    --sidebar-primary: 43 96% 56%;             /* Same as accent (gold) */
-    --sidebar-primary-foreground: 214 100% 14%; /* Navy text on gold */
-    --sidebar-accent: 210 40% 96%;             /* Same as muted */
-    --sidebar-accent-foreground: 214 100% 14%; /* Navy text */
-    --sidebar-border: 214 32% 91%;             /* Same as border */
-    --sidebar-ring: 43 96% 56%;                /* Gold focus ring */
+    --sidebar-background: 0 0% 100%;          /* Pure white */
+    --sidebar-foreground: 222 84% 4.9%;       /* Deep charcoal */
+    --sidebar-primary: 25 95% 53%;            /* Vibrant orange */
+    --sidebar-primary-foreground: 0 0% 98%;   /* White text */
+    --sidebar-accent: 210 40% 96%;            /* Muted background */
+    --sidebar-accent-foreground: 222 84% 4.9%; /* Charcoal text */
+    --sidebar-border: 214 32% 91%;            /* Subtle border */
+    --sidebar-ring: 221 83% 53%;              /* Primary blue ring */
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(214 100% 14%), hsl(43 96% 56%));
-    --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 66%));
-    --gradient-subtle: linear-gradient(180deg, hsl(248 100% 98%), hsl(210 40% 96%));
+    /* Enhanced Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(25 95% 53%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 95% 63%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 96%));
     
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(214 20% 0% / 0.05);
@@ -81,17 +88,21 @@
 }
 
 .dark {
-    /* REISTOQ Corporate Brand Colors - Dark Theme */
-    --background: 215 28% 17%;         /* Sophisticated dark gray #1f2937 */
-    --foreground: 0 0% 100%;           /* Pure white text */
-    --primary: 43 96% 56%;             /* REISTOQ Gold primary #fbbf24 */
-    --primary-foreground: 214 100% 14%; /* Navy text on gold */
-    --primary-hover: 43 96% 60%;       /* Brighter gold for hover */
-    --primary-light: 43 96% 15%;       /* Dark gold background */
+    /* REISTOQ Enhanced Dark Theme */
+    --background: 222 84% 4.9%;        /* Deep charcoal background */
+    --foreground: 210 40% 98%;         /* Near white text */
     
-    /* Accent */
-    --accent: 43 96% 56%;              /* REISTOQ Gold accent */
-    --accent-foreground: 214 100% 14%; /* Navy text on gold */
+    /* Primary - Brighter Blue for dark mode */
+    --primary: 217 91% 60%;            /* Brighter blue */
+    --primary-foreground: 222 84% 4.9%; /* Dark text on blue */
+    --primary-hover: 217 91% 65%;      /* Even brighter hover */
+    --primary-light: 217 91% 20%;      /* Dark blue background */
+    --primary-glow: 217 81% 70%;       /* Bright glow effect */
+    
+    /* Accent - Bright Orange for dark */
+    --accent: 25 95% 58%;              /* Bright orange */
+    --accent-foreground: 222 84% 4.9%; /* Dark text on orange */
+    --accent-light: 25 95% 25%;        /* Dark orange background */
     
     /* Cards & Surfaces - DARK CARDS FOR BETTER CONTRAST */
     --card: 215 25% 22%;               /* Dark cards for better contrast */
@@ -110,28 +121,31 @@
     --input: 215 25% 27%;              /* Dark input background */
     --ring: 43 96% 56%;                /* Gold focus ring */
     
-    /* Status Colors - enhanced for dark */
+    /* Enhanced Status Colors for dark */
     --success: 142 76% 45%;
     --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 25%;
     --warning: 38 92% 60%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 65%;
+    --warning-foreground: 222 84% 4.9%;
+    --warning-light: 38 92% 25%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 63% 15%;
     
     /* Sidebar - Dark Theme */
-    --sidebar-background: 215 28% 17%;         /* Same as background */
-    --sidebar-foreground: 0 0% 100%;           /* Same as foreground (white) */
-    --sidebar-primary: 43 96% 56%;             /* Same as accent (gold) */
-    --sidebar-primary-foreground: 214 100% 14%; /* Navy text on gold */
-    --sidebar-accent: 215 25% 27%;             /* Same as muted */
-    --sidebar-accent-foreground: 0 0% 100%;    /* White text */
-    --sidebar-border: 215 25% 27%;             /* Same as border */
-    --sidebar-ring: 43 96% 56%;                /* Gold focus ring */
+    --sidebar-background: 222 84% 4.9%;       /* Deep charcoal */
+    --sidebar-foreground: 210 40% 98%;        /* Near white */
+    --sidebar-primary: 25 95% 58%;            /* Bright orange */
+    --sidebar-primary-foreground: 222 84% 4.9%; /* Dark text on orange */
+    --sidebar-accent: 215 25% 27%;            /* Dark muted */
+    --sidebar-accent-foreground: 210 40% 98%; /* White text */
+    --sidebar-border: 215 25% 27%;            /* Dark borders */
+    --sidebar-ring: 217 91% 60%;              /* Blue ring */
     
-    /* Gradients for dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 66%));
-    --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 46%));
-    --gradient-subtle: linear-gradient(180deg, hsl(215 28% 17%), hsl(215 25% 20%));
+    /* Enhanced Gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(25 95% 58%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 95% 58%), hsl(25 95% 68%));
+    --gradient-subtle: linear-gradient(180deg, hsl(222 84% 4.9%), hsl(215 25% 20%));
   }
 
 @layer base {
