@@ -2,6 +2,7 @@ import React from 'react';
 import { Crown, Home, Package, ShoppingCart, ScanLine, ArrowLeftRight, Settings, History } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '@/hooks/use-theme';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Sidebar,
   SidebarContent,
@@ -19,43 +20,50 @@ const navigationItems = [
     title: 'Dashboard',
     url: '/',
     icon: Home,
-    description: 'Visão geral'
+    description: 'Visão geral',
+    permission: 'dashboard:view'
   },
   {
     title: 'Estoque',
     url: '/estoque',
     icon: Package,
-    description: 'Gestão de produtos'
+    description: 'Gestão de produtos',
+    permission: 'estoque:view'
   },
   {
     title: 'Pedidos',
     url: '/pedidos',
     icon: ShoppingCart,
-    description: 'Gestão de pedidos'
+    description: 'Gestão de pedidos',
+    permission: 'pedidos:view'
   },
   {
     title: 'SKU Mapa',
     url: '/depara',
     icon: ArrowLeftRight,
-    description: 'Mapeamento de SKUs'
+    description: 'Mapeamento de SKUs',
+    permission: 'depara:view'
   },
   {
     title: 'Scanner',
     url: '/scanner',
     icon: ScanLine,
-    description: 'Leitor de códigos'
+    description: 'Leitor de códigos',
+    permission: 'scanner:use'
   },
   {
     title: 'Histórico',
     url: '/historico',
     icon: History,
-    description: 'Histórico de ações'
+    description: 'Histórico de ações',
+    permission: 'historico:view'
   },
   {
     title: 'Configurações',
     url: '/configuracoes',
     icon: Settings,
-    description: 'Configurações do sistema'
+    description: 'Configurações do sistema',
+    permission: 'configuracoes:view'
   }
 ];
 
@@ -63,6 +71,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { theme } = useTheme();
+  const { isLoading, hasPermission } = usePermissions();
   const collapsed = state === 'collapsed';
   
   const isActive = (path: string) => {
@@ -75,6 +84,8 @@ export function AppSidebar() {
       ? 'bg-accent/10 text-accent border-r-2 border-accent' 
       : 'text-sidebar-foreground hover:bg-accent/5 hover:text-accent';
   };
+
+  const itemsToShow = isLoading ? navigationItems : navigationItems.filter((i) => hasPermission(i.permission));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -100,7 +111,7 @@ export function AppSidebar() {
           {!collapsed && <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
+              {itemsToShow.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
                     <NavLink

@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationAccountsManager } from "@/components/integrations/IntegrationAccountsManager";
+import { RolePermissionManager } from "@/components/auth/RolePermissionManager";
 
 export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
@@ -411,6 +412,10 @@ export function Configuracoes() {
 
       {/* Integrações · Contas */}
       <IntegrationAccountsManager />
+
+      {/* Cargos e Permissões */}
+      <RolePermissionManager />
+
 
       {/* API Configuration */}
       <Card>

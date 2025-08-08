@@ -19,6 +19,7 @@ import { Historico } from '@/components/pages/Historico';
 import { Scanner } from '@/components/pages/Scanner';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 import { Loader2 } from 'lucide-react';
+import { PermissionGate } from '@/components/auth/PermissionGate';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,7 +95,9 @@ const App = () => {
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <Dashboard />
+                        <PermissionGate required="dashboard:view">
+                          <Dashboard />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
@@ -102,7 +105,9 @@ const App = () => {
                   <Route path="/estoque" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <Estoque />
+                        <PermissionGate required="estoque:view">
+                          <Estoque />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
@@ -110,7 +115,9 @@ const App = () => {
                   <Route path="/pedidos" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <Pedidos />
+                        <PermissionGate required="pedidos:view">
+                          <Pedidos />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
@@ -118,7 +125,9 @@ const App = () => {
                   <Route path="/depara" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <DePara />
+                        <PermissionGate required="depara:view">
+                          <DePara />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
@@ -126,7 +135,9 @@ const App = () => {
                   <Route path="/historico" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <Historico />
+                        <PermissionGate required="historico:view">
+                          <Historico />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
@@ -134,7 +145,9 @@ const App = () => {
                   <Route path="/scanner" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <Scanner />
+                        <PermissionGate required="scanner:use">
+                          <Scanner />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
@@ -142,7 +155,9 @@ const App = () => {
                   <Route path="/configuracoes" element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <Configuracoes />
+                        <PermissionGate required="configuracoes:view">
+                          <Configuracoes />
+                        </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
                   } />
