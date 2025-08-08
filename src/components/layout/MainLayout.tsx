@@ -10,6 +10,7 @@ import { Scanner } from '@/components/pages/Scanner';
 import { Historico } from '@/components/pages/Historico';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 import DePara from '@/components/pages/DePara';
+import { NotificationBar } from '@/components/notifications/NotificationBar';
 
 interface MainLayoutProps {
   children?: React.ReactNode;
@@ -22,6 +23,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1">
           <Header />
+          <NotificationBar />
           <main className="flex-1 p-6 overflow-auto">
             {children || (
               <Routes>
