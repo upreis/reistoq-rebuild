@@ -105,18 +105,18 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
 
   if (collapsed) {
     return (
-      <div className={containerCls}>
-        <div className="flex items-center gap-2 rounded-full border bg-background/95 px-3 py-1 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-fade-in">
-          <Bell className="h-4 w-4 text-primary" />
-          <span className="text-xs text-muted-foreground">Avisos</span>
-          <button
-            onClick={() => setCollapsed(false)}
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-          >
-            <ChevronDown className="h-3 w-3" /> Mostrar
-          </button>
+        <div className={containerCls}>
+          <div className="flex items-center gap-2 rounded-full border bg-background/95 px-3 py-1 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-fade-in">
+            <Bell className="h-[14px] w-[14px] text-primary" />
+            <span className="text-[13px] text-muted-foreground">Avisos</span>
+            <button
+              onClick={() => setCollapsed(false)}
+              className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline"
+            >
+              <ChevronDown className="h-[14px] w-[14px]" /> Mostrar
+            </button>
+          </div>
         </div>
-      </div>
     );
   }
 
@@ -137,14 +137,14 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
       <div className={innerWrapCls}>
         <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm p-2 px-3`}> 
           <div className="flex w-full items-center gap-2">
-              <Bell className="h-3 w-3 text-primary" />
+              <Bell className="h-[14px] w-[14px] text-primary" />
             <div className="flex-1">
-              <AlertDescription className="text-sm text-foreground">
+              <AlertDescription className="text-[13px] text-foreground">
                 {activeItem.message}
                 {activeItem.href && (
                   <a
                     href={activeItem.href}
-                    className="ml-2 text-sm text-primary underline underline-offset-4 hover-scale"
+                    className="ml-2 text-[13px] text-primary underline underline-offset-4 hover-scale"
                   >
                     {activeItem.linkLabel ?? "Ver mais"}
                   </a>
@@ -172,7 +172,7 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
               </PermissionGate>
 
               <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
-                <ChevronUp className="h-3 w-3" />
+                <ChevronUp className="h-[14px] w-[14px]" />
               </Button>
             </div>
           </div>
