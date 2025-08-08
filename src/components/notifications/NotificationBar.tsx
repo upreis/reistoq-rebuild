@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { PermissionGate } from "@/components/auth/PermissionGate";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export type NotificationKind = "info" | "success" | "warning" | "destructive";
 
@@ -25,12 +26,12 @@ export interface NotificationItem {
   message: string;
   href?: string;
   linkLabel?: string;
+  type?: "system_alert" | "announcement";
 }
 
 const COLLAPSE_KEY = "reistoq.notification.collapsed";
-const MANUAL_KEY = "reistoq.notification.manual";
 
-function usePersistentState<T>(key: string, initial: T) {
+export function usePersistentState<T>(key: string, initial: T) {
   const [state, setState] = React.useState<T>(() => {
     try {
       const raw = localStorage.getItem(key);
@@ -50,17 +51,47 @@ function usePersistentState<T>(key: string, initial: T) {
 export function NotificationBar() {
   const { toast } = useToast();
   const [collapsed, setCollapsed] = usePersistentState<boolean>(COLLAPSE_KEY, false);
-  const [manual, setManual] = usePersistentState<NotificationItem | null>(MANUAL_KEY, null);
+  const [notifications, setNotifications] = React.useState<NotificationItem[]>([]);
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const { fetchNotifications, saveAnnouncement, removeAnnouncement, dismissNotification } = useNotifications();
 
-  // Placeholder: espaço reservado para integrar alertas automáticos do backend
-  // Ex.: buscar da tabela "system_alerts" (a ser criada) e rotacionar itens
-  const systemAlerts: NotificationItem[] = [];
+  // Buscar notificações na montagem
+  React.useEffect(() => {
+    const loadNotifications = async () => {
+      const fetchedNotifications = await fetchNotifications();
+      setNotifications(fetchedNotifications.map(n => ({
+        id: n.id,
+        kind: n.kind,
+        message: n.message,
+        href: n.href,
+        linkLabel: n.link_label,
+        type: n.type,
+      })));
+    };
+    loadNotifications();
+  }, []);
 
-  const activeItem: NotificationItem | null = manual ?? systemAlerts[0] ?? null;
+  // Rotação automática de notificações a cada 8 segundos
+  React.useEffect(() => {
+    if (notifications.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % notifications.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [notifications.length]);
+
+  const activeItem: NotificationItem | null = notifications[currentIndex] ?? null;
 
   const onDismiss = () => {
-    // Ao dispensar, apenas colapsa (permite reabrir)
-    setCollapsed(true);
+    if (activeItem) {
+      dismissNotification(activeItem.id, activeItem.type || "system_alert");
+      // Remover da lista local
+      setNotifications(prev => prev.filter(n => n.id !== activeItem.id));
+      // Ajustar índice se necessário
+      if (currentIndex >= notifications.length - 1) {
+        setCurrentIndex(0);
+      }
+    }
   };
 
   if (collapsed) {
@@ -115,14 +146,18 @@ export function NotificationBar() {
             <div className="flex items-center gap-1">
               <PermissionGate required="system:announce">
                 <NotificationManager
-                  initial={manual ?? undefined}
-                  onSave={(item) => {
-                    setManual(item);
-                    toast({ title: "Anúncio atualizado", description: "A barra refletirá sua mensagem." });
-                  }}
-                  onClear={() => {
-                    setManual(null);
-                    toast({ title: "Anúncio removido", description: "A barra voltará a mostrar alertas do sistema." });
+                  onSave={async (item) => {
+                    await saveAnnouncement(item);
+                    // Recarregar notificações
+                    const fetchedNotifications = await fetchNotifications();
+                    setNotifications(fetchedNotifications.map(n => ({
+                      id: n.id,
+                      kind: n.kind,
+                      message: n.message,
+                      href: n.href,
+                      linkLabel: n.link_label,
+                      type: n.type,
+                    })));
                   }}
                 />
               </PermissionGate>
@@ -142,30 +177,29 @@ export function NotificationBar() {
 }
 
 function NotificationManager({
-  initial,
   onSave,
-  onClear,
 }: {
-  initial?: NotificationItem
-  onSave: (n: NotificationItem) => void
-  onClear: () => void
+  onSave: (n: { kind: NotificationKind; message: string; href?: string; link_label?: string }) => void
 }) {
   const [open, setOpen] = React.useState(false);
-  const [kind, setKind] = React.useState<NotificationKind>(initial?.kind ?? "info");
-  const [message, setMessage] = React.useState<string>(initial?.message ?? "");
-  const [href, setHref] = React.useState<string>(initial?.href ?? "");
-  const [linkLabel, setLinkLabel] = React.useState<string>(initial?.linkLabel ?? "");
+  const [kind, setKind] = React.useState<NotificationKind>("info");
+  const [message, setMessage] = React.useState<string>("");
+  const [href, setHref] = React.useState<string>("");
+  const [linkLabel, setLinkLabel] = React.useState<string>("");
 
   const handleSave = () => {
-    const item: NotificationItem = {
-      id: initial?.id ?? `manual-${Date.now()}`,
+    onSave({
       kind,
       message,
       href: href || undefined,
-      linkLabel: linkLabel || undefined,
-    };
-    onSave(item);
+      link_label: linkLabel || undefined,
+    });
     setOpen(false);
+    // Limpar formulário
+    setKind("info");
+    setMessage("");
+    setHref("");
+    setLinkLabel("");
   };
 
   return (
@@ -177,7 +211,7 @@ function NotificationManager({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Gerenciar anúncio manual</DialogTitle>
+          <DialogTitle>Criar novo anúncio</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -214,10 +248,7 @@ function NotificationManager({
 
         <DialogFooter className="gap-2">
           <Button variant="secondary" onClick={() => setOpen(false)}>Cancelar</Button>
-          {initial && (
-            <Button variant="outline" onClick={() => { onClear(); setOpen(false); }}>Remover anúncio</Button>
-          )}
-          <Button onClick={handleSave} disabled={!message.trim()}>Salvar</Button>
+          <Button onClick={handleSave} disabled={!message.trim()}>Criar anúncio</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

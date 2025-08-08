@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          href: string | null
+          id: string
+          kind: string
+          link_label: string | null
+          message: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          href?: string | null
+          id?: string
+          kind: string
+          link_label?: string | null
+          message: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          href?: string | null
+          id?: string
+          kind?: string
+          link_label?: string | null
+          message?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_permissions: {
         Row: {
           description: string | null
@@ -826,6 +865,69 @@ export type Database = {
         }
         Relationships: []
       }
+      system_alerts: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          expires_at: string | null
+          href: string | null
+          id: string
+          kind: string
+          link_label: string | null
+          message: string
+          priority: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          expires_at?: string | null
+          href?: string | null
+          id?: string
+          kind: string
+          link_label?: string | null
+          message: string
+          priority?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          expires_at?: string | null
+          href?: string | null
+          id?: string
+          kind?: string
+          link_label?: string | null
+          message?: string
+          priority?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_dismissed_notifications: {
+        Row: {
+          dismissed_at: string
+          id: string
+          notification_id: string
+          notification_type: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          notification_id: string
+          notification_type: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          notification_id?: string
+          notification_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_permission_overrides: {
         Row: {
           allow: boolean
@@ -901,6 +1003,10 @@ export type Database = {
       accept_invite: {
         Args: { _token: string }
         Returns: Json
+      }
+      cleanup_expired_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       complete_onboarding: {
         Args: {
