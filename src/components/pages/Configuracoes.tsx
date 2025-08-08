@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationAccountsManager } from "@/components/integrations/IntegrationAccountsManager";
 import { RolePermissionManager } from "@/components/auth/RolePermissionManager";
+import { AnnouncementsManager } from "@/components/notifications/AnnouncementsManager";
 
 export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
@@ -415,6 +416,11 @@ export function Configuracoes() {
 
       {/* Cargos e Permissões */}
       <RolePermissionManager />
+
+      {/* Avisos e Anúncios */}
+      <AnnouncementsManager />
+
+
 
 
       {/* API Configuration */}

@@ -11,6 +11,7 @@ interface Notification {
   link_label?: string;
   type: "system_alert" | "announcement";
   priority?: number;
+  target_routes?: string[];
 }
 
 const DISMISSED_KEY = "reistoq.notification.dismissed";
@@ -89,6 +90,7 @@ export function useNotifications() {
           link_label: announcement.link_label || undefined,
           type: "announcement" as const,
           priority: 0,
+          target_routes: announcement.target_routes || undefined,
         })),
       ];
 

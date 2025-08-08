@@ -1,5 +1,6 @@
 import React from "react";
-import { Bell, ChevronUp, ChevronDown, X, Settings2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Bell, ChevronUp, ChevronDown, Settings2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ export interface NotificationItem {
   href?: string;
   linkLabel?: string;
   type?: "system_alert" | "announcement";
+  target_routes?: string[];
 }
 
 const COLLAPSE_KEY = "reistoq.notification.collapsed";
@@ -56,22 +58,27 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   const { fetchNotifications, saveAnnouncement, removeAnnouncement, dismissNotification } = useNotifications();
   const containerCls = placement === 'sticky' ? 'sticky top-0 z-40 flex w-full justify-center' : 'w-full flex justify-center';
   const innerWrapCls = placement === 'sticky' ? 'mx-3 mt-3 w-full max-w-4xl animate-fade-in' : 'mx-1 mt-1 w-full max-w-3xl animate-fade-in';
+  const location = useLocation();
 
   // Buscar notificações na montagem
   React.useEffect(() => {
     const loadNotifications = async () => {
       const fetchedNotifications = await fetchNotifications();
-      setNotifications(fetchedNotifications.map(n => ({
+      const currentPath = location.pathname;
+      const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
+      const mapped = fetchedNotifications.map(n => ({
         id: n.id,
         kind: n.kind,
         message: n.message,
         href: n.href,
         linkLabel: n.link_label,
         type: n.type,
-      })));
+        target_routes: (n as any).target_routes || undefined,
+      }));
+      setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
     };
     loadNotifications();
-  }, []);
+  }, [location.pathname]);
 
   // Rotação automática de notificações a cada 8 segundos
   React.useEffect(() => {
@@ -166,9 +173,6 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
 
               <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
                 <ChevronUp className="h-3 w-3" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onDismiss} aria-label="Fechar barra">
-                <X className="h-3 w-3" />
               </Button>
             </div>
           </div>

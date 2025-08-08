@@ -25,6 +25,10 @@ export type Database = {
           kind: string
           link_label: string | null
           message: string
+          organization_id: string | null
+          target_roles: string[] | null
+          target_routes: string[] | null
+          target_users: string[] | null
           updated_at: string
         }
         Insert: {
@@ -37,6 +41,10 @@ export type Database = {
           kind: string
           link_label?: string | null
           message: string
+          organization_id?: string | null
+          target_roles?: string[] | null
+          target_routes?: string[] | null
+          target_users?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -49,6 +57,10 @@ export type Database = {
           kind?: string
           link_label?: string | null
           message?: string
+          organization_id?: string | null
+          target_roles?: string[] | null
+          target_routes?: string[] | null
+          target_users?: string[] | null
           updated_at?: string
         }
         Relationships: []
@@ -1044,6 +1056,10 @@ export type Database = {
       seed_admin_role_for_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: undefined
+      }
+      user_matches_announcement: {
+        Args: { _target_users: string[]; _target_roles: string[] }
+        Returns: boolean
       }
     }
     Enums: {
