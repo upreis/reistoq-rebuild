@@ -1,6 +1,7 @@
 import { Plus, RefreshCw, Trash2, FileText, Bell, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 
 interface EstoqueHeaderProps {
   produtosSelecionados: string[];
@@ -31,14 +32,16 @@ export function EstoqueHeader({
       </div>
       <div className="flex gap-2">
         {produtosSelecionados.length > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={onExcluirSelecionados}
-            className="mr-2"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir Selecionados ({produtosSelecionados.length})
-          </Button>
+          <PermissionGate required="estoque:delete">
+            <Button 
+              variant="destructive" 
+              onClick={onExcluirSelecionados}
+              className="mr-2"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir Selecionados ({produtosSelecionados.length})
+            </Button>
+          </PermissionGate>
         )}
         
         <Button variant="outline" onClick={onEnviarAlertas}>
@@ -79,10 +82,12 @@ export function EstoqueHeader({
           Atualizar
         </Button>
         
-        <Button variant="premium" onClick={onNovoProduto}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Produto
-        </Button>
+        <PermissionGate required="estoque:create">
+          <Button variant="premium" onClick={onNovoProduto}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Produto
+          </Button>
+        </PermissionGate>
       </div>
     </div>
   );

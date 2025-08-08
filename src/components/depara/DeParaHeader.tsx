@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeftRight, Plus, Trash2 } from "lucide-react";
 import { DeParaControleAlertas } from "./DeParaControleAlertas";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 
 interface DeParaHeaderProps {
   mapeamentosSelecionados: string[];
@@ -27,23 +28,27 @@ export function DeParaHeader({
       
       <div className="flex items-center gap-2">
         {mapeamentosSelecionados.length > 0 && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onExcluirSelecionados}
-            className="gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Excluir Selecionados ({mapeamentosSelecionados.length})
-          </Button>
+          <PermissionGate required="depara:delete">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onExcluirSelecionados}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir Selecionados ({mapeamentosSelecionados.length})
+            </Button>
+          </PermissionGate>
         )}
         
         <DeParaControleAlertas />
         
-        <Button onClick={onNovoMapeamento} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Mapeamento
-        </Button>
+        <PermissionGate required="depara:create">
+          <Button onClick={onNovoMapeamento} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Novo Mapeamento
+          </Button>
+        </PermissionGate>
       </div>
     </div>
   );

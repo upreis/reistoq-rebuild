@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/pagination";
 import { Produto } from "@/hooks/useEstoque";
 import { ProdutoImageUpload } from "./ProdutoImageUpload";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 
 interface EstoqueTabelaProps {
   produtos: Produto[];
@@ -242,11 +243,13 @@ export function EstoqueTabela({
                         {formatarMoeda(produto.preco_venda || 0)}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()} className="w-20">
-                        <ProdutoImageUpload
-                          produtoId={produto.id}
-                          currentImageUrl={produto.url_imagem}
-                          onImageUploaded={onImageUploaded}
-                        />
+                        <PermissionGate required="estoque:edit">
+                          <ProdutoImageUpload
+                            produtoId={produto.id}
+                            currentImageUrl={produto.url_imagem}
+                            onImageUploaded={onImageUploaded}
+                          />
+                        </PermissionGate>
                       </TableCell>
                       <TableCell className="w-20">
                         <Badge variant={statusInfo.variant} className="text-xs">
@@ -255,22 +258,26 @@ export function EstoqueTabela({
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[120px]">
                         <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs px-2"
-                            onClick={() => onAbrirEdicao(produto)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="secondary" 
-                            className="text-xs px-2"
-                            onClick={() => onMovimentar(produto)}
-                          >
-                            Movimentar
-                          </Button>
+                          <PermissionGate required="estoque:edit">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs px-2"
+                              onClick={() => onAbrirEdicao(produto)}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </PermissionGate>
+                          <PermissionGate required="estoque:edit">
+                            <Button 
+                              size="sm" 
+                              variant="secondary" 
+                              className="text-xs px-2"
+                              onClick={() => onMovimentar(produto)}
+                            >
+                              Movimentar
+                            </Button>
+                          </PermissionGate>
                           {onAbrirPrevisao && (
                             <Button 
                               size="sm" 

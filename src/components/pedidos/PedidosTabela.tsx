@@ -27,6 +27,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Pedido } from "@/hooks/usePedidos";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 
 interface PedidosTabelaProps {
   pedidos: Pedido[];
@@ -210,15 +211,19 @@ export function PedidosTabela({
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEditarPedido(pedido)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        {pedido.situacao === 'pendente' && (
-                          <DropdownMenuItem onClick={() => onProcessarPedido(pedido)}>
-                            <Package className="mr-2 h-4 w-4" />
-                            Processar
+                        <PermissionGate required="pedidos:edit">
+                          <DropdownMenuItem onClick={() => onEditarPedido(pedido)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
                           </DropdownMenuItem>
+                        </PermissionGate>
+                        {pedido.situacao === 'pendente' && (
+                          <PermissionGate required="pedidos:process">
+                            <DropdownMenuItem onClick={() => onProcessarPedido(pedido)}>
+                              <Package className="mr-2 h-4 w-4" />
+                              Processar
+                            </DropdownMenuItem>
+                          </PermissionGate>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
