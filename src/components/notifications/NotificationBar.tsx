@@ -48,12 +48,13 @@ export function usePersistentState<T>(key: string, initial: T) {
   return [state, setState] as const;
 }
 
-export function NotificationBar() {
+export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky' | 'header' }) {
   const { toast } = useToast();
   const [collapsed, setCollapsed] = usePersistentState<boolean>(COLLAPSE_KEY, false);
   const [notifications, setNotifications] = React.useState<NotificationItem[]>([]);
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const { fetchNotifications, saveAnnouncement, removeAnnouncement, dismissNotification } = useNotifications();
+  const containerCls = placement === 'sticky' ? 'sticky top-0 z-40 flex w-full justify-center' : 'w-full flex justify-center';
 
   // Buscar notificações na montagem
   React.useEffect(() => {
@@ -96,8 +97,8 @@ export function NotificationBar() {
 
   if (collapsed) {
     return (
-      <div className="sticky top-0 z-40 flex w-full justify-center">
-        <div className="mt-2 flex items-center gap-2 rounded-full border bg-background/95 px-3 py-1 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-fade-in">
+      <div className={containerCls}>
+        <div className="flex items-center gap-2 rounded-full border bg-background/95 px-3 py-1 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-fade-in">
           <Bell className="h-4 w-4 text-primary" />
           <span className="text-xs text-muted-foreground">Avisos</span>
           <button
@@ -124,7 +125,7 @@ export function NotificationBar() {
   } as const;
 
   return (
-    <div className="sticky top-0 z-40 flex w-full justify-center">
+    <div className={containerCls}>
       <div className="mx-3 mt-3 w-full max-w-4xl animate-fade-in">
         <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm`}> 
           <div className="flex w-full items-center gap-3">

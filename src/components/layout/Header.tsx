@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Settings, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { NotificationBar } from "@/components/notifications/NotificationBar";
 
 export function Header() {
   const { user, signOut, organizacao } = useAuth();
@@ -52,53 +53,60 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-      <SidebarTrigger />
-      
-      <div className="flex flex-col">
-        <h1 className="text-lg font-bold text-foreground">{pageInfo.title}</h1>
-        <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
-      </div>
-      
-      <div className="w-full flex-1" />
-      
-      <div className="flex items-center gap-4">
-        <ThemeToggle />
+    <header className="border-b bg-background px-4 lg:px-6">
+      <div className="flex h-14 items-center gap-4">
+        <SidebarTrigger />
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {getUserInitials()}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
+        <div className="flex flex-col">
+          <h1 className="text-lg font-bold text-foreground">{pageInfo.title}</h1>
+          <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
+        </div>
+        
+        <div className="w-full flex-1" />
+        
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
           
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <div className="flex flex-col space-y-1 p-2">
-              <p className="text-sm font-medium">{user?.email}</p>
-              {organizacao && (
-                <p className="text-xs text-muted-foreground">{organizacao.nome}</p>
-              )}
-            </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
             
-            <DropdownMenuSeparator />
-            
-            <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações
-            </DropdownMenuItem>
-            
-            <DropdownMenuSeparator />
-            
-            <DropdownMenuItem onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium">{user?.email}</p>
+                {organizacao && (
+                  <p className="text-xs text-muted-foreground">{organizacao.nome}</p>
+                )}
+              </div>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <div className="flex justify-center pb-2">
+        <div className="w-full max-w-4xl">
+          <NotificationBar placement="header" />
+        </div>
       </div>
     </header>
   );
