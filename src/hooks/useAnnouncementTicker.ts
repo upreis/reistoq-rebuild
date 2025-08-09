@@ -45,7 +45,7 @@ export function useAnnouncementTicker() {
     load();
   }, []);
 
-  const props: Partial<AnnouncementTickerProps> & { themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>> } = {
+  const props: AnnouncementTickerProps = {
     items,
     mode: "continuous",
     speed: 80,
