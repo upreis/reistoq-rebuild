@@ -385,7 +385,7 @@ function CssContinuousTicker({
   );
 
   return (
-    <div ref={viewportRef} className="ticker-viewport relative h-[28px] sm:h-[34px] overflow-hidden" aria-live="polite">
+    <div ref={viewportRef} className="ticker-viewport relative h-[32px] sm:h-[38px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
         className="ticker-track absolute left-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-3 pr-6 will-change-transform"
@@ -500,10 +500,10 @@ function ContinuousTicker({
       const bw = Math.max(1, Math.floor(track.scrollWidth / Math.max(1, repeatCount)));
       const cw = container.clientWidth;
       const needed = Math.max(2, Math.ceil(cw / bw) + 2);
+      const next = Math.max(2, Math.min(3, needed)); // clamp to avoid many duplicates on screen
       setBaseWidth(bw);
-      if (needed !== repeatCount) setRepeatCount(needed);
+      if (next !== repeatCount) setRepeatCount(next);
     };
-
     measure();
     const ro1 = new ResizeObserver(measure);
     const ro2 = new ResizeObserver(measure);
@@ -569,7 +569,7 @@ function ContinuousTicker({
   );
 
   return (
-    <div ref={containerRef} className="relative h-[28px] sm:h-[34px] overflow-hidden" aria-live="polite">
+    <div ref={containerRef} className="relative h-[32px] sm:h-[38px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
@@ -621,7 +621,7 @@ function SlideTicker({
   }, [paused, speed, count, loop]);
 
   return (
-    <div className="relative h-[28px] sm:h-[34px] overflow-hidden" aria-live="polite">
+    <div className="relative h-[32px] sm:h-[38px] overflow-hidden" aria-live="polite">
       <div
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
         style={{ transform: `translateY(-50%) translateX(calc(50% - ${index * 100}%))` }}
