@@ -71,6 +71,24 @@ export function useNotifications() {
         console.error("Erro ao buscar anúncios:", announcementError);
       }
 
+      // Carregar cargos do usuário para filtrar por público-alvo
+      const { data: myRoles } = await supabase
+        .from("user_role_assignments")
+        .select("role_id");
+      const roleSet = new Set<string>((myRoles || []).map((r: any) => String(r.role_id)));
+
+      // Filtrar anúncios por alvo (usuários/cargos) e validade; rotas serão filtradas na NotificationBar
+      const filteredAnnouncements = (announcements || []).filter((a: any) => {
+        const users: string[] | null = (a.target_users as any) || null;
+        const roles: string[] | null = (a.target_roles as any) || null;
+        // prioridade: se há usuários-alvo, precisa conter o usuário
+        if (users && users.length) return !!user && users.includes(user.id);
+        // senão, se há cargos alvo, precisa intersectar
+        if (roles && roles.length) return roles.some((rid) => roleSet.has(String(rid)));
+        // sem alvo específico => todos da organização
+        return true;
+      });
+
       // Converter para formato padrão
       const notifications: Notification[] = [
         ...(systemAlerts || []).map((alert) => ({
@@ -82,7 +100,7 @@ export function useNotifications() {
           type: "system_alert" as const,
           priority: alert.priority,
         })),
-        ...(announcements || []).map((announcement) => ({
+        ...filteredAnnouncements.map((announcement: any) => ({
           id: announcement.id,
           kind: announcement.kind as "info" | "success" | "warning" | "destructive",
           message: announcement.message,
@@ -90,7 +108,7 @@ export function useNotifications() {
           link_label: announcement.link_label || undefined,
           type: "announcement" as const,
           priority: 0,
-          target_routes: announcement.target_routes || undefined,
+          target_routes: (announcement.target_routes as string[] | null) || undefined,
         })),
       ];
 
