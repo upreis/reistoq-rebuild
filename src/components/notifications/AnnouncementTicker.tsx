@@ -246,7 +246,7 @@ function Divider({ type, custom }: { type: NonNullable<AnnouncementTickerProps["
   if (type === "dot") return <span aria-hidden className="mx-3 inline-block h-1 w-1 rounded-full bg-foreground/30" />;
   if (type === "slash") return <span aria-hidden className="mx-3 inline-block select-none text-foreground/50">/</span>;
   // default bar - full height divider
-  return <span aria-hidden className="mx-6 inline-block w-px self-stretch bg-foreground/20" />;
+  return <span aria-hidden className="mx-3 inline-block w-px self-stretch bg-foreground/20" />;
 }
 
 function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>; variant?: "chip" | "plain" }) {
@@ -374,7 +374,7 @@ function CssContinuousTicker({
   }, [copies, items, speed]);
 
   const block = (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-3">
       {items.map((item, idx) => (
         <span key={`css-item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
@@ -385,13 +385,13 @@ function CssContinuousTicker({
   );
 
   return (
-    <div ref={viewportRef} className="ticker-viewport relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
+    <div ref={viewportRef} className="ticker-viewport relative h-[28px] sm:h-[34px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
-        className="ticker-track absolute left-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-6 pr-12 will-change-transform"
+        className="ticker-track absolute left-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-3 pr-6 will-change-transform"
       >
         {Array.from({ length: copies }).map((_, i) => (
-          <div key={`blk-${i}`} className="inline-flex items-center gap-6 pr-12">
+          <div key={`blk-${i}`} className="inline-flex items-center gap-3 pr-6">
             {block}
             <Divider type={divider} custom={customDivider} />
           </div>
@@ -437,7 +437,7 @@ function TickerRow({
     );
   }
 
-  if (variant === "plain") {
+  if (false) {
     return (
       <CssContinuousTicker
         items={items}
@@ -558,7 +558,7 @@ function ContinuousTicker({
   }, [paused, speed, baseWidth, loop]);
 
   const row = (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-3">
       {items.map((item, idx) => (
         <span key={`item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
@@ -569,14 +569,14 @@ function ContinuousTicker({
   );
 
   return (
-    <div ref={containerRef} className="relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
+    <div ref={containerRef} className="relative h-[28px] sm:h-[34px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
         style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
       >
         {Array.from({ length: repeatCount }).map((_, i) => (
-          <div key={`row-${i}`} className="inline-flex items-center gap-6 pr-12">
+          <div key={`row-${i}`} className="inline-flex items-center gap-3 pr-6">
             {row}
           </div>
         ))}
@@ -621,12 +621,12 @@ function SlideTicker({
   }, [paused, speed, count, loop]);
 
   return (
-    <div className="relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
+    <div className="relative h-[28px] sm:h-[34px] overflow-hidden" aria-live="polite">
       <div
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
         style={{ transform: `translateY(-50%) translateX(calc(50% - ${index * 100}%))` }}
       >
-        <div className="flex items-center gap-6 pr-12">
+        <div className="flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
             <span key={`slide-${item.id}-${idx}`} className="contents">
               <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
