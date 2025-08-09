@@ -320,7 +320,7 @@ async function buscarConfiguracoesTiny(supabase: any): Promise<ConfiguracaoTiny>
 
   return {
     tiny_erp_token: configMap.tiny_token,
-    tiny_api_url: configMap.tiny_api_url,
+    tiny_api_url: configMap.tiny_api_url || 'https://api.tiny.com.br/api2',
     tiny_timeout_segundos: parseInt(configMap.tiny_timeout_segundos) || 30,
     tiny_max_tentativas: parseInt(configMap.tiny_max_tentativas) || 3,
     tiny_delay_entre_requisicoes: parseInt(configMap.tiny_delay_entre_requisicoes) || 2000,
@@ -452,8 +452,13 @@ Deno.serve(async (req) => {
 
     if (contasTiny.length === 0) {
       // Fallback: usar configuração única
-      if (!config.tiny_erp_token || !config.tiny_api_url) {
-        throw new Error('Token ou URL da API Tiny ERP não configurados');
+      if (!config.tiny_erp_token) {
+        const msg = 'Nenhum token Tiny encontrado nas Integrações · Contas nem em Configurações > Token de API';
+        console.log(`❌ ${msg}`);
+        return new Response(JSON.stringify({ success: false, error: msg }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        });
       }
       console.log('🔑 Usando token de Configurações > API (tiny_token) como fallback.');
       contasTiny.push({ id: null, name: 'Configurações', token: config.tiny_erp_token });
