@@ -42,6 +42,12 @@ export function AnnouncementsManager() {
   const [routesText, setRoutesText] = useState("");
   const [active, setActive] = useState(true);
 
+  // Seleção de público
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   // Editar anúncio
   const [editOpen, setEditOpen] = useState(false);
   const [editRow, setEditRow] = useState<AnnRow | null>(null);
@@ -51,6 +57,8 @@ export function AnnouncementsManager() {
   const [editLinkLabel, setEditLinkLabel] = useState("");
   const [editRoutesText, setEditRoutesText] = useState("");
   const [editActive, setEditActive] = useState(true);
+  const [editSelectedRoleIds, setEditSelectedRoleIds] = useState<string[]>([]);
+  const [editSelectedUserIds, setEditSelectedUserIds] = useState<string[]>([]);
 
 
   const routesArray = useMemo(() =>
@@ -146,6 +154,15 @@ export function AnnouncementsManager() {
     }
   };
 
+  const handleDelete = async (row: AnnRow) => {
+    try {
+      const { error } = await supabase.from("announcements").delete().eq("id", row.id);
+      if (error) throw error;
+      setList((prev) => prev.filter((a) => a.id !== row.id));
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro", description: e.message || "Falha ao excluir" });
+    }
+  };
   const openEdit = (row: AnnRow) => {
     setEditRow(row);
     setEditKind(row.kind);
