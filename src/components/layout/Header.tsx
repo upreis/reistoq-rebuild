@@ -61,7 +61,7 @@ export function Header() {
           <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-4 ml-auto">
+        <div className="flex items-center gap-4 ml-auto pr-10 sm:pr-12">
           <ThemeToggle />
 
           <DropdownMenu>

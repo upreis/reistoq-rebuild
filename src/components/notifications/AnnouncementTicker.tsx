@@ -31,6 +31,7 @@ export type AnnouncementTickerProps = {
   dir?: "ltr" | "rtl";
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
   edgeToEdge?: boolean; // if true, removes horizontal paddings and containers
+  variant?: "chip" | "plain"; // rendering style for items
 };
 
 // Token variants mapping to Tailwind semantic tokens
@@ -43,6 +44,15 @@ const TOKEN_CLASSES = {
 } as const;
 
 export type TokenVariant = keyof typeof TOKEN_CLASSES;
+
+// Text-only color classes per token
+const TEXT_ONLY_CLASSES: Record<TokenVariant, string> = {
+  muted: "text-foreground",
+  warning: "text-warning",
+  primary: "text-primary",
+  destructive: "text-destructive",
+  card: "text-foreground",
+};
 
 // Default urgency → token
 const DEFAULT_URGENCY_MAP: Record<UrgencyLevel, TokenVariant> = {
@@ -106,6 +116,7 @@ export function AnnouncementTicker({
   dir = "ltr",
   themeVariant,
   edgeToEdge = false,
+  variant = "plain",
 }: AnnouncementTickerProps) {
   const [hidden, setHidden] = React.useState<boolean>(() => (showClose ? shouldHide(closeTtlHours) : false));
   const { paused, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut, setPaused } = useHoverPause();
@@ -156,7 +167,7 @@ export function AnnouncementTicker({
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
     "relative w-full",
-    collapsed ? "h-0 bg-transparent" : "border-b bg-background",
+    collapsed ? "h-0 bg-transparent" : "border-b bg-white",
     className
   );
 
