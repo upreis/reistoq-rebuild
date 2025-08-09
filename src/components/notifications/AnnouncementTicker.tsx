@@ -133,12 +133,6 @@ export function AnnouncementTicker({
   }, [setPaused]);
 
   const [collapsed, setCollapsed] = React.useState<boolean>(() => loadCollapsed());
-  React.useEffect(() => {
-    try {
-      window.dispatchEvent(new CustomEvent('announcementTicker:collapsed', { detail: { collapsed } }));
-    } catch {}
-  }, [collapsed]);
-
   const toggleCollapsed = React.useCallback(() => {
     const next = !collapsed;
     setCollapsed(next);
@@ -163,8 +157,8 @@ export function AnnouncementTicker({
 
   // Inner container classes (controls horizontal padding / full-bleed)
   const innerBaseCls = edgeToEdge
-    ? "relative w-full flex items-center justify-center"
-    : "relative mx-auto w-full flex items-center justify-center pl-10 pr-10 sm:pl-12 sm:pr-12";
+    ? "relative w-full"
+    : "relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12";
 
   // Debug render
   console.debug("AnnouncementTicker: render", { items: items?.length ?? 0, hidden, collapsed, userPaused: userPaused, mode, speed });
@@ -214,29 +208,16 @@ export function AnnouncementTicker({
       )}
 
       {showCollapse && (
-        collapsed ? (
-          <button
-            onClick={toggleCollapsed}
-            aria-label="Expandir barra de anúncios"
-            className={cn(
-              "fixed right-2 top-2 z-[60] inline-flex h-7 w-7 items-center justify-center rounded-full",
-              "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
-            )}
-          >
-            {React.createElement(icons["ChevronDown"]) }
-          </button>
-        ) : (
-          <button
-            onClick={toggleCollapsed}
-            aria-label="Recolher barra de anúncios"
-            className={cn(
-              "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
-              "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
-            )}
-          >
-            {React.createElement(icons["ChevronUp"]) }
-          </button>
-        )
+        <button
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
+          className={cn(
+            "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+            "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
+          )}
+        >
+          {React.createElement(icons[collapsed ? "ChevronDown" : "ChevronUp"]) }
+        </button>
       )}
 
     </div>
@@ -383,12 +364,8 @@ function ContinuousTicker({
     if (!track || !container) return;
 
     const measure = () => {
-      const container = containerRef.current;
-      const track = trackRef.current;
-      if (!track || !container) return;
-      const firstRow = track.querySelector('.ticker-row') as HTMLElement | null;
-      const bwRaw = firstRow?.scrollWidth || (track.scrollWidth / Math.max(1, repeatCount));
-      const bw = Math.max(1, Math.floor(bwRaw));
+      // baseWidth = total / repeats
+      const bw = Math.max(1, Math.floor(track.scrollWidth / Math.max(1, repeatCount)));
       const cw = container.clientWidth;
       const needed = Math.max(2, Math.ceil(cw / bw) + 2);
       setBaseWidth(bw);
@@ -449,12 +426,12 @@ function ContinuousTicker({
   }, [paused, speed, baseWidth, loop]);
 
   const row = (
-    <div className="ticker-row flex items-center gap-3">
+    <div className="flex items-center gap-3">
       {items.map((item, idx) => (
-        <span key={`item-${item.id}-${idx}`} className="contents">
+        <React.Fragment key={`item-${item.id}-${idx}`}>
           <ItemChip item={item} themeVariant={themeVariant} />
           {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
-        </span>
+        </React.Fragment>
       ))}
     </div>
   );
@@ -515,12 +492,12 @@ function SlideTicker({
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
         style={{ transform: `translateX(calc(50% - ${index * 100}%))` }}
       >
-        <div className="ticker-row flex items-center gap-3 pr-6">
+        <div className="flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
-            <span key={`slide-${item.id}-${idx}`} className="contents">
+            <React.Fragment key={`slide-${item.id}-${idx}`}>
               <ItemChip item={item} themeVariant={themeVariant} />
               {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
-            </span>
+            </React.Fragment>
           ))}
         </div>
       </div>

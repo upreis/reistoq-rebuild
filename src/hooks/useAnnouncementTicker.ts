@@ -71,7 +71,6 @@ export function useAnnouncementTicker() {
     showPause: false,
     sticky: true,
     themeVariant,
-    edgeToEdge: true,
   };
 
   return { props, items, themeVariant, loading, speedMode };
