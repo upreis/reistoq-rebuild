@@ -386,9 +386,7 @@ Deno.serve(async (req) => {
       console.log('⚠️ Não foi possível resolver organização/conta Tiny:', (e as any)?.message || e);
     }
 
-    if (!config.tiny_erp_token || !config.tiny_api_url) {
-      throw new Error('Token ou URL da API Tiny ERP não configurados');
-    }
+    // Aviso: se não houver token em contas, cairemos no fallback de Configurações mais abaixo
 
     // Parse request body para filtros opcionais
     let filtros: any = {};
@@ -434,18 +432,20 @@ Deno.serve(async (req) => {
         }
       }
 
-      let query = supabase
-        .from('integration_accounts')
-        .select('id,name,auth_data')
-        .eq('provider', 'tiny')
-        .eq('is_active', true);
-      if (orgId) query = query.eq('organization_id', orgId);
-
-      const { data: contas } = await query;
-      (contas || []).forEach((conta: any) => {
-        const token = conta?.auth_data?.tiny_token;
-        if (token) contasTiny.push({ id: conta.id, name: conta.name, token });
-      });
+      if (orgId) {
+        const { data: contas } = await supabase
+          .from('integration_accounts')
+          .select('id,name,auth_data')
+          .eq('provider', 'tiny')
+          .eq('is_active', true)
+          .eq('organization_id', orgId);
+        (contas || []).forEach((conta: any) => {
+          const token = conta?.auth_data?.tiny_token;
+          if (token) contasTiny.push({ id: conta.id, name: conta.name, token });
+        });
+      } else {
+        console.log('ℹ️ Organização não resolvida pelo JWT. Ignorando integração_accounts e usando fallback de Configurações, se existir.');
+      }
     } catch (e) {
       console.log('⚠️ Erro ao montar lista de contas Tiny:', (e as any)?.message || e);
     }
@@ -455,6 +455,7 @@ Deno.serve(async (req) => {
       if (!config.tiny_erp_token || !config.tiny_api_url) {
         throw new Error('Token ou URL da API Tiny ERP não configurados');
       }
+      console.log('🔑 Usando token de Configurações > API (tiny_token) como fallback.');
       contasTiny.push({ id: null, name: 'Configurações', token: config.tiny_erp_token });
     }
 
