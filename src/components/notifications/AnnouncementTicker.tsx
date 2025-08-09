@@ -163,7 +163,7 @@ export function AnnouncementTicker({
 
   // Inner container classes (controls horizontal padding / full-bleed)
   const innerBaseCls = edgeToEdge
-    ? "relative w-full"
+    ? "relative w-full flex items-center justify-center"
     : "relative mx-auto w-full flex items-center justify-center pl-10 pr-10 sm:pl-12 sm:pr-12";
 
   // Debug render
@@ -434,10 +434,10 @@ function ContinuousTicker({
   const row = (
     <div className="flex items-center gap-3">
       {items.map((item, idx) => (
-        <React.Fragment key={`item-${item.id}-${idx}`}>
+        <span key={`item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} />
           {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
-        </React.Fragment>
+        </span>
       ))}
     </div>
   );
@@ -500,10 +500,10 @@ function SlideTicker({
       >
         <div className="flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
-            <React.Fragment key={`slide-${item.id}-${idx}`}>
+            <span key={`slide-${item.id}-${idx}`} className="contents">
               <ItemChip item={item} themeVariant={themeVariant} />
               {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
-            </React.Fragment>
+            </span>
           ))}
         </div>
       </div>
