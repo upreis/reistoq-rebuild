@@ -64,11 +64,9 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   React.useEffect(() => {
     const loadNotifications = async () => {
       const fetchedNotifications = await fetchNotifications();
-      // Exibir apenas anúncios (exclui system_alerts)
-      const onlyAnnouncements = fetchedNotifications.filter(n => n.type === "announcement");
       const currentPath = location.pathname;
       const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
-      const mapped = onlyAnnouncements.map(n => ({
+      const mapped = fetchedNotifications.map(n => ({
         id: n.id,
         kind: n.kind,
         message: n.message,
