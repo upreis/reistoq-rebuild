@@ -12,29 +12,14 @@ interface ReistoqLogoProps {
 }
 
 export function ReistoqLogo({ className = "", width = 140, height = 40, variant = 'full' }: ReistoqLogoProps) {
-  const { theme } = useTheme();
-  
-  // Determine which logo to use based on theme and variant
-  const getLogoSrc = () => {
-    if (variant === 'icon') {
-      return reistoqIcon;
-    }
-    
-    // For full logos, check theme
-    if (theme === 'dark') {
-      return reistoqLogoDark;
-    }
-    
-    return reistoqLogoLight;
-  };
-
+  // Use the correct logo from the system
   return (
     <img 
-      src={getLogoSrc()}
-      alt="ReiStoq - Sistema de Gestão de Estoque"
+      src="/lovable-uploads/78a28708-1e34-459a-b347-1c12a0b5b9e7.png"
+      alt="REISTOQ - Sistema de Gestão de Estoque"
       width={width} 
       height={height} 
-      className={`transition-smooth hover:scale-105 ${className}`}
+      className={`transition-smooth hover:scale-105 object-contain ${className}`}
       draggable={false}
     />
   );

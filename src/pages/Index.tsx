@@ -137,7 +137,7 @@ export function Index() {
             <Badge variant="secondary" className="mb-6 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
               🚀 Usado por 1000+ empresas brasileiras
             </Badge>
-            <h1 className="text-4xl lg:text-7xl font-bold mb-8 leading-tight">
+            <h1 className="text-4xl lg:text-7xl font-bold mb-8 leading-tight text-foreground">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
                 Revolucione
               </span>{" "}
@@ -221,8 +221,8 @@ export function Index() {
                   <div className="mx-auto w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                     <feature.icon className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground mb-3">{feature.description}</p>
+                   <h3 className="text-lg font-semibold mb-2 text-foreground">{feature.title}</h3>
+                   <p className="text-muted-foreground mb-3">{feature.description}</p>
                   <Badge variant="secondary" className="bg-primary/10 text-primary">
                     {feature.metrics}
                   </Badge>
@@ -249,7 +249,7 @@ export function Index() {
                 <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <benefit.icon className="h-10 w-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>
+                <h3 className="text-xl font-semibold mb-3 text-foreground">{benefit.title}</h3>
                 <p className="text-muted-foreground mb-4">{benefit.description}</p>
                 <div className="text-2xl font-bold text-primary">{benefit.highlight}</div>
               </div>
@@ -298,7 +298,7 @@ export function Index() {
                       <div className="text-center h-full flex flex-col justify-center">
                         <ReistoqLogo className="h-12 w-auto mx-auto mb-4 opacity-50" />
                         <Play className="h-20 w-20 text-primary mx-auto mb-4 cursor-pointer hover:scale-110 transition-transform" />
-                        <p className="text-lg font-semibold">Interface Real do Sistema</p>
+                        <p className="text-lg font-semibold text-foreground">Interface Real do Sistema</p>
                         <p className="text-muted-foreground text-sm">Clique para iniciar demonstração</p>
                       </div>
                     </div>
@@ -331,10 +331,10 @@ export function Index() {
                     ))}
                   </div>
                   <p className="text-muted-foreground mb-4 italic">"{testimonial.text}"</p>
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.company}</p>
-                  </div>
+                   <div>
+                     <p className="font-semibold text-foreground">{testimonial.name}</p>
+                     <p className="text-sm text-muted-foreground">{testimonial.company}</p>
+                   </div>
                 </CardContent>
               </Card>
             ))}
@@ -382,7 +382,7 @@ export function Index() {
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <Card className="border-border hover:shadow-lg transition-all duration-300">
               <CardContent className="p-8 text-center">
-                <h3 className="text-xl font-bold mb-4">Starter</h3>
+                <h3 className="text-xl font-bold mb-4 text-foreground">Starter</h3>
                 <div className="text-3xl font-bold mb-6">Grátis</div>
                 <ul className="space-y-3 text-sm text-muted-foreground mb-6">
                   <li className="flex items-center gap-2">
