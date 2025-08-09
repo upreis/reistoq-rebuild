@@ -24,7 +24,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background flex-col">
         <section aria-label="Avisos do sistema" className="w-full">
-          <AnnouncementTicker {...props} sticky={true} showPause={false} />
+          <AnnouncementTicker {...props} sticky={true} showPause={false} className="bg-white text-foreground border-b" />
         </section>
         <div className="flex w-full flex-1">
           <AppSidebar />

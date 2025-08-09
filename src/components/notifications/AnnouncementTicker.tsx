@@ -446,7 +446,7 @@ function ContinuousTicker({
       <div
         ref={trackRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
-        style={{ transform: `translateX(${offset}px)` }}
+        style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
       >
         {Array.from({ length: repeatCount }).map((_, i) => (
           <div key={`row-${i}`} className="inline-flex items-center gap-3 pr-6">
@@ -495,7 +495,7 @@ function SlideTicker({
     <div className="relative h-[44px] sm:h-[48px] overflow-hidden" aria-live="polite">
       <div
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
-        style={{ transform: `translateX(calc(50% - ${index * 100}%))` }}
+        style={{ transform: `translateY(-50%) translateX(calc(50% - ${index * 100}%))` }}
       >
         <div className="flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
