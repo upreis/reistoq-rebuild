@@ -133,6 +133,11 @@ export function AnnouncementTicker({
   }, [setPaused]);
 
   const [collapsed, setCollapsed] = React.useState<boolean>(() => loadCollapsed());
+  React.useEffect(() => {
+    try {
+      window.dispatchEvent(new CustomEvent("announcementTicker:collapse-changed", { detail: collapsed }));
+    } catch {}
+  }, [collapsed]);
   const toggleCollapsed = React.useCallback(() => {
     const next = !collapsed;
     setCollapsed(next);
@@ -428,10 +433,10 @@ function ContinuousTicker({
   const row = (
     <div className="flex items-center gap-3">
       {items.map((item, idx) => (
-        <React.Fragment key={`item-${item.id}-${idx}`}>
+        <span key={`item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} />
           {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
-        </React.Fragment>
+        </span>
       ))}
     </div>
   );
@@ -494,10 +499,10 @@ function SlideTicker({
       >
         <div className="flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
-            <React.Fragment key={`slide-${item.id}-${idx}`}>
+            <span key={`slide-${item.id}-${idx}`} className="contents">
               <ItemChip item={item} themeVariant={themeVariant} />
               {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
-            </React.Fragment>
+            </span>
           ))}
         </div>
       </div>
