@@ -23,12 +23,21 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background flex-col">
+        <section aria-label="Avisos do sistema" className="w-full">
+          <AnnouncementTicker
+            {...props}
+            sticky={true}
+            showPause={false}
+            edgeToEdge
+            variant="plain"
+            mode="continuous"
+            speed={50}
+            className="bg-white border-b"
+          />
+        </section>
         <div className="flex w-full flex-1">
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
-            <section aria-label="Avisos do sistema" className="w-full">
-              <AnnouncementTicker {...props} sticky={true} showPause={false} edgeToEdge className="bg-white border-b px-4 lg:px-6" themeVariant={props.themeVariant} mode={props.mode} speed={props.speed} divider={props.divider} />
-            </section>
             <Header />
             <main className="flex-1 p-6 overflow-auto">
 

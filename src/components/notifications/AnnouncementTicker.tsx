@@ -204,6 +204,7 @@ export function AnnouncementTicker({
             divider={divider}
             customDivider={customDivider}
             themeVariant={themeVariant}
+            variant={variant}
           />
         </div>
       )}
@@ -248,7 +249,7 @@ function Divider({ type, custom }: { type: NonNullable<AnnouncementTickerProps["
   return <span aria-hidden className="mx-3 inline-block h-4 w-px bg-foreground/30" />;
 }
 
-function ItemChip({ item, themeVariant }: { item: TickerItem; themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>> }) {
+function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>; variant?: "chip" | "plain" }) {
   const IconNode = React.useMemo(() => {
     if (!item.icon) return null;
     if (typeof item.icon === "string") {
@@ -260,9 +261,40 @@ function ItemChip({ item, themeVariant }: { item: TickerItem; themeVariant?: Par
   }, [item.icon]);
 
   const token = (themeVariant?.[item.urgency] ?? DEFAULT_URGENCY_MAP[item.urgency]);
+
+  if (variant === "plain") {
+    const textColor = TEXT_ONLY_CLASSES[token];
+    const content = (
+      <span className={cn("font-bold whitespace-nowrap flex items-center gap-2", textColor)}>
+        {IconNode && <span className="shrink-0">{IconNode}</span>}
+        <span>{item.title}</span>
+        {item.description && (
+          <span className="opacity-80 font-normal">{item.description}</span>
+        )}
+      </span>
+    );
+
+    if (item.href) {
+      const isExternal = /^(https?:)?\/\//i.test(item.href);
+      if (isExternal) {
+        return (
+          <a href={item.href} target="_blank" rel="noopener noreferrer" className="focus:outline-none focus:ring-2 focus:ring-ring rounded">
+            {content}
+          </a>
+        );
+      }
+      return (
+        <Link to={item.href} className="focus:outline-none focus:ring-2 focus:ring-ring rounded">
+          {content}
+        </Link>
+      );
+    }
+    return content;
+  }
+
+  // default chip variant
   const cls = TOKEN_CLASSES[token];
   const styles = { container: cls.bg, text: cls.text };
-
   const content = (
     <div
       className={cn(
@@ -313,6 +345,7 @@ function TickerRow({
   divider,
   customDivider,
   themeVariant,
+  variant,
 }: {
   items: TickerItem[];
   mode: NonNullable<AnnouncementTickerProps["mode"]>;
@@ -322,6 +355,7 @@ function TickerRow({
   divider: NonNullable<AnnouncementTickerProps["divider"]>;
   customDivider?: React.ReactNode;
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
+  variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
   if (mode === "slide") {
     return (
@@ -333,6 +367,7 @@ function TickerRow({
         divider={divider}
         customDivider={customDivider}
         themeVariant={themeVariant}
+        variant={variant}
       />
     );
   }
@@ -346,6 +381,7 @@ function TickerRow({
       divider={divider}
       customDivider={customDivider}
       themeVariant={themeVariant}
+      variant={variant}
     />
   );
 }
@@ -358,6 +394,7 @@ function ContinuousTicker({
   divider,
   customDivider,
   themeVariant,
+  variant,
 }: {
   items: TickerItem[];
   speed: number; // px/s
@@ -366,6 +403,7 @@ function ContinuousTicker({
   divider: NonNullable<AnnouncementTickerProps["divider"]>;
   customDivider?: React.ReactNode;
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
+  variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -442,10 +480,10 @@ function ContinuousTicker({
   }, [paused, speed, baseWidth, loop]);
 
   const row = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-6">
       {items.map((item, idx) => (
         <span key={`item-${item.id}-${idx}`} className="contents">
-          <ItemChip item={item} themeVariant={themeVariant} />
+          <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
           {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
         </span>
       ))}
@@ -453,14 +491,14 @@ function ContinuousTicker({
   );
 
   return (
-    <div ref={containerRef} className="relative h-[44px] sm:h-[48px] overflow-hidden" aria-live="polite">
+    <div ref={containerRef} className="relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
         style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
       >
         {Array.from({ length: repeatCount }).map((_, i) => (
-          <div key={`row-${i}`} className="inline-flex items-center gap-3 pr-6">
+          <div key={`row-${i}`} className="inline-flex items-center gap-6 pr-12">
             {row}
           </div>
         ))}
@@ -477,6 +515,7 @@ function SlideTicker({
   divider,
   customDivider,
   themeVariant,
+  variant,
 }: {
   items: TickerItem[];
   speed: number; // ms per item
@@ -485,6 +524,7 @@ function SlideTicker({
   divider: NonNullable<AnnouncementTickerProps["divider"]>;
   customDivider?: React.ReactNode;
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
+  variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
   const [index, setIndex] = React.useState(0);
   const count = items.length;
@@ -503,15 +543,15 @@ function SlideTicker({
   }, [paused, speed, count, loop]);
 
   return (
-    <div className="relative h-[44px] sm:h-[48px] overflow-hidden" aria-live="polite">
+    <div className="relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
       <div
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
         style={{ transform: `translateY(-50%) translateX(calc(50% - ${index * 100}%))` }}
       >
-        <div className="flex items-center gap-3 pr-6">
+        <div className="flex items-center gap-6 pr-12">
           {items.map((item, idx) => (
             <span key={`slide-${item.id}-${idx}`} className="contents">
-              <ItemChip item={item} themeVariant={themeVariant} />
+              <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
               {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
             </span>
           ))}

@@ -1,8 +1,9 @@
+import React from 'react';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -12,8 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Settings, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
+import { cn } from "@/lib/utils";
 export function Header() {
   const { user, signOut, organizacao } = useAuth();
   const navigate = useNavigate();
@@ -51,6 +51,16 @@ export function Header() {
     return user.email.substring(0, 2).toUpperCase();
   };
 
+  const [tickerCollapsed, setTickerCollapsed] = React.useState<boolean>(() => {
+    try { return localStorage.getItem('announcementTicker:collapsed') === '1'; } catch { return false; }
+  });
+  React.useEffect(() => {
+    const handler = (e: any) => setTickerCollapsed(Boolean(e?.detail));
+    window.addEventListener('announcementTicker:collapse-changed', handler as EventListener);
+    return () => window.removeEventListener('announcementTicker:collapse-changed', handler as EventListener);
+  }, []);
+
+
   return (
     <header className="border-b bg-background px-4 lg:px-6">
       <div className="flex items-center gap-4 py-3">
@@ -61,7 +71,7 @@ export function Header() {
           <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-4 ml-auto pr-10 sm:pr-12">
+        <div className={cn("flex items-center gap-4 ml-auto", tickerCollapsed ? "pr-20 sm:pr-24" : "pr-10 sm:pr-12")}>
           <ThemeToggle />
 
           <DropdownMenu>
