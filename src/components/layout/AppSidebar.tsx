@@ -74,17 +74,6 @@ export function AppSidebar() {
   const { isLoading, hasPermission } = usePermissions();
   const collapsed = state === 'collapsed';
   
-  const [tickerCollapsed, setTickerCollapsed] = React.useState<boolean>(() => {
-    try { return localStorage.getItem('announcementTicker:collapsed') === '1'; } catch { return false; }
-  });
-  React.useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      setTickerCollapsed(Boolean(detail));
-    };
-    window.addEventListener('announcementTicker:collapse-changed', handler as EventListener);
-    return () => window.removeEventListener('announcementTicker:collapse-changed', handler as EventListener);
-  }, []);
   
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -97,8 +86,8 @@ export function AppSidebar() {
       : 'text-sidebar-foreground hover:bg-accent/5 hover:text-accent';
   };
 
-  const topCls = tickerCollapsed ? 'top-0' : 'top-11 sm:top-12';
-  const heightCls = tickerCollapsed ? 'h-svh' : 'h-[calc(100svh-44px)] sm:h-[calc(100svh-48px)]';
+  const topCls = 'top-0';
+  const heightCls = 'h-svh';
 
   const itemsToShow = isLoading ? navigationItems : navigationItems.filter((i) => hasPermission(i.permission));
 
