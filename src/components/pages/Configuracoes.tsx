@@ -478,6 +478,11 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, low: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, low: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, low: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Média (medium)</Label>
@@ -491,6 +496,11 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, medium: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, medium: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, medium: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Alta (high)</Label>
@@ -504,6 +514,11 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, high: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, high: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, high: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Crítica (critical)</Label>
@@ -517,6 +532,11 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, critical: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, critical: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, critical: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
             </div>
           </div>
 

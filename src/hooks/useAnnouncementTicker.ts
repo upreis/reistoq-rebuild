@@ -89,10 +89,11 @@ export function useAnnouncementTicker() {
     fast: 130,
   } as const;
 
-  const effectiveItemsRaw = items.length ? items : alerts;
+  const baseManualItems = items.length ? items : alerts;
+  const combinedRaw: TickerItem[] = [...annItems, ...baseManualItems];
   const seen = new Set<string>();
   const keyOf = (t: TickerItem) => `${(t.title || "").trim().toLowerCase()}|${t.href || ""}`;
-  const effectiveItems = effectiveItemsRaw.filter((t) => {
+  const effectiveItems = combinedRaw.filter((t) => {
     const k = keyOf(t);
     if (seen.has(k)) return false;
     seen.add(k);
