@@ -166,7 +166,7 @@ export function AnnouncementTicker({
 
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
-    "relative w-full",
+    "relative w-full ticker-root",
     collapsed ? "h-0 bg-transparent" : "border-b bg-white",
     className
   );
@@ -245,8 +245,8 @@ function Divider({ type, custom }: { type: NonNullable<AnnouncementTickerProps["
   if (type === "custom") return <>{custom}</>;
   if (type === "dot") return <span aria-hidden className="mx-3 inline-block h-1 w-1 rounded-full bg-foreground/30" />;
   if (type === "slash") return <span aria-hidden className="mx-3 inline-block select-none text-foreground/50">/</span>;
-  // default bar
-  return <span aria-hidden className="mx-3 inline-block h-4 w-px bg-foreground/30" />;
+  // default bar - full height divider
+  return <span aria-hidden className="mx-6 inline-block w-px self-stretch bg-foreground/20" />;
 }
 
 function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>; variant?: "chip" | "plain" }) {
@@ -265,12 +265,8 @@ function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; 
   if (variant === "plain") {
     const textColor = TEXT_ONLY_CLASSES[token];
     const content = (
-      <span className={cn("font-bold whitespace-nowrap flex items-center gap-2", textColor)}>
-        {IconNode && <span className="shrink-0">{IconNode}</span>}
-        <span>{item.title}</span>
-        {item.description && (
-          <span className="opacity-80 font-normal">{item.description}</span>
-        )}
+      <span className={cn("font-bold whitespace-nowrap inline-flex items-center justify-center text-center", textColor)}>
+        {item.title}
       </span>
     );
 
@@ -336,6 +332,75 @@ function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; 
   return <div className="focus:outline-none">{content}</div>;
 }
 
+// CSS-based continuous ticker (right-to-left) for plain text variant
+function CssContinuousTicker({
+  items,
+  speed,
+  divider,
+  customDivider,
+  themeVariant,
+  variant,
+}: {
+  items: TickerItem[];
+  speed: number; // px/s
+  divider: NonNullable<AnnouncementTickerProps["divider"]>;
+  customDivider?: React.ReactNode;
+  themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
+  variant: NonNullable<AnnouncementTickerProps["variant"]>;
+}) {
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
+  const trackRef = React.useRef<HTMLDivElement | null>(null);
+  const [copies, setCopies] = React.useState(2);
+
+  // Ensure we have enough copies to cover at least 2x viewport width
+  React.useLayoutEffect(() => {
+    const vw = viewportRef.current?.offsetWidth ?? 0;
+    const tw = trackRef.current?.scrollWidth ?? 0;
+    if (!vw || !tw) return;
+    const base = Math.max(1, Math.floor(tw / Math.max(1, copies)));
+    const minWidth = vw * 2;
+    const reps = Math.ceil(minWidth / base);
+    setCopies(Math.max(2, reps + 1));
+  }, [items]);
+
+  // Set duration based on half of total width (block A)
+  React.useLayoutEffect(() => {
+    const tw = trackRef.current?.scrollWidth ?? 0;
+    const base = Math.max(1, Math.floor(tw / Math.max(1, copies)));
+    const duration = Math.max(20, Math.round(base / Math.max(1, speed)));
+    if (trackRef.current) {
+      trackRef.current.style.setProperty("--ticker-duration", `${duration}s`);
+    }
+  }, [copies, items, speed]);
+
+  const block = (
+    <div className="flex items-center gap-6">
+      {items.map((item, idx) => (
+        <span key={`css-item-${item.id}-${idx}`} className="contents">
+          <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
+          {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
+        </span>
+      ))}
+    </div>
+  );
+
+  return (
+    <div ref={viewportRef} className="ticker-viewport relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
+      <div
+        ref={trackRef}
+        className="ticker-track absolute left-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-6 pr-12 will-change-transform"
+      >
+        {Array.from({ length: copies }).map((_, i) => (
+          <div key={`blk-${i}`} className="inline-flex items-center gap-6 pr-12">
+            {block}
+            <Divider type={divider} custom={customDivider} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TickerRow({
   items,
   mode,
@@ -364,6 +429,19 @@ function TickerRow({
         speed={speed}
         paused={paused}
         loop={loop}
+        divider={divider}
+        customDivider={customDivider}
+        themeVariant={themeVariant}
+        variant={variant}
+      />
+    );
+  }
+
+  if (variant === "plain") {
+    return (
+      <CssContinuousTicker
+        items={items}
+        speed={speed}
         divider={divider}
         customDivider={customDivider}
         themeVariant={themeVariant}
