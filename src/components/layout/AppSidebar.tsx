@@ -97,8 +97,8 @@ export function AppSidebar() {
       : 'text-sidebar-foreground hover:bg-accent/5 hover:text-accent';
   };
 
-  const topCls = tickerCollapsed ? 'top-11 sm:top-12' : 'top-[88px] sm:top-[96px]';
-  const heightCls = tickerCollapsed ? 'h-[calc(100svh-44px)] sm:h-[calc(100svh-48px)]' : 'h-[calc(100svh-88px)] sm:h-[calc(100svh-96px)]';
+  const topCls = tickerCollapsed ? 'top-0' : 'top-11 sm:top-12';
+  const heightCls = tickerCollapsed ? 'h-svh' : 'h-[calc(100svh-44px)] sm:h-[calc(100svh-48px)]';
 
   const itemsToShow = isLoading ? navigationItems : navigationItems.filter((i) => hasPermission(i.permission));
 
