@@ -15,9 +15,6 @@
     --primary-hover: 221 83% 48%;      /* Darker blue for hover */
     --primary-light: 221 83% 90%;      /* Light blue background */
     --primary-glow: 221 73% 63%;       /* Glow effect */
-
-    /* Ticker */
-    --ticker-outline: 0 0% 0%;          /* Black outline for ticker text */
     
     /* Accent - Amarelo ReiStoq */
     --accent: 43 96% 56%;              /* Brand yellow */
@@ -215,14 +212,6 @@
   .ticker-root:hover .ticker-track,
   .ticker-root:focus-within .ticker-track {
     animation-play-state: paused;
-  }
-  .ticker-text-outline {
-    /* Thin dark outline to improve legibility on light backgrounds */
-    -webkit-text-stroke: 0.6px hsl(var(--ticker-outline));
-    text-shadow:
-      0 0 0.6px hsl(var(--ticker-outline)),
-      0 0 0.6px hsl(var(--ticker-outline)),
-      0 0 0.6px hsl(var(--ticker-outline));
   }
   @keyframes ticker-rtl {
     from { transform: translateX(0); }
