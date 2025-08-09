@@ -24,6 +24,7 @@ export type AnnouncementTickerProps = {
   customDivider?: React.ReactNode;
   showClose?: boolean; // deprecated in this project; keep for compat
   showCollapse?: boolean; // show collapse/expand button (default true)
+  showPause?: boolean; // show pause/play button (default true)
   closeTtlHours?: number; // default: 24
   sticky?: boolean; // default: true
   className?: string;
@@ -100,6 +101,7 @@ export function AnnouncementTicker({
   customDivider,
   showClose = false,
   showCollapse = true,
+  showPause = true,
   closeTtlHours = 24,
   sticky = true,
   className,
@@ -107,6 +109,9 @@ export function AnnouncementTicker({
 }: AnnouncementTickerProps) {
   const [hidden, setHidden] = React.useState(() => shouldHide(closeTtlHours));
   const { paused, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut, setPaused } = useHoverPause();
+  const [userPaused, setUserPaused] = React.useState(false);
+  const effectivePaused = paused || userPaused;
+  const toggleUserPaused = React.useCallback(() => setUserPaused((p) => !p), []);
 
   // Accessibility: pause when any child receives focus
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -141,7 +146,7 @@ export function AnnouncementTicker({
 
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
-    "w-full border-b",
+    "relative w-full border-b",
     // Provide a neutral background so urgency colors stand out as chips/items
     "bg-background",
     className
@@ -160,7 +165,7 @@ export function AnnouncementTicker({
       onBlur={pauseOnHover ? onFocusOut : undefined}
     >
       {collapsed ? (
-        <div className={cn("mx-auto w-full px-3 sm:px-4 h-[36px] flex items-center justify-between")}> 
+        <div className={cn("relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12 h-[36px] flex items-center justify-between")}> 
           <div className="flex items-center gap-2">
             {React.createElement(icons["Bell"], { className: "h-4 w-4 text-muted-foreground" })}
             <span className="text-sm text-muted-foreground">Atualizações</span>
@@ -168,17 +173,31 @@ export function AnnouncementTicker({
           </div>
         </div>
       ) : (
-        <div className={cn("mx-auto w-full px-3 sm:px-4")}> 
+        <div className={cn("relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12")}> 
           <TickerRow
             items={items}
             mode={mode}
             speed={speed}
-            paused={paused}
+            paused={effectivePaused}
             loop={loop}
             divider={divider}
             customDivider={customDivider}
           />
         </div>
+      )}
+
+      {showPause && (
+        <button
+          onClick={toggleUserPaused}
+          aria-pressed={userPaused}
+          aria-label={userPaused ? "Reproduzir rolagem" : "Pausar rolagem"}
+          className={cn(
+            "absolute left-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+            "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
+          )}
+        >
+          {React.createElement(icons[userPaused ? "Play" : "Pause"]) }
+        </button>
       )}
 
       {showCollapse && (
@@ -193,6 +212,7 @@ export function AnnouncementTicker({
           {React.createElement(icons[collapsed ? "ChevronDown" : "ChevronUp"]) }
         </button>
       )}
+
     </div>
   );
 }
