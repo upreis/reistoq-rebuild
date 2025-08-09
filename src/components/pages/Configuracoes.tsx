@@ -36,7 +36,7 @@ export function Configuracoes() {
   const { toast } = useToast();
 
   // Announcement Ticker configs
-  const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted" | "warning" | "primary" | "destructive" | "card">>>({});
+const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted" | "success" | "warning" | "primary" | "destructive" | "card">>>({});
   const [customItems, setCustomItems] = useState<TickerItem[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -467,13 +467,14 @@ export function Configuracoes() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label>Baixa (low)</Label>
-              <Select value={urgencyMap.low as any || 'muted'} onValueChange={(v) => setUrgencyMap((p) => ({ ...p, low: v as any }))}>
+              <Select value={urgencyMap.low as any || 'success'} onValueChange={(v) => setUrgencyMap((p) => ({ ...p, low: v as any }))}>
                 <SelectTrigger><SelectValue placeholder="Escolha a cor" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="muted">Neutro</SelectItem>
-                  <SelectItem value="warning">Aviso</SelectItem>
+                  <SelectItem value="success">Verde (Sucesso)</SelectItem>
+                  <SelectItem value="warning">Laranja (Aviso)</SelectItem>
+                  <SelectItem value="destructive">Vermelho (Crítico)</SelectItem>
                   <SelectItem value="primary">Primário</SelectItem>
-                  <SelectItem value="destructive">Crítico</SelectItem>
+                  <SelectItem value="muted">Neutro</SelectItem>
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>

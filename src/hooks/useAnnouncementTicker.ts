@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AnnouncementTickerProps, TickerItem, UrgencyLevel } from "@/components/notifications/AnnouncementTicker";
 import { alerts } from "@/config/announcementTicker.config";
 
-export type TokenVariant = "muted" | "warning" | "primary" | "destructive" | "card";
+export type TokenVariant = "muted" | "success" | "warning" | "primary" | "destructive" | "card";
 
 export function useAnnouncementTicker() {
-  const [items, setItems] = useState<TickerItem[]>([]);
+  const [items, setItems] = useState<TickerItem[]>([]); // itens manuais salvos em configuracoes
+  const [annItems, setAnnItems] = useState<TickerItem[]>([]); // anúncios do Gerenciar Anúncios
   const [themeVariant, setThemeVariant] = useState<Partial<Record<UrgencyLevel, TokenVariant>>>({});
   const [loading, setLoading] = useState(true);
   const [speedMode, setSpeedMode] = useState<"slow" | "normal" | "fast">("normal");
@@ -42,6 +43,35 @@ export function useAnnouncementTicker() {
         if (speedRow?.valor) {
           const v = String(speedRow.valor).toLowerCase();
           if (v === "slow" || v === "normal" || v === "fast") setSpeedMode(v);
+        }
+
+        // Carregar anúncios ativos e mapear para itens do ticker
+        try {
+          const { data: ann, error: annErr } = await supabase
+            .from("announcements")
+            .select("id, kind, message, href, link_label, active, target_routes")
+            .eq("active", true)
+            .order("created_at", { ascending: false });
+          if (annErr) throw annErr;
+          const path = window.location?.pathname || "/";
+          const mapped: TickerItem[] = (ann || []).filter((a: any) => {
+            const routes: string[] | null = a.target_routes as any;
+            if (!routes || !routes.length) return true;
+            return routes.some((r) => path.startsWith(r));
+          }).map((a: any) => {
+            const kind = String(a.kind || "info");
+            const urgency: UrgencyLevel = kind === "success" ? "low" : kind === "warning" ? "medium" : kind === "destructive" ? "critical" : "medium";
+            return {
+              id: `ann-${a.id}`,
+              title: a.message,
+              description: a.link_label || undefined,
+              href: a.href || undefined,
+              urgency,
+            } as TickerItem;
+          });
+          setAnnItems(mapped);
+        } catch (e) {
+          console.error("useAnnouncementTicker announcements error", e);
         }
       } catch (e) {
         console.error("useAnnouncementTicker load error", e);

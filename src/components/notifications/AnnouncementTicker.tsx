@@ -37,6 +37,7 @@ export type AnnouncementTickerProps = {
 // Token variants mapping to Tailwind semantic tokens
 const TOKEN_CLASSES = {
   muted: { bg: "bg-muted", text: "text-muted-foreground" },
+  success: { bg: "bg-success", text: "text-success-foreground" },
   warning: { bg: "bg-warning", text: "text-warning-foreground" },
   primary: { bg: "bg-primary", text: "text-primary-foreground" },
   destructive: { bg: "bg-destructive", text: "text-destructive-foreground" },
@@ -48,6 +49,7 @@ export type TokenVariant = keyof typeof TOKEN_CLASSES;
 // Text-only color classes per token
 const TEXT_ONLY_CLASSES: Record<TokenVariant, string> = {
   muted: "text-foreground",
+  success: "text-success",
   warning: "text-warning",
   primary: "text-primary",
   destructive: "text-destructive",
@@ -56,9 +58,9 @@ const TEXT_ONLY_CLASSES: Record<TokenVariant, string> = {
 
 // Default urgency → token
 const DEFAULT_URGENCY_MAP: Record<UrgencyLevel, TokenVariant> = {
-  low: "muted",
+  low: "success",
   medium: "warning",
-  high: "primary",
+  high: "destructive",
   critical: "destructive",
 };
 
