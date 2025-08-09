@@ -148,7 +148,8 @@ export function AnnouncementTicker({
 
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
-    "relative w-full border-b",
+    "relative w-full",
+    sticky && "border-b",
     // Provide a neutral background so urgency colors stand out as chips/items
     "bg-background",
     className

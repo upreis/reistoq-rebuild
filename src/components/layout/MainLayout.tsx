@@ -27,7 +27,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
             <Header />
-            <section aria-label="Avisos do sistema" className="px-6 pt-3">
+            <section aria-label="Avisos do sistema" className="px-6">
               <AnnouncementTicker {...props} sticky={false} />
             </section>
             <main className="flex-1 p-6 overflow-auto">
