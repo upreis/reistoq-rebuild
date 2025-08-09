@@ -11,9 +11,8 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Settings, LogOut } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { NotificationBar } from "@/components/notifications/NotificationBar";
 
 export function Header() {
   const { user, signOut, organizacao } = useAuth();
@@ -56,22 +55,15 @@ export function Header() {
     <header className="border-b bg-background px-4 lg:px-6 pb-2">
       <div className="flex items-center gap-4 py-3">
         <SidebarTrigger />
-        
+
         <div className="flex flex-col">
           <h1 className="text-lg font-bold text-foreground">{pageInfo.title}</h1>
           <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
         </div>
-        
-        {/* Centro: barra de notificações entre o título e os controles */}
-        <div className="flex-1 flex justify-center">
-          <div className="w-full max-w-3xl">
-            <NotificationBar placement="header" />
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-4 ml-auto">
           <ThemeToggle />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -82,7 +74,7 @@ export function Header() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            
+
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex flex-col space-y-1 p-2">
                 <p className="text-sm font-medium">{user?.email}</p>
@@ -90,16 +82,16 @@ export function Header() {
                   <p className="text-xs text-muted-foreground">{organizacao.nome}</p>
                 )}
               </div>
-              
+
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
+
+              <DropdownMenuItem onClick={() => navigate("/configuracoes")}> 
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair

@@ -10,6 +10,8 @@ import { Scanner } from '@/components/pages/Scanner';
 import { Historico } from '@/components/pages/Historico';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 import DePara from '@/components/pages/DePara';
+import { AnnouncementTicker } from '@/components/notifications/AnnouncementTicker';
+import tickerConfig from '@/config/announcementTicker.config';
 
 
 interface MainLayoutProps {
@@ -22,6 +24,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1">
+          <AnnouncementTicker {...tickerConfig} />
           <Header />
           
           <main className="flex-1 p-6 overflow-auto">
