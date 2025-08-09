@@ -29,7 +29,7 @@ interface AnnRow {
 }
 
 export function AnnouncementsManager() {
-  const { organizacao } = useAuth();
+  const { user, organizacao } = useAuth();
   const { toast } = useToast();
   const [list, setList] = useState<AnnRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,7 +89,12 @@ export function AnnouncementsManager() {
 
   const handleCreate = async () => {
     try {
+      if (!user) {
+        toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado" });
+        return;
+      }
       const payload: any = {
+        created_by: user.id,
         kind,
         message,
         href: href || null,
