@@ -88,7 +88,7 @@ export function AppSidebar() {
   const itemsToShow = isLoading ? navigationItems : navigationItems.filter((i) => hasPermission(i.permission));
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border top-11 sm:top-12 h-[calc(100svh-44px)] sm:h-[calc(100svh-48px)]">
       <SidebarContent>
         {/* Header */}
         <div className={`border-b border-sidebar-border ${collapsed ? 'px-3 py-3' : 'px-6 py-3'}`}>
