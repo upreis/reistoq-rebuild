@@ -101,9 +101,9 @@ export function AppSidebar() {
     return () => window.removeEventListener('announcementTicker:collapsed', handler as EventListener);
   }, []);
 
-  const topMobile = tickerCollapsed ? 'top-11' : 'top-[88px]';
+  const topMobile = tickerCollapsed ? 'top-12' : 'top-[92px]';
   const topDesktop = tickerCollapsed ? 'sm:top-12' : 'sm:top-[96px]';
-  const heightMobile = tickerCollapsed ? 'h-[calc(100svh-44px)]' : 'h-[calc(100svh-88px)]';
+  const heightMobile = tickerCollapsed ? 'h-[calc(100svh-48px)]' : 'h-[calc(100svh-92px)]';
   const heightDesktop = tickerCollapsed ? 'sm:h-[calc(100svh-48px)]' : 'sm:h-[calc(100svh-96px)]';
 
   return (
