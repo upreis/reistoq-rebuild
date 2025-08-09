@@ -118,9 +118,9 @@ export function AppSidebar() {
               className={`flex-shrink-0 object-contain ${collapsed ? 'h-8 w-8' : 'h-12 w-12'}`}
             />
             {!collapsed && (
-              <div>
-                <span className="text-xl font-bold text-accent">REISTOQ</span>
-                <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
+              <div className="flex flex-col justify-center">
+                <span className="text-xl font-bold text-accent leading-none">REISTOQ</span>
+                <p className="text-xs text-muted-foreground leading-none mt-1">Sistema de Gestão</p>
               </div>
             )}
           </div>

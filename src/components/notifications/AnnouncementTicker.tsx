@@ -214,16 +214,29 @@ export function AnnouncementTicker({
       )}
 
       {showCollapse && (
-        <button
-          onClick={toggleCollapsed}
-          aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
-          className={cn(
-            "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
-            "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
-          )}
-        >
-          {React.createElement(icons[collapsed ? "ChevronDown" : "ChevronUp"]) }
-        </button>
+        collapsed ? (
+          <button
+            onClick={toggleCollapsed}
+            aria-label="Expandir barra de anúncios"
+            className={cn(
+              "fixed right-2 top-2 z-[60] inline-flex h-7 w-7 items-center justify-center rounded-full",
+              "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
+            )}
+          >
+            {React.createElement(icons["ChevronDown"]) }
+          </button>
+        ) : (
+          <button
+            onClick={toggleCollapsed}
+            aria-label="Recolher barra de anúncios"
+            className={cn(
+              "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+              "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
+            )}
+          >
+            {React.createElement(icons["ChevronUp"]) }
+          </button>
+        )
       )}
 
     </div>
@@ -370,8 +383,12 @@ function ContinuousTicker({
     if (!track || !container) return;
 
     const measure = () => {
-      // baseWidth = total / repeats
-      const bw = Math.max(1, Math.floor(track.scrollWidth / Math.max(1, repeatCount)));
+      const container = containerRef.current;
+      const track = trackRef.current;
+      if (!track || !container) return;
+      const firstRow = track.querySelector('.ticker-row') as HTMLElement | null;
+      const bwRaw = firstRow?.scrollWidth || (track.scrollWidth / Math.max(1, repeatCount));
+      const bw = Math.max(1, Math.floor(bwRaw));
       const cw = container.clientWidth;
       const needed = Math.max(2, Math.ceil(cw / bw) + 2);
       setBaseWidth(bw);
@@ -432,7 +449,7 @@ function ContinuousTicker({
   }, [paused, speed, baseWidth, loop]);
 
   const row = (
-    <div className="flex items-center gap-3">
+    <div className="ticker-row flex items-center gap-3">
       {items.map((item, idx) => (
         <span key={`item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} />
@@ -498,7 +515,7 @@ function SlideTicker({
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
         style={{ transform: `translateX(calc(50% - ${index * 100}%))` }}
       >
-        <div className="flex items-center gap-3 pr-6">
+        <div className="ticker-row flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
             <span key={`slide-${item.id}-${idx}`} className="contents">
               <ItemChip item={item} themeVariant={themeVariant} />
