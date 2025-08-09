@@ -1,4 +1,4 @@
-import { AnnouncementTickerProps, TickerItem } from "@/components/notifications/AnnouncementTicker";
+import type { AnnouncementTickerProps, TickerItem } from "@/components/notifications/AnnouncementTicker";
 
 // Exemplo de itens iniciais (edite livremente)
 export const alerts: TickerItem[] = [
@@ -16,7 +16,7 @@ const tickerConfig: Pick<AnnouncementTickerProps, "items" | "mode" | "speed" | "
   pauseOnHover: true,
   loop: true,
   divider: "bar",
-  showClose: true,
+  showClose: false,
   sticky: true,
 };
 

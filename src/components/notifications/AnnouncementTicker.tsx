@@ -91,6 +91,9 @@ const loadCollapsed = () => {
   }
 };
 
+// Debug mount
+console.debug("AnnouncementTicker: module loaded");
+
 export function AnnouncementTicker({
   items,
   mode = "continuous",
@@ -155,6 +158,9 @@ export function AnnouncementTicker({
     "bg-background",
     className
   );
+
+  // Debug render
+  console.debug("AnnouncementTicker: render", { items: items?.length ?? 0, hidden, collapsed, userPaused: userPaused, mode, speed });
 
   return (
     <div
