@@ -346,6 +346,46 @@ Deno.serve(async (req) => {
     const config = await buscarConfiguracoesTiny(supabase);
     console.log('✅ Configurações carregadas');
 
+    // Tentar resolver a organização do usuário e pegar token de Integrações · Contas (Tiny)
+    let CURRENT_ACCOUNT_ID: string | null = null;
+    let CURRENT_ACCOUNT_NAME: string | null = null;
+    try {
+      const authHeader = req.headers.get('Authorization') || '';
+      const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (jwt) {
+        const { data: userData } = await supabase.auth.getUser(jwt);
+        const userId = userData?.user?.id;
+        if (userId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('organizacao_id')
+            .eq('id', userId)
+            .maybeSingle();
+          const orgId = profile?.organizacao_id;
+          if (orgId) {
+            const { data: contas } = await supabase
+              .from('integration_accounts')
+              .select('id,name,auth_data')
+              .eq('organization_id', orgId)
+              .eq('provider', 'tiny')
+              .eq('is_active', true)
+              .limit(1);
+            if (contas && contas.length > 0) {
+              const conta = contas[0] as any;
+              const tokenConta = conta?.auth_data?.tiny_token;
+              if (tokenConta) {
+                config.tiny_erp_token = tokenConta;
+                CURRENT_ACCOUNT_ID = conta.id;
+                CURRENT_ACCOUNT_NAME = conta.name;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.log('⚠️ Não foi possível resolver organização/conta Tiny:', (e as any)?.message || e);
+    }
+
     if (!config.tiny_erp_token || !config.tiny_api_url) {
       throw new Error('Token ou URL da API Tiny ERP não configurados');
     }
@@ -595,7 +635,10 @@ Deno.serve(async (req) => {
             valor_desconto: parseFloat(pedidoDetalhado.valor_desconto || pedidoDetalhado.desconto || '0'),
             valor_total: parseFloat(pedidoDetalhado.total_pedido || pedidoDetalhado.valor_total || '0'),
             obs: pedidoDetalhado.obs,
-            obs_interna: pedidoDetalhado.obs_interna
+            obs_interna: pedidoDetalhado.obs_interna,
+            // Multi-conta
+            integration_account_id: CURRENT_ACCOUNT_ID,
+            empresa: CURRENT_ACCOUNT_NAME || null
           };
 
           // ✅ PROCESSAR ITENS com informações completas
@@ -615,7 +658,8 @@ Deno.serve(async (req) => {
                 valor_total: parseFloat(item.valor_total || '0'),
                 ncm: item.ncm || null,
                 codigo_barras: item.codigo_barras || null,
-                observacoes: item.observacoes || null
+                observacoes: item.observacoes || null,
+                integration_account_id: CURRENT_ACCOUNT_ID
               });
             }
           }
