@@ -151,9 +151,7 @@ export function AnnouncementTicker({
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
     "relative w-full",
-    sticky && "border-b",
-    // Provide a neutral background so urgency colors stand out as chips/items
-    "bg-background",
+    collapsed ? "h-0 bg-transparent" : "border-b bg-background",
     className
   );
 
@@ -178,15 +176,9 @@ export function AnnouncementTicker({
       onBlur={pauseOnHover ? onFocusOut : undefined}
     >
       {collapsed ? (
-        <div className={cn(innerBaseCls, "h-[36px] flex items-center justify-between")}> 
-          <div className="flex items-center gap-2">
-            {React.createElement(icons["Bell"], { className: "h-4 w-4 text-muted-foreground" })}
-            <span className="text-sm text-muted-foreground">Atualizações</span>
-            <span className="text-xs text-muted-foreground/70">({items.length})</span>
-          </div>
-        </div>
+        <div className={cn(innerBaseCls, "h-0")} />
       ) : (
-        <div className={cn(innerBaseCls)}> 
+        <div className={cn(innerBaseCls)}>
           <TickerRow
             items={items}
             mode={mode}
@@ -199,6 +191,7 @@ export function AnnouncementTicker({
           />
         </div>
       )}
+
 
       {showPause && (
         <button
@@ -219,7 +212,7 @@ export function AnnouncementTicker({
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
           className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+            "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
             "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
           )}
         >
@@ -358,37 +351,50 @@ function ContinuousTicker({
   customDivider?: React.ReactNode;
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
 }) {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const [offset, setOffset] = React.useState(0);
-  const [width, setWidth] = React.useState(0);
+  const [baseWidth, setBaseWidth] = React.useState(0); // width of a single row
+  const [repeatCount, setRepeatCount] = React.useState(2);
 
-  // Measure content width
+  // Measure content width and ensure we render enough copies to cover the viewport
   React.useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
+    const track = trackRef.current;
+    const container = containerRef.current;
+    if (!track || !container) return;
+
     const measure = () => {
-      setWidth(el.scrollWidth / 2); // half, because we duplicate
+      // baseWidth = total / repeats
+      const bw = Math.max(1, Math.floor(track.scrollWidth / Math.max(1, repeatCount)));
+      const cw = container.clientWidth;
+      const needed = Math.max(2, Math.ceil(cw / bw) + 2);
+      setBaseWidth(bw);
+      if (needed !== repeatCount) setRepeatCount(needed);
     };
-    measure();
-    const resizeObs = new ResizeObserver(measure);
-    resizeObs.observe(el);
-    return () => resizeObs.disconnect();
-  }, [items]);
 
-  // RAF loop
+    measure();
+    const ro1 = new ResizeObserver(measure);
+    const ro2 = new ResizeObserver(measure);
+    ro1.observe(track);
+    ro2.observe(container);
+    return () => {
+      ro1.disconnect();
+      ro2.disconnect();
+    };
+  }, [items, repeatCount]);
+
+  // RAF loop (looping)
   React.useEffect(() => {
-    if (!loop) return; // if not loop, we still scroll once until items end
+    if (!loop) return;
     let raf: number;
     let last = performance.now();
     const tick = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      if (!paused && speed > 0 && width > 0) {
+      if (!paused && speed > 0 && baseWidth > 0) {
         setOffset((prev) => {
-          const next = prev - speed * dt; // move left
-          if (-next >= width) {
-            return 0; // reset seamlessly
-          }
+          const next = prev - speed * dt;
+          if (-next >= baseWidth) return 0; // reset seamlessly after one row width
           return next;
         });
       }
@@ -396,7 +402,7 @@ function ContinuousTicker({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [paused, speed, width, loop]);
+  }, [paused, speed, baseWidth, loop]);
 
   // Non-loop mode: stop at the end
   React.useEffect(() => {
@@ -409,8 +415,7 @@ function ContinuousTicker({
       if (!paused && speed > 0) {
         setOffset((prev) => {
           const next = prev - speed * dt;
-          // clamp to end (no reset)
-          if (-next >= width) return -width;
+          if (-next >= baseWidth) return -baseWidth;
           return next;
         });
       }
@@ -418,7 +423,7 @@ function ContinuousTicker({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [paused, speed, width, loop]);
+  }, [paused, speed, baseWidth, loop]);
 
   const row = (
     <div className="flex items-center gap-3">
@@ -432,15 +437,17 @@ function ContinuousTicker({
   );
 
   return (
-    <div className="relative h-[44px] sm:h-[48px] overflow-hidden" aria-live="polite">
+    <div ref={containerRef} className="relative h-[44px] sm:h-[48px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
         style={{ transform: `translateX(${offset}px)` }}
       >
-        {/* duplicate content for seamless loop */}
-        <div className="inline-flex items-center gap-3 pr-6">{row}</div>
-        <div className="inline-flex items-center gap-3 pr-6">{row}</div>
+        {Array.from({ length: repeatCount }).map((_, i) => (
+          <div key={`row-${i}`} className="inline-flex items-center gap-3 pr-6">
+            {row}
+          </div>
+        ))}
       </div>
     </div>
   );

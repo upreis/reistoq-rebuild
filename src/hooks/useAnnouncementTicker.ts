@@ -9,6 +9,7 @@ export function useAnnouncementTicker() {
   const [items, setItems] = useState<TickerItem[]>([]);
   const [themeVariant, setThemeVariant] = useState<Partial<Record<UrgencyLevel, TokenVariant>>>({});
   const [loading, setLoading] = useState(true);
+  const [speedMode, setSpeedMode] = useState<"slow" | "normal" | "fast">("normal");
 
   useEffect(() => {
     const load = async () => {
@@ -17,11 +18,12 @@ export function useAnnouncementTicker() {
         const { data, error } = await supabase
           .from("configuracoes")
           .select("chave, valor")
-          .in("chave", ["ticker_custom_items", "ticker_urgency_map"]);
+          .in("chave", ["ticker_custom_items", "ticker_urgency_map", "ticker_speed_mode"]);
         if (error) throw error;
 
         const mapRow = data?.find((d) => d.chave === "ticker_urgency_map");
         const itemsRow = data?.find((d) => d.chave === "ticker_custom_items");
+        const speedRow = data?.find((d) => d.chave === "ticker_speed_mode");
 
         if (mapRow?.valor) {
           try {
@@ -36,6 +38,11 @@ export function useAnnouncementTicker() {
             setItems(parsed);
           } catch {}
         }
+
+        if (speedRow?.valor) {
+          const v = String(speedRow.valor).toLowerCase();
+          if (v === "slow" || v === "normal" || v === "fast") setSpeedMode(v);
+        }
       } catch (e) {
         console.error("useAnnouncementTicker load error", e);
       } finally {
@@ -46,19 +53,25 @@ export function useAnnouncementTicker() {
     load();
   }, []);
 
+  const speeds = {
+    slow: 50,    // px/s
+    normal: 80,
+    fast: 130,
+  } as const;
+
   const effectiveItems = items.length ? items : alerts;
   const props: AnnouncementTickerProps = {
     items: effectiveItems,
     mode: "continuous",
-    speed: 80,
+    speed: speeds[speedMode],
     pauseOnHover: true,
     loop: true,
     divider: "bar",
     showCollapse: true,
-    showPause: true,
+    showPause: false,
     sticky: true,
     themeVariant,
   };
 
-  return { props, items, themeVariant, loading };
+  return { props, items, themeVariant, loading, speedMode };
 }
