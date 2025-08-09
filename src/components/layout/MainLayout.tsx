@@ -11,7 +11,7 @@ import { Historico } from '@/components/pages/Historico';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 import DePara from '@/components/pages/DePara';
 import { AnnouncementTicker } from '@/components/notifications/AnnouncementTicker';
-import tickerConfig from '@/config/announcementTicker.config';
+import { useAnnouncementTicker } from '@/hooks/useAnnouncementTicker';
 
 
 interface MainLayoutProps {
@@ -19,10 +19,11 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
+  const { props } = useAnnouncementTicker();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background flex-col">
-        <AnnouncementTicker {...tickerConfig} showCollapse />
+        <AnnouncementTicker {...props} />
         <div className="flex w-full flex-1">
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
