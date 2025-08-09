@@ -30,6 +30,7 @@ export type AnnouncementTickerProps = {
   className?: string;
   dir?: "ltr" | "rtl";
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
+  edgeToEdge?: boolean; // if true, removes horizontal paddings and containers
 };
 
 // Token variants mapping to Tailwind semantic tokens
@@ -104,6 +105,7 @@ export function AnnouncementTicker({
   className,
   dir = "ltr",
   themeVariant,
+  edgeToEdge = false,
 }: AnnouncementTickerProps) {
   const [hidden, setHidden] = React.useState<boolean>(() => (showClose ? shouldHide(closeTtlHours) : false));
   const { paused, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut, setPaused } = useHoverPause();
@@ -155,6 +157,11 @@ export function AnnouncementTicker({
     className
   );
 
+  // Inner container classes (controls horizontal padding / full-bleed)
+  const innerBaseCls = edgeToEdge
+    ? "relative w-full"
+    : "relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12";
+
   // Debug render
   console.debug("AnnouncementTicker: render", { items: items?.length ?? 0, hidden, collapsed, userPaused: userPaused, mode, speed });
 
@@ -171,7 +178,7 @@ export function AnnouncementTicker({
       onBlur={pauseOnHover ? onFocusOut : undefined}
     >
       {collapsed ? (
-        <div className={cn("relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12 h-[36px] flex items-center justify-between")}> 
+        <div className={cn(innerBaseCls, "h-[36px] flex items-center justify-between")}> 
           <div className="flex items-center gap-2">
             {React.createElement(icons["Bell"], { className: "h-4 w-4 text-muted-foreground" })}
             <span className="text-sm text-muted-foreground">Atualizações</span>
@@ -179,7 +186,7 @@ export function AnnouncementTicker({
           </div>
         </div>
       ) : (
-        <div className={cn("relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12")}> 
+        <div className={cn(innerBaseCls)}> 
           <TickerRow
             items={items}
             mode={mode}
