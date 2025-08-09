@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AnnouncementTickerProps, TickerItem, UrgencyLevel } from "@/components/notifications/AnnouncementTicker";
 import { alerts } from "@/config/announcementTicker.config";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { useLocation } from "react-router-dom";
 export type TokenVariant = "muted" | "success" | "warning" | "primary" | "destructive" | "card";
 
 export function useAnnouncementTicker() {
@@ -13,7 +13,7 @@ export function useAnnouncementTicker() {
   const [loading, setLoading] = useState(true);
   const [speedMode, setSpeedMode] = useState<"slow" | "normal" | "fast">("normal");
   const { user } = useAuth();
-
+  const location = useLocation();
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -62,7 +62,7 @@ export function useAnnouncementTicker() {
             .order("created_at", { ascending: false });
           if (annErr) throw annErr;
 
-          const path = window.location?.pathname || "/";
+          const path = location.pathname || "/";
           const now = Date.now();
 
           const filtered = (ann || []).filter((a: any) => {
@@ -72,7 +72,7 @@ export function useAnnouncementTicker() {
 
             // rotas
             const routes: string[] | null = (a.target_routes as any) || null;
-            const routeOk = !routes || routes.length === 0 || routes.some((r) => path.startsWith(String(r)));
+            const routeOk = !routes || routes.length === 0 || routes.includes('*') || routes.some((r) => path.startsWith(String(r)));
             if (!routeOk) return false;
 
             // alvo por usuário
@@ -117,7 +117,7 @@ export function useAnnouncementTicker() {
     };
 
     load();
-  }, []);
+  }, [location.pathname, user?.id]);
 
   const speeds = {
     slow: 50,    // px/s
@@ -125,8 +125,7 @@ export function useAnnouncementTicker() {
     fast: 130,
   } as const;
 
-  const baseManualItems = items.length ? items : alerts;
-  const combinedRaw: TickerItem[] = [...annItems, ...baseManualItems];
+  const combinedRaw: TickerItem[] = [...annItems];
   const seen = new Set<string>();
   const keyOf = (t: TickerItem) => {
     const title = String(t.title || "").toLowerCase().replace(/\s+/g, " ").trim();
