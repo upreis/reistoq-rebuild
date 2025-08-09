@@ -91,12 +91,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarContent>
         {/* Header */}
-        <div className={`border-b border-sidebar-border ${collapsed ? 'p-3' : 'p-6'}`}>
+        <div className={`border-b border-sidebar-border ${collapsed ? 'px-3 py-3' : 'px-6 py-3'}`}>
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
             <img 
               src="/lovable-uploads/78a28708-1e34-459a-b347-1c12a0b5b9e7.png" 
               alt="REISTOQ Logo" 
-              className={`flex-shrink-0 object-contain ${collapsed ? 'h-8 w-8' : 'h-16 w-16'}`}
+              className={`flex-shrink-0 object-contain ${collapsed ? 'h-8 w-8' : 'h-12 w-12'}`}
             />
             {!collapsed && (
               <div>
