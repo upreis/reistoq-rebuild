@@ -75,17 +75,10 @@
     --transition-colors: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     
     --radius: 0.75rem;
-
-    /* Layout offsets for aligning header/ticker/main with sidebar */
-    --content-left-offset: 0px;
-    --sidebar-open-offset: 256px;   /* matches 16rem */
-    --sidebar-closed-offset: 48px;  /* matches 3rem */
   }
 }
 
-/* Sidebar state classes applied by app to body */
-body.sidebar-open { --content-left-offset: var(--sidebar-open-offset); }
-body.sidebar-closed { --content-left-offset: var(--sidebar-closed-offset); }
+/* Scanner styles */
 .scanner-active {
   visibility: hidden;
 }
