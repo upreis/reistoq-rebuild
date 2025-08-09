@@ -22,7 +22,8 @@ export type AnnouncementTickerProps = {
   loop?: boolean; // default: true
   divider?: "bar" | "dot" | "slash" | "custom";
   customDivider?: React.ReactNode;
-  showClose?: boolean;
+  showClose?: boolean; // deprecated in this project; keep for compat
+  showCollapse?: boolean; // show collapse/expand button (default true)
   closeTtlHours?: number; // default: 24
   sticky?: boolean; // default: true
   className?: string;
@@ -66,6 +67,7 @@ function useHoverPause() {
 }
 
 const CLOSE_KEY = "announcementTicker:closedAt";
+const COLLAPSE_KEY = "announcementTicker:collapsed";
 
 function shouldHide(ttlHours: number) {
   try {
@@ -80,6 +82,14 @@ function shouldHide(ttlHours: number) {
   }
 }
 
+const loadCollapsed = () => {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
 export function AnnouncementTicker({
   items,
   mode = "continuous",
@@ -89,6 +99,7 @@ export function AnnouncementTicker({
   divider = "bar",
   customDivider,
   showClose = false,
+  showCollapse = true,
   closeTtlHours = 24,
   sticky = true,
   className,
@@ -111,6 +122,13 @@ export function AnnouncementTicker({
       el.removeEventListener("focusout", onFocusOutLocal);
     };
   }, [setPaused]);
+
+  const [collapsed, setCollapsed] = React.useState<boolean>(() => loadCollapsed());
+  const toggleCollapsed = React.useCallback(() => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0"); } catch {}
+  }, [collapsed]);
 
   const close = React.useCallback(() => {
     try {
@@ -141,29 +159,38 @@ export function AnnouncementTicker({
       onFocus={pauseOnHover ? onFocusIn : undefined}
       onBlur={pauseOnHover ? onFocusOut : undefined}
     >
-      <div className={cn("mx-auto w-full px-3 sm:px-4")}>
-        <TickerRow
-          items={items}
-          mode={mode}
-          speed={speed}
-          paused={paused}
-          loop={loop}
-          divider={divider}
-          customDivider={customDivider}
-        />
-      </div>
+      {collapsed ? (
+        <div className={cn("mx-auto w-full px-3 sm:px-4 h-[36px] flex items-center justify-between")}> 
+          <div className="flex items-center gap-2">
+            {React.createElement(icons["Bell"], { className: "h-4 w-4 text-muted-foreground" })}
+            <span className="text-sm text-muted-foreground">Atualizações</span>
+            <span className="text-xs text-muted-foreground/70">({items.length})</span>
+          </div>
+        </div>
+      ) : (
+        <div className={cn("mx-auto w-full px-3 sm:px-4")}> 
+          <TickerRow
+            items={items}
+            mode={mode}
+            speed={speed}
+            paused={paused}
+            loop={loop}
+            divider={divider}
+            customDivider={customDivider}
+          />
+        </div>
+      )}
 
-      {showClose && (
+      {showCollapse && (
         <button
-          onClick={close}
-          aria-label="Fechar barra de anúncios"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
           className={cn(
             "absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full",
             "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
           )}
         >
-          {/* Simple close icon using Lucide x */}
-          {React.createElement(icons["X"]) }
+          {React.createElement(icons[collapsed ? "ChevronDown" : "ChevronUp"]) }
         </button>
       )}
     </div>
