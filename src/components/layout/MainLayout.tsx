@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Header } from './Header';
 import { Dashboard } from '@/components/pages/Dashboard';
@@ -28,13 +28,16 @@ export function MainLayout({ children }: MainLayoutProps) {
             {...props}
             sticky={true}
             showPause={false}
+            showCollapse={true}
             edgeToEdge
             variant="plain"
             mode="continuous"
-            speed={50}
+            speed={35}
+            dir="rtl"
             className="bg-white border-b"
           />
         </section>
+        <SidebarStateBodySync />
         <div className="flex w-full flex-1">
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
@@ -58,4 +61,14 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
     </SidebarProvider>
   );
+}
+
+function SidebarStateBodySync() {
+  const { state, isMobile } = useSidebar();
+  React.useEffect(() => {
+    const body = document.body;
+    body.classList.toggle('sidebar-open', state === 'expanded' && !isMobile);
+    body.classList.toggle('sidebar-closed', state !== 'expanded' || isMobile);
+  }, [state, isMobile]);
+  return null;
 }

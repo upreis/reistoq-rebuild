@@ -186,7 +186,6 @@ export function AnnouncementTicker({
       ref={containerRef}
       role="region"
       aria-label="Atualizações"
-      dir={dir}
       className={baseWrapperCls}
       onMouseEnter={pauseOnHover ? onMouseEnter : undefined}
       onMouseLeave={pauseOnHover ? onMouseLeave : undefined}
@@ -518,8 +517,8 @@ function ContinuousTicker({
     <div ref={containerRef} className="relative h-[48px] sm:h-[56px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
-        className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
-        style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
+        className="absolute left-0 top-0 h-full will-change-transform"
+        style={{ transform: `translateX(${offset}px)` }}
       >
         {Array.from({ length: repeatCount }).map((_, i) => (
           <div key={`row-${i}`} className="inline-flex items-center gap-6 pr-12">
