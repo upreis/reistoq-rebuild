@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { IntegrationAccountsManager } from "@/components/integrations/IntegrationAccountsManager";
 import { RolePermissionManager } from "@/components/auth/RolePermissionManager";
 import { AnnouncementsManager } from "@/components/notifications/AnnouncementsManager";
-
+import type { TickerItem, UrgencyLevel } from "@/components/notifications/AnnouncementTicker";
 
 export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
@@ -35,6 +35,13 @@ export function Configuracoes() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Announcement Ticker configs
+const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted" | "success" | "warning" | "primary" | "destructive" | "card">>>({});
+  const [customItems, setCustomItems] = useState<TickerItem[]>([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newHref, setNewHref] = useState("");
+  const [newUrgency, setNewUrgency] = useState<UrgencyLevel>("medium");
 
   // Carregar configurações existentes
   useEffect(() => {
@@ -55,7 +62,9 @@ export function Configuracoes() {
             'alertas_estoque_baixo',
             'alertas_skus_pendentes',
             'alertas_pedidos_parados',
-            'alertas_sync_falhas'
+            'alertas_sync_falhas',
+            'ticker_urgency_map',
+            'ticker_custom_items'
           ]);
 
         if (error) throw error;
@@ -97,6 +106,12 @@ export function Configuracoes() {
               break;
             case 'alertas_sync_falhas':
               setAlertasSyncFalhas(config.valor === 'true');
+              break;
+            case 'ticker_urgency_map':
+              try { setUrgencyMap(JSON.parse(config.valor)); } catch {}
+              break;
+            case 'ticker_custom_items':
+              try { setCustomItems(JSON.parse(config.valor)); } catch {}
               break;
           }
         });
@@ -309,6 +324,21 @@ export function Configuracoes() {
     }
   };
 
+  const handleSaveTickerConfig = async () => {
+    try {
+      const payloadMap = JSON.stringify(urgencyMap || {});
+      const payloadItems = JSON.stringify(customItems || []);
+      const [{ error: e1 }, { error: e2 }] = await Promise.all([
+        supabase.from('configuracoes').upsert({ chave: 'ticker_urgency_map', valor: payloadMap, tipo: 'json' }, { onConflict: 'chave' }),
+        supabase.from('configuracoes').upsert({ chave: 'ticker_custom_items', valor: payloadItems, tipo: 'json' }, { onConflict: 'chave' }),
+      ]);
+      if (e1 || e2) throw e1 || e2;
+      toast({ title: 'Ticker atualizado', description: 'Preferências e alertas salvos com sucesso.' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Falha ao salvar o ticker.' });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -423,6 +453,158 @@ export function Configuracoes() {
       {/* Avisos e Anúncios */}
       <AnnouncementsManager />
 
+      {/* Announcement Ticker - Preferências e Alertas Manuais */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Announcement Ticker
+          </CardTitle>
+          <CardDescription>Defina cores por urgência e adicione alertas manuais exibidos no topo do sistema.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Cores por urgência */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label>Baixa (low)</Label>
+              <Select value={urgencyMap.low as any || 'success'} onValueChange={(v) => setUrgencyMap((p) => ({ ...p, low: v as any }))}>
+                <SelectTrigger><SelectValue placeholder="Escolha a cor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="success">Verde (Sucesso)</SelectItem>
+                  <SelectItem value="warning">Laranja (Aviso)</SelectItem>
+                  <SelectItem value="destructive">Vermelho (Crítico)</SelectItem>
+                  <SelectItem value="primary">Primário</SelectItem>
+                  <SelectItem value="muted">Neutro</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, low: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, low: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, low: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Média (medium)</Label>
+              <Select value={urgencyMap.medium as any || 'warning'} onValueChange={(v) => setUrgencyMap((p) => ({ ...p, medium: v as any }))}>
+                <SelectTrigger><SelectValue placeholder="Escolha a cor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="muted">Neutro</SelectItem>
+                  <SelectItem value="warning">Aviso</SelectItem>
+                  <SelectItem value="primary">Primário</SelectItem>
+                  <SelectItem value="destructive">Crítico</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, medium: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, medium: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, medium: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Alta (high)</Label>
+              <Select value={urgencyMap.high as any || 'primary'} onValueChange={(v) => setUrgencyMap((p) => ({ ...p, high: v as any }))}>
+                <SelectTrigger><SelectValue placeholder="Escolha a cor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="muted">Neutro</SelectItem>
+                  <SelectItem value="warning">Aviso</SelectItem>
+                  <SelectItem value="primary">Primário</SelectItem>
+                  <SelectItem value="destructive">Crítico</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, high: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, high: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, high: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Crítica (critical)</Label>
+              <Select value={urgencyMap.critical as any || 'destructive'} onValueChange={(v) => setUrgencyMap((p) => ({ ...p, critical: v as any }))}>
+                <SelectTrigger><SelectValue placeholder="Escolha a cor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="muted">Neutro</SelectItem>
+                  <SelectItem value="warning">Aviso</SelectItem>
+                  <SelectItem value="primary">Primário</SelectItem>
+                  <SelectItem value="destructive">Crítico</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, critical: 'success' }))} className="rounded-full px-2 py-1 text-xs bg-success text-success-foreground">Verde</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, critical: 'warning' }))} className="rounded-full px-2 py-1 text-xs bg-warning text-warning-foreground">Amarelo</button>
+                <button type="button" onClick={() => setUrgencyMap((p) => ({ ...p, critical: 'destructive' }))} className="rounded-full px-2 py-1 text-xs bg-destructive text-destructive-foreground">Vermelho</button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Adicionar alerta manual */}
+          <div className="grid md:grid-cols-4 gap-3 items-end">
+            <div className="grid gap-2">
+              <Label>Título</Label>
+              <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Ex.: Sem mapeamento" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Descrição (opcional)</Label>
+              <Input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Detalhes rápidos" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Link (opcional)</Label>
+              <Input value={newHref} onChange={(e) => setNewHref(e.target.value)} placeholder="https://..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Urgência</Label>
+              <Select value={newUrgency} onValueChange={(v: UrgencyLevel) => setNewUrgency(v)}>
+                <SelectTrigger><SelectValue placeholder="Urgência" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="critical">Crítica</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (!newTitle.trim()) return;
+                const id = Date.now().toString(36);
+                const item: TickerItem = { id, title: newTitle.trim(), description: newDescription || undefined, href: newHref || undefined, urgency: newUrgency };
+                setCustomItems((prev) => [...prev, item]);
+                setNewTitle(""); setNewDescription(""); setNewHref(""); setNewUrgency("medium");
+              }}
+            >Adicionar alerta</Button>
+          </div>
+
+          {/* Lista de alertas manuais */}
+          <div className="space-y-2">
+            {customItems.map((it) => (
+              <div key={it.id} className="flex items-center justify-between border rounded-md p-2">
+                <div className="text-sm">
+                  <span className="font-medium mr-2">[{it.urgency}]</span>{it.title}
+                  {it.description && <span className="text-muted-foreground ml-2">— {it.description}</span>}
+                </div>
+                <Button size="icon" variant="ghost" onClick={() => setCustomItems((prev) => prev.filter((x) => x.id !== it.id))} aria-label="Remover">
+                  ✕
+                </Button>
+              </div>
+            ))}
+            {!customItems.length && (
+              <div className="text-sm text-muted-foreground">Nenhum alerta manual adicionado.</div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveTickerConfig}>Salvar preferências do Ticker</Button>
+          </div>
+        </CardContent>
+      </Card>
 
 
 

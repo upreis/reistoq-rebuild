@@ -202,3 +202,19 @@
     @apply bg-muted/20 border-b-2 border-border;
   }
 }
+
+/* AnnouncementTicker CSS utilities */
+@layer components {
+  .ticker-viewport { }
+  .ticker-track {
+    animation: ticker-rtl var(--ticker-duration, 40s) linear infinite;
+  }
+  .ticker-root:hover .ticker-track,
+  .ticker-root:focus-within .ticker-track {
+    animation-play-state: paused;
+  }
+  @keyframes ticker-rtl {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+}
