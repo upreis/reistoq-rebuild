@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,16 @@ interface AnnRow {
   target_users?: string[] | null;
 }
 
+const AVAILABLE_ROUTES = [
+  { path: "/dashboard", label: "Dashboard" },
+  { path: "/estoque", label: "Estoque" },
+  { path: "/pedidos", label: "Pedidos" },
+  { path: "/depara", label: "DE/PARA" },
+  { path: "/historico", label: "Histórico" },
+  { path: "/scanner", label: "Scanner" },
+  { path: "/configuracoes", label: "Configurações" },
+] as const;
+
 export function AnnouncementsManager() {
   const { user, organizacao } = useAuth();
   const { toast } = useToast();
@@ -39,7 +49,7 @@ export function AnnouncementsManager() {
   const [message, setMessage] = useState("");
   const [href, setHref] = useState("");
   const [linkLabel, setLinkLabel] = useState("");
-  const [routesText, setRoutesText] = useState("");
+  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [active, setActive] = useState(true);
 
   // Seleção de público
@@ -55,19 +65,12 @@ export function AnnouncementsManager() {
   const [editMessage, setEditMessage] = useState("");
   const [editHref, setEditHref] = useState("");
   const [editLinkLabel, setEditLinkLabel] = useState("");
-  const [editRoutesText, setEditRoutesText] = useState("");
+  const [editSelectedRoutes, setEditSelectedRoutes] = useState<string[]>([]);
   const [editActive, setEditActive] = useState(true);
   const [editSelectedRoleIds, setEditSelectedRoleIds] = useState<string[]>([]);
   const [editSelectedUserIds, setEditSelectedUserIds] = useState<string[]>([]);
 
 
-  const routesArray = useMemo(() =>
-    routesText
-      .split(",")
-      .map((r) => r.trim())
-      .filter(Boolean),
-    [routesText]
-  );
 
   const loadAll = async () => {
     setLoading(true);
@@ -105,6 +108,11 @@ export function AnnouncementsManager() {
   const toggleEditUser = (id: string) =>
     setEditSelectedUserIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const toggleRoute = (path: string) =>
+    setSelectedRoutes((prev) => (prev.includes(path) ? prev.filter((x) => x !== path) : [...prev, path]));
+  const toggleEditRoute = (path: string) =>
+    setEditSelectedRoutes((prev) => (prev.includes(path) ? prev.filter((x) => x !== path) : [...prev, path]));
+
   const handleCreate = async () => {
     try {
       if (!user) {
@@ -118,7 +126,7 @@ export function AnnouncementsManager() {
         href: href || null,
         link_label: linkLabel || null,
         active,
-        target_routes: routesArray.length ? routesArray : null,
+        target_routes: selectedRoutes.length ? selectedRoutes : null,
         target_roles: selectedRoleIds.length ? selectedRoleIds : null,
         target_users: selectedUserIds.length ? selectedUserIds : null,
       };
@@ -131,7 +139,7 @@ export function AnnouncementsManager() {
       setMessage("");
       setHref("");
       setLinkLabel("");
-      setRoutesText("");
+      setSelectedRoutes([]);
       setSelectedRoleIds([]);
       setSelectedUserIds([]);
       loadAll();
@@ -169,7 +177,7 @@ export function AnnouncementsManager() {
     setEditMessage(row.message);
     setEditHref(row.href || "");
     setEditLinkLabel(row.link_label || "");
-    setEditRoutesText((row.target_routes || []).join(", "));
+    setEditSelectedRoutes(row.target_routes || []);
     setEditActive(row.active);
     setEditSelectedRoleIds(row.target_roles || []);
     setEditSelectedUserIds(row.target_users || []);
@@ -185,7 +193,7 @@ export function AnnouncementsManager() {
         href: editHref || null,
         link_label: editLinkLabel || null,
         active: editActive,
-        target_routes: editRoutesText.split(",").map((r) => r.trim()).filter(Boolean) || null,
+        target_routes: editSelectedRoutes.length ? editSelectedRoutes : null,
         target_roles: editSelectedRoleIds.length ? editSelectedRoleIds : null,
         target_users: editSelectedUserIds.length ? editSelectedUserIds : null,
       };
@@ -252,7 +260,15 @@ export function AnnouncementsManager() {
 
                 <div className="grid gap-2">
                   <Label>Páginas (rotas) alvo</Label>
-                  <Input value={routesText} onChange={(e) => setRoutesText(e.target.value)} placeholder="Ex.: /depara, /estoque, /pedidos ou deixe vazio para todas"/>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {AVAILABLE_ROUTES.map((r) => (
+                      <label key={r.path} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={selectedRoutes.includes(r.path)} onCheckedChange={() => toggleRoute(r.path)} />
+                        {r.label}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Deixe vazio para todas as páginas</p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -369,7 +385,15 @@ export function AnnouncementsManager() {
 
             <div className="grid gap-2">
               <Label>Páginas (rotas) alvo</Label>
-              <Input value={editRoutesText} onChange={(e) => setEditRoutesText(e.target.value)} placeholder="Ex.: /depara, /estoque, /pedidos ou deixe vazio para todas"/>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {AVAILABLE_ROUTES.map((r) => (
+                  <label key={r.path} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={editSelectedRoutes.includes(r.path)} onCheckedChange={() => toggleEditRoute(r.path)} />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Deixe vazio para todas as páginas</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
