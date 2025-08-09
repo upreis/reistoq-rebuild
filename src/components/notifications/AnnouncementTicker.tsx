@@ -587,7 +587,7 @@ function ContinuousTicker({
     <div ref={containerRef} className="relative h-[32px] sm:h-[38px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
-        className="absolute left-0 top-1/2 -translate-y-1/2 will-change-transform"
+        className="absolute left-0 top-1/2 -translate-y-1/2 inline-flex whitespace-nowrap items-stretch gap-2 pr-4 will-change-transform"
         style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
       >
         {Array.from({ length: repeatCount }).map((_, i) => (
