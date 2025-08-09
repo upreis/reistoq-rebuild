@@ -35,9 +35,9 @@ const URGENCY_STYLES: Record<
   { container: string; text: string; accent: string }
 > = {
   low: {
-    container: "bg-card",
-    text: "text-foreground",
-    accent: "border-border",
+    container: "bg-muted",
+    text: "text-muted-foreground",
+    accent: "border-muted",
   },
   medium: {
     container: "bg-warning",
