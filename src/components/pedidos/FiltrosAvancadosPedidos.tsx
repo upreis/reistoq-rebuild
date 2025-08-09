@@ -52,22 +52,34 @@ export function FiltrosAvancadosPedidos({
   const [nomeFiltro, setNomeFiltro] = useState("");
   const [mostrarSalvarFiltro, setMostrarSalvarFiltro] = useState(false);
   
-  // Estados para datas
-  const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
-    if (filtros.dataInicio) {
-      const [ano, mes, dia] = filtros.dataInicio.split('-');
-      return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+  // Estados para datas (parser tolerante a formatos yyyy-MM-dd e dd/MM/yyyy)
+  const parseDateFlexible = (value?: string): Date | undefined => {
+    if (!value) return undefined;
+    try {
+      let y: number, m: number, d: number;
+      if (value.includes('-')) {
+        const [ano, mes, dia] = value.split('-');
+        y = parseInt(ano);
+        m = parseInt(mes);
+        d = parseInt(dia);
+      } else if (value.includes('/')) {
+        const [dia, mes, ano] = value.split('/');
+        y = parseInt(ano);
+        m = parseInt(mes);
+        d = parseInt(dia);
+      } else {
+        return undefined;
+      }
+      const dt = new Date(y, (m || 1) - 1, d || 1);
+      return isNaN(dt.getTime()) ? undefined : dt;
+    } catch {
+      return undefined;
     }
-    return undefined;
-  });
+  };
+
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(() => parseDateFlexible(filtros.dataInicio));
   
-  const [dataFim, setDataFim] = useState<Date | undefined>(() => {
-    if (filtros.dataFinal) {
-      const [ano, mes, dia] = filtros.dataFinal.split('-');
-      return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-    }
-    return undefined;
-  });
+  const [dataFim, setDataFim] = useState<Date | undefined>(() => parseDateFlexible(filtros.dataFinal));
 
   // Carregar filtros salvos do localStorage
   useEffect(() => {
@@ -79,19 +91,8 @@ export function FiltrosAvancadosPedidos({
 
   // Sincronizar datas com filtros
   useEffect(() => {
-    if (filtros.dataInicio) {
-      const [ano, mes, dia] = filtros.dataInicio.split('-');
-      setDataInicio(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
-    } else {
-      setDataInicio(undefined);
-    }
-    
-    if (filtros.dataFinal) {
-      const [ano, mes, dia] = filtros.dataFinal.split('-');
-      setDataFim(new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)));
-    } else {
-      setDataFim(undefined);
-    }
+    setDataInicio(parseDateFlexible(filtros.dataInicio));
+    setDataFim(parseDateFlexible(filtros.dataFinal));
   }, [filtros.dataInicio, filtros.dataFinal]);
 
   const situacoes = [
