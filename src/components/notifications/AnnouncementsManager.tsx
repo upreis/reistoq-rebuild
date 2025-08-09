@@ -42,10 +42,16 @@ export function AnnouncementsManager() {
   const [routesText, setRoutesText] = useState("");
   const [active, setActive] = useState(true);
 
-  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
-  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
-  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  // Editar anúncio
+  const [editOpen, setEditOpen] = useState(false);
+  const [editRow, setEditRow] = useState<AnnRow | null>(null);
+  const [editKind, setEditKind] = useState<AnnRow["kind"]>("info");
+  const [editMessage, setEditMessage] = useState("");
+  const [editHref, setEditHref] = useState("");
+  const [editLinkLabel, setEditLinkLabel] = useState("");
+  const [editRoutesText, setEditRoutesText] = useState("");
+  const [editActive, setEditActive] = useState(true);
+
 
   const routesArray = useMemo(() =>
     routesText
@@ -86,6 +92,10 @@ export function AnnouncementsManager() {
     setSelectedRoleIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const toggleUser = (id: string) =>
     setSelectedUserIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleEditRole = (id: string) =>
+    setEditSelectedRoleIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleEditUser = (id: string) =>
+    setEditSelectedUserIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handleCreate = async () => {
     try {
@@ -136,13 +146,40 @@ export function AnnouncementsManager() {
     }
   };
 
-  const handleDelete = async (row: AnnRow) => {
+  const openEdit = (row: AnnRow) => {
+    setEditRow(row);
+    setEditKind(row.kind);
+    setEditMessage(row.message);
+    setEditHref(row.href || "");
+    setEditLinkLabel(row.link_label || "");
+    setEditRoutesText((row.target_routes || []).join(", "));
+    setEditActive(row.active);
+    setEditSelectedRoleIds(row.target_roles || []);
+    setEditSelectedUserIds(row.target_users || []);
+    setEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editRow) return;
     try {
-      const { error } = await supabase.from("announcements").delete().eq("id", row.id);
+      const payload: any = {
+        kind: editKind,
+        message: editMessage,
+        href: editHref || null,
+        link_label: editLinkLabel || null,
+        active: editActive,
+        target_routes: editRoutesText.split(",").map((r) => r.trim()).filter(Boolean) || null,
+        target_roles: editSelectedRoleIds.length ? editSelectedRoleIds : null,
+        target_users: editSelectedUserIds.length ? editSelectedUserIds : null,
+      };
+      const { error } = await supabase.from("announcements").update(payload).eq("id", editRow.id);
       if (error) throw error;
-      setList((prev) => prev.filter((a) => a.id !== row.id));
+      toast({ title: "Anúncio atualizado", description: "Alterações salvas." });
+      setEditOpen(false);
+      setEditRow(null);
+      loadAll();
     } catch (e: any) {
-      toast({ variant: "destructive", title: "Erro", description: e.message || "Falha ao excluir" });
+      toast({ variant: "destructive", title: "Erro", description: e.message || "Falha ao atualizar" });
     }
   };
 
@@ -261,6 +298,7 @@ export function AnnouncementsManager() {
                 <Button size="sm" variant="outline" onClick={() => handleToggleActive(row)}>
                   {row.active ? "Desativar" : "Ativar"}
                 </Button>
+                <Button size="sm" variant="secondary" onClick={() => openEdit(row)}>Editar</Button>
                 <Button size="icon" variant="ghost" onClick={() => handleDelete(row)} aria-label="Excluir">
                   <Trash2 className="h-4 w-4"/>
                 </Button>
@@ -272,6 +310,91 @@ export function AnnouncementsManager() {
           )}
         </div>
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar anúncio</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>Tipo</Label>
+                <Select value={editKind} onValueChange={(v: AnnRow["kind"]) => setEditKind(v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="info">Informação</SelectItem>
+                    <SelectItem value="success">Sucesso</SelectItem>
+                    <SelectItem value="warning">Aviso</SelectItem>
+                    <SelectItem value="destructive">Crítico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Link (opcional)</Label>
+                <Input value={editHref} onChange={(e) => setEditHref(e.target.value)} placeholder="https://..."/>
+              </div>
+              <div className="grid gap-2">
+                <Label>Texto do link</Label>
+                <Input value={editLinkLabel} onChange={(e) => setEditLinkLabel(e.target.value)} placeholder="Ver mais"/>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Mensagem</Label>
+              <Input value={editMessage} onChange={(e) => setEditMessage(e.target.value)} placeholder="Digite o aviso"/>
+            </div>
+
+            <Separator />
+
+            <div className="grid gap-2">
+              <Label>Páginas (rotas) alvo</Label>
+              <Input value={editRoutesText} onChange={(e) => setEditRoutesText(e.target.value)} placeholder="Ex.: /depara, /estoque, /pedidos ou deixe vazio para todas"/>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Cargos (roles) alvo</Label>
+                <ScrollArea className="h-32 border rounded-md p-2">
+                  <div className="space-y-2">
+                    {roles.map((r) => (
+                      <label key={r.id} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={editSelectedRoleIds.includes(r.id)} onCheckedChange={() => toggleEditRole(r.id)} />
+                        {r.name}
+                      </label>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div className="space-y-2">
+                <Label>Usuários alvo</Label>
+                <ScrollArea className="h-32 border rounded-md p-2">
+                  <div className="space-y-2">
+                    {users.map((u) => (
+                      <label key={u.id} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={editSelectedUserIds.includes(u.id)} onCheckedChange={() => toggleEditUser(u.id)} />
+                        {u.name}
+                      </label>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch checked={editActive} onCheckedChange={setEditActive} id="ann-edit-active"/>
+              <Label htmlFor="ann-edit-active">Ativo</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setEditOpen(false)}>Cancelar</Button>
+            <Button onClick={handleUpdate} disabled={!editMessage.trim()}>Salvar alterações</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
