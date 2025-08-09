@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AnnouncementTickerProps, TickerItem, UrgencyLevel } from "@/components/notifications/AnnouncementTicker";
+import { alerts } from "@/config/announcementTicker.config";
 
 export type TokenVariant = "muted" | "warning" | "primary" | "destructive" | "card";
 
@@ -45,8 +46,9 @@ export function useAnnouncementTicker() {
     load();
   }, []);
 
+  const effectiveItems = items.length ? items : alerts;
   const props: AnnouncementTickerProps = {
-    items,
+    items: effectiveItems,
     mode: "continuous",
     speed: 80,
     pauseOnHover: true,
