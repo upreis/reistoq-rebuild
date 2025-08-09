@@ -92,7 +92,11 @@ export function useAnnouncementTicker() {
   const baseManualItems = items.length ? items : alerts;
   const combinedRaw: TickerItem[] = [...annItems, ...baseManualItems];
   const seen = new Set<string>();
-  const keyOf = (t: TickerItem) => `${(t.title || "").trim().toLowerCase()}|${t.href || ""}`;
+  const keyOf = (t: TickerItem) => {
+    const title = String(t.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    const href = String(t.href || "").trim();
+    return `${title}|${href}`;
+  };
   const effectiveItems = combinedRaw.filter((t) => {
     const k = keyOf(t);
     if (seen.has(k)) return false;
