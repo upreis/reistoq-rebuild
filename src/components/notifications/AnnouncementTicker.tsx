@@ -30,7 +30,6 @@ export type AnnouncementTickerProps = {
   className?: string;
   dir?: "ltr" | "rtl";
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
-  controlsVariant?: "default" | "subtle";
 };
 
 // Token variants mapping to Tailwind semantic tokens
@@ -105,7 +104,6 @@ export function AnnouncementTicker({
   className,
   dir = "ltr",
   themeVariant,
-  controlsVariant = "default",
 }: AnnouncementTickerProps) {
   const [hidden, setHidden] = React.useState<boolean>(() => (showClose ? shouldHide(closeTtlHours) : false));
   const { paused, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut, setPaused } = useHoverPause();
@@ -200,10 +198,8 @@ export function AnnouncementTicker({
           aria-pressed={userPaused}
           aria-label={userPaused ? "Reproduzir rolagem" : "Pausar rolagem"}
           className={cn(
-            "absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full transition-colors",
-            controlsVariant === "subtle"
-              ? "h-6 w-6 bg-muted/40 text-muted-foreground/70 hover:bg-muted/60"
-              : "h-7 w-7 bg-muted/60 text-muted-foreground hover:bg-muted"
+            "absolute left-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+            "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
           )}
         >
           {React.createElement(icons[userPaused ? "Play" : "Pause"]) }
@@ -215,10 +211,8 @@ export function AnnouncementTicker({
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
           className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full transition-colors",
-            controlsVariant === "subtle"
-              ? "h-6 w-6 bg-muted/40 text-muted-foreground/70 hover:bg-muted/60"
-              : "h-7 w-7 bg-muted/60 text-muted-foreground hover:bg-muted"
+            "absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+            "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
           )}
         >
           {React.createElement(icons[collapsed ? "ChevronDown" : "ChevronUp"]) }
