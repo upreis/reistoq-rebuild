@@ -23,30 +23,28 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background flex-col">
+        <section aria-label="Avisos do sistema" className="w-full">
+          <AnnouncementTicker {...props} sticky={false} showPause={false} />
+        </section>
         <div className="flex w-full flex-1">
           <AppSidebar />
-          <div className="flex flex-col flex-1">
-            <section aria-label="Avisos do sistema" className="px-6">
-              <AnnouncementTicker {...props} sticky={false} />
-            </section>
-            <SidebarInset className="flex flex-col flex-1">
-              <Header />
-              <main className="flex-1 p-6 overflow-auto">
+          <SidebarInset className="flex flex-col flex-1">
+            <Header />
+            <main className="flex-1 p-6 overflow-auto">
 
-                {children || (
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/estoque" element={<Estoque />} />
-                    <Route path="/pedidos" element={<Pedidos />} />
-                    <Route path="/depara" element={<DePara />} />
-                    <Route path="/scanner" element={<Scanner />} />
-                    <Route path="/historico" element={<Historico />} />
-                    <Route path="/configuracoes" element={<Configuracoes />} />
-                  </Routes>
-                )}
-              </main>
-            </SidebarInset>
-          </div>
+              {children || (
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/estoque" element={<Estoque />} />
+                  <Route path="/pedidos" element={<Pedidos />} />
+                  <Route path="/depara" element={<DePara />} />
+                  <Route path="/scanner" element={<Scanner />} />
+                  <Route path="/historico" element={<Historico />} />
+                  <Route path="/configuracoes" element={<Configuracoes />} />
+                </Routes>
+              )}
+            </main>
+          </SidebarInset>
         </div>
       </div>
     </SidebarProvider>
