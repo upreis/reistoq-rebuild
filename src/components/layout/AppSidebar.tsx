@@ -87,8 +87,27 @@ export function AppSidebar() {
 
   const itemsToShow = isLoading ? navigationItems : navigationItems.filter((i) => hasPermission(i.permission));
 
+  // Track AnnouncementTicker collapsed state to adjust Sidebar offset/height dynamically
+  const [tickerCollapsed, setTickerCollapsed] = React.useState<boolean>(() => {
+    try { return localStorage.getItem('announcementTicker:collapsed') === '1'; } catch { return false; }
+  });
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && typeof detail.collapsed === 'boolean') setTickerCollapsed(detail.collapsed);
+    };
+    window.addEventListener('announcementTicker:collapsed', handler as EventListener);
+    return () => window.removeEventListener('announcementTicker:collapsed', handler as EventListener);
+  }, []);
+
+  const topMobile = tickerCollapsed ? 'top-11' : 'top-[88px]';
+  const topDesktop = tickerCollapsed ? 'sm:top-12' : 'sm:top-[96px]';
+  const heightMobile = tickerCollapsed ? 'h-[calc(100svh-44px)]' : 'h-[calc(100svh-88px)]';
+  const heightDesktop = tickerCollapsed ? 'sm:h-[calc(100svh-48px)]' : 'sm:h-[calc(100svh-96px)]';
+
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border top-11 sm:top-12 h-[calc(100svh-44px)] sm:h-[calc(100svh-48px)]">
+    <Sidebar collapsible="icon" className={`border-r border-sidebar-border ${topMobile} ${topDesktop} ${heightMobile} ${heightDesktop}`}>
       <SidebarContent>
         {/* Header */}
         <div className={`border-b border-sidebar-border ${collapsed ? 'px-3 py-3' : 'px-6 py-3'}`}>

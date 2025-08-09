@@ -133,6 +133,12 @@ export function AnnouncementTicker({
   }, [setPaused]);
 
   const [collapsed, setCollapsed] = React.useState<boolean>(() => loadCollapsed());
+  React.useEffect(() => {
+    try {
+      window.dispatchEvent(new CustomEvent('announcementTicker:collapsed', { detail: { collapsed } }));
+    } catch {}
+  }, [collapsed]);
+
   const toggleCollapsed = React.useCallback(() => {
     const next = !collapsed;
     setCollapsed(next);
@@ -158,7 +164,7 @@ export function AnnouncementTicker({
   // Inner container classes (controls horizontal padding / full-bleed)
   const innerBaseCls = edgeToEdge
     ? "relative w-full"
-    : "relative mx-auto w-full pl-10 pr-10 sm:pl-12 sm:pr-12";
+    : "relative mx-auto w-full flex items-center justify-center pl-10 pr-10 sm:pl-12 sm:pr-12";
 
   // Debug render
   console.debug("AnnouncementTicker: render", { items: items?.length ?? 0, hidden, collapsed, userPaused: userPaused, mode, speed });
