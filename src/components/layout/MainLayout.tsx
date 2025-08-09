@@ -23,13 +23,15 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background flex-col">
-        <AnnouncementTicker {...props} />
         <div className="flex w-full flex-1">
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
             <Header />
-            
+            <section aria-label="Avisos do sistema" className="px-6 pt-3">
+              <AnnouncementTicker {...props} sticky={false} />
+            </section>
             <main className="flex-1 p-6 overflow-auto">
+
               {children || (
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
