@@ -492,25 +492,25 @@ function ContinuousTicker({
   const [repeatCount, setRepeatCount] = React.useState(2);
   const initializedRef = React.useRef(false);
 
-  // Measure content width and ensure we render enough copies to cover the viewport
-  React.useEffect(() => {
+  // Measure using layout effect to set initial offset before paint and keep exactly 2 copies
+  React.useLayoutEffect(() => {
     const track = trackRef.current;
     const container = containerRef.current;
     if (!track || !container) return;
 
     const measure = () => {
-      const bw = Math.max(1, Math.floor(track.scrollWidth / Math.max(1, repeatCount)));
+      const copies = 2;
+      const bw = Math.max(1, Math.floor(track.scrollWidth / copies));
       const cw = container.clientWidth;
-      const needed = Math.max(2, Math.ceil(cw / bw) + 2);
-      const next = Math.max(2, Math.min(3, needed)); // clamp to avoid many duplicates on screen
       setBaseWidth(bw);
-      if (next !== repeatCount) setRepeatCount(next);
-      // Start from the right edge so items enter the viewport from the end
+      if (repeatCount !== copies) setRepeatCount(copies);
+      // Start from the right edge so items enter the viewport from the end without flashing
       if (!initializedRef.current && cw > 0) {
         setOffset(cw);
         initializedRef.current = true;
       }
     };
+
     measure();
     const ro1 = new ResizeObserver(measure);
     const ro2 = new ResizeObserver(measure);
@@ -520,7 +520,7 @@ function ContinuousTicker({
       ro1.disconnect();
       ro2.disconnect();
     };
-  }, [items, repeatCount]);
+  }, [items]);
 
   // Re-initialize start position when items change
   React.useEffect(() => {
@@ -590,6 +590,7 @@ function ContinuousTicker({
         {Array.from({ length: repeatCount }).map((_, i) => (
           <div key={`row-${i}`} className="inline-flex items-stretch gap-2 pr-4">
             {row}
+            <Divider type={divider} custom={customDivider} />
           </div>
         ))}
       </div>

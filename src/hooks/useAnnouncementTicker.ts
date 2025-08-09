@@ -89,7 +89,15 @@ export function useAnnouncementTicker() {
     fast: 130,
   } as const;
 
-  const effectiveItems = items.length ? items : alerts;
+  const effectiveItemsRaw = items.length ? items : alerts;
+  const seen = new Set<string>();
+  const keyOf = (t: TickerItem) => `${(t.title || "").trim().toLowerCase()}|${t.href || ""}`;
+  const effectiveItems = effectiveItemsRaw.filter((t) => {
+    const k = keyOf(t);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
   const props: AnnouncementTickerProps = {
     items: effectiveItems,
     mode: "continuous",
