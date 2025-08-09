@@ -25,26 +25,28 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="min-h-screen flex w-full bg-background flex-col">
         <div className="flex w-full flex-1">
           <AppSidebar />
-          <SidebarInset className="flex flex-col flex-1">
-            <Header />
+          <div className="flex flex-col flex-1">
             <section aria-label="Avisos do sistema" className="px-6">
               <AnnouncementTicker {...props} sticky={false} />
             </section>
-            <main className="flex-1 p-6 overflow-auto">
+            <SidebarInset className="flex flex-col flex-1">
+              <Header />
+              <main className="flex-1 p-6 overflow-auto">
 
-              {children || (
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/estoque" element={<Estoque />} />
-                  <Route path="/pedidos" element={<Pedidos />} />
-                  <Route path="/depara" element={<DePara />} />
-                  <Route path="/scanner" element={<Scanner />} />
-                  <Route path="/historico" element={<Historico />} />
-                  <Route path="/configuracoes" element={<Configuracoes />} />
-                </Routes>
-              )}
-            </main>
-          </SidebarInset>
+                {children || (
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/estoque" element={<Estoque />} />
+                    <Route path="/pedidos" element={<Pedidos />} />
+                    <Route path="/depara" element={<DePara />} />
+                    <Route path="/scanner" element={<Scanner />} />
+                    <Route path="/historico" element={<Historico />} />
+                    <Route path="/configuracoes" element={<Configuracoes />} />
+                  </Routes>
+                )}
+              </main>
+            </SidebarInset>
+          </div>
         </div>
       </div>
     </SidebarProvider>
