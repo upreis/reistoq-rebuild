@@ -29,34 +29,28 @@ export type AnnouncementTickerProps = {
   sticky?: boolean; // default: true
   className?: string;
   dir?: "ltr" | "rtl";
+  themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
 };
 
-// Urgency styles mapped to the project's design tokens
-const URGENCY_STYLES: Record<
-  UrgencyLevel,
-  { container: string; text: string; accent: string }
-> = {
-  low: {
-    container: "bg-muted",
-    text: "text-muted-foreground",
-    accent: "border-muted",
-  },
-  medium: {
-    container: "bg-warning",
-    text: "text-warning-foreground",
-    accent: "border-warning",
-  },
-  high: {
-    container: "bg-primary",
-    text: "text-primary-foreground",
-    accent: "border-primary",
-  },
-  critical: {
-    container: "bg-destructive",
-    text: "text-destructive-foreground",
-    accent: "border-destructive",
-  },
+// Token variants mapping to Tailwind semantic tokens
+const TOKEN_CLASSES = {
+  muted: { bg: "bg-muted", text: "text-muted-foreground" },
+  warning: { bg: "bg-warning", text: "text-warning-foreground" },
+  primary: { bg: "bg-primary", text: "text-primary-foreground" },
+  destructive: { bg: "bg-destructive", text: "text-destructive-foreground" },
+  card: { bg: "bg-card", text: "text-foreground" },
+} as const;
+
+export type TokenVariant = keyof typeof TOKEN_CLASSES;
+
+// Default urgency → token
+const DEFAULT_URGENCY_MAP: Record<UrgencyLevel, TokenVariant> = {
+  low: "muted",
+  medium: "warning",
+  high: "primary",
+  critical: "destructive",
 };
+
 
 function useHoverPause() {
   const [paused, setPaused] = React.useState(false);
@@ -109,6 +103,7 @@ export function AnnouncementTicker({
   sticky = true,
   className,
   dir = "ltr",
+  themeVariant,
 }: AnnouncementTickerProps) {
   const [hidden, setHidden] = React.useState<boolean>(() => (showClose ? shouldHide(closeTtlHours) : false));
   const { paused, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut, setPaused } = useHoverPause();
@@ -192,6 +187,7 @@ export function AnnouncementTicker({
             loop={loop}
             divider={divider}
             customDivider={customDivider}
+            themeVariant={themeVariant}
           />
         </div>
       )}
@@ -235,7 +231,7 @@ function Divider({ type, custom }: { type: NonNullable<AnnouncementTickerProps["
   return <span aria-hidden className="mx-3 inline-block h-4 w-px bg-foreground/30" />;
 }
 
-function ItemChip({ item }: { item: TickerItem }) {
+function ItemChip({ item, themeVariant }: { item: TickerItem; themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>> }) {
   const IconNode = React.useMemo(() => {
     if (!item.icon) return null;
     if (typeof item.icon === "string") {
@@ -246,7 +242,9 @@ function ItemChip({ item }: { item: TickerItem }) {
     return item.icon;
   }, [item.icon]);
 
-  const styles = URGENCY_STYLES[item.urgency];
+  const token = (themeVariant?.[item.urgency] ?? DEFAULT_URGENCY_MAP[item.urgency]);
+  const cls = TOKEN_CLASSES[token];
+  const styles = { container: cls.bg, text: cls.text };
 
   const content = (
     <div
@@ -297,6 +295,7 @@ function TickerRow({
   loop,
   divider,
   customDivider,
+  themeVariant,
 }: {
   items: TickerItem[];
   mode: NonNullable<AnnouncementTickerProps["mode"]>;
@@ -305,6 +304,7 @@ function TickerRow({
   loop: boolean;
   divider: NonNullable<AnnouncementTickerProps["divider"]>;
   customDivider?: React.ReactNode;
+  themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
 }) {
   if (mode === "slide") {
     return (
@@ -315,6 +315,7 @@ function TickerRow({
         loop={loop}
         divider={divider}
         customDivider={customDivider}
+        themeVariant={themeVariant}
       />
     );
   }
@@ -327,6 +328,7 @@ function TickerRow({
       loop={loop}
       divider={divider}
       customDivider={customDivider}
+      themeVariant={themeVariant}
     />
   );
 }
@@ -338,6 +340,7 @@ function ContinuousTicker({
   loop,
   divider,
   customDivider,
+  themeVariant,
 }: {
   items: TickerItem[];
   speed: number; // px/s
@@ -345,6 +348,7 @@ function ContinuousTicker({
   loop: boolean;
   divider: NonNullable<AnnouncementTickerProps["divider"]>;
   customDivider?: React.ReactNode;
+  themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
 }) {
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const [offset, setOffset] = React.useState(0);
@@ -412,7 +416,7 @@ function ContinuousTicker({
     <div className="flex items-center gap-3">
       {items.map((item, idx) => (
         <React.Fragment key={`item-${item.id}-${idx}`}>
-          <ItemChip item={item} />
+          <ItemChip item={item} themeVariant={themeVariant} />
           {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
         </React.Fragment>
       ))}
@@ -441,6 +445,7 @@ function SlideTicker({
   loop,
   divider,
   customDivider,
+  themeVariant,
 }: {
   items: TickerItem[];
   speed: number; // ms per item
@@ -448,6 +453,7 @@ function SlideTicker({
   loop: boolean;
   divider: NonNullable<AnnouncementTickerProps["divider"]>;
   customDivider?: React.ReactNode;
+  themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
 }) {
   const [index, setIndex] = React.useState(0);
   const count = items.length;
@@ -474,7 +480,7 @@ function SlideTicker({
         <div className="flex items-center gap-3 pr-6">
           {items.map((item, idx) => (
             <React.Fragment key={`slide-${item.id}-${idx}`}>
-              <ItemChip item={item} />
+              <ItemChip item={item} themeVariant={themeVariant} />
               {idx < items.length - 1 && <Divider type={divider} custom={customDivider} />}
             </React.Fragment>
           ))}
