@@ -538,7 +538,10 @@ function ContinuousTicker({
       if (!paused && speed > 0 && baseWidth > 0) {
         setOffset((prev) => {
           const next = prev - speed * dt;
-          if (-next >= baseWidth) return 0; // reset seamlessly after one row width
+          if (-next >= baseWidth) {
+            const cw = containerRef.current?.clientWidth ?? 0;
+            return cw; // reinicia entrando pela direita
+          }
           return next;
         });
       }
