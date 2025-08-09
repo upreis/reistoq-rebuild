@@ -267,7 +267,7 @@ function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; 
   if (variant === "plain") {
     const textColor = TEXT_ONLY_CLASSES[token];
     const content = (
-      <span className={cn("font-bold whitespace-nowrap inline-flex items-center justify-center text-center", textColor)}>
+      <span className={cn("font-bold whitespace-nowrap inline-flex items-center justify-center text-center ticker-text-outline", textColor)}>
         {item.title}
       </span>
     );
@@ -303,9 +303,9 @@ function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; 
       )}
     >
       {IconNode && <span className="shrink-0">{IconNode}</span>}
-      <span className="font-medium">{item.title}</span>
+      <span className="font-medium ticker-text-outline">{item.title}</span>
       {item.description && (
-        <span className={cn("opacity-80")}>{item.description}</span>
+        <span className={cn("opacity-80 ticker-text-outline")}>{item.description}</span>
       )}
     </div>
   );
@@ -493,7 +493,7 @@ function ContinuousTicker({
   const initializedRef = React.useRef(false);
 
   // Measure content width and ensure we render enough copies to cover the viewport
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const track = trackRef.current;
     const container = containerRef.current;
     if (!track || !container) return;
