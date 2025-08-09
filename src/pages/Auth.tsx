@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReistoqLogo } from '@/components/ui/reistoq-logo';
-import { Eye, EyeOff, ArrowLeft, Chrome } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Chrome, Apple, PanelsTopLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -74,9 +74,42 @@ export default function Auth() {
         console.error('Erro ao iniciar login com Google:', error.message);
         setLoading(false);
       }
-      // Em caso de sucesso, haverá redirecionamento automático do provedor
     } catch (err) {
       console.error('Erro inesperado no login Google:', err);
+      setLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignIn = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: { redirectTo: `${window.location.origin}/` }
+      });
+      if (error) {
+        console.error('Erro ao iniciar login com Microsoft:', error.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Erro inesperado no login Microsoft:', err);
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: `${window.location.origin}/` }
+      });
+      if (error) {
+        console.error('Erro ao iniciar login com Apple:', error.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Erro inesperado no login Apple:', err);
       setLoading(false);
     }
   };
@@ -111,9 +144,17 @@ export default function Auth() {
           
           <CardContent>
             <div className="space-y-4">
-              <Button type="button" variant="secondary" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
-                <Chrome className="h-4 w-4 mr-2" /> Continuar com Google
-              </Button>
+              <div className="grid gap-2">
+                <Button type="button" variant="secondary" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
+                  <Chrome className="h-4 w-4 mr-2" /> Continuar com Google
+                </Button>
+                <Button type="button" variant="secondary" className="w-full" onClick={handleMicrosoftSignIn} disabled={loading}>
+                  <PanelsTopLeft className="h-4 w-4 mr-2" /> Continuar com Microsoft
+                </Button>
+                <Button type="button" variant="secondary" className="w-full" onClick={handleAppleSignIn} disabled={loading}>
+                  <Apple className="h-4 w-4 mr-2" /> Continuar com Apple
+                </Button>
+              </div>
               <div className="flex items-center gap-2">
                 <Separator className="flex-1" />
                 <span className="text-xs text-muted-foreground">ou</span>
