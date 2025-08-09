@@ -107,11 +107,15 @@ export function AnnouncementTicker({
   className,
   dir = "ltr",
 }: AnnouncementTickerProps) {
-  const [hidden, setHidden] = React.useState(() => shouldHide(closeTtlHours));
+  const [hidden, setHidden] = React.useState<boolean>(() => (showClose ? shouldHide(closeTtlHours) : false));
   const { paused, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut, setPaused } = useHoverPause();
   const [userPaused, setUserPaused] = React.useState(false);
   const effectivePaused = paused || userPaused;
   const toggleUserPaused = React.useCallback(() => setUserPaused((p) => !p), []);
+
+  React.useEffect(() => {
+    if (!showClose) setHidden(false);
+  }, [showClose]);
 
   // Accessibility: pause when any child receives focus
   const containerRef = React.useRef<HTMLDivElement | null>(null);
