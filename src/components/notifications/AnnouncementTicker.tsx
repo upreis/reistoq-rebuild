@@ -243,10 +243,10 @@ export function AnnouncementTicker({
 
 function Divider({ type, custom }: { type: NonNullable<AnnouncementTickerProps["divider"]>; custom?: React.ReactNode }) {
   if (type === "custom") return <>{custom}</>;
-  if (type === "dot") return <span aria-hidden className="mx-3 inline-block h-1 w-1 rounded-full bg-foreground/30" />;
-  if (type === "slash") return <span aria-hidden className="mx-3 inline-block select-none text-foreground/50">/</span>;
-  // default bar - full height divider
-  return <span aria-hidden className="mx-3 inline-block w-px self-stretch bg-foreground/20" />;
+  if (type === "dot") return <span aria-hidden className="mx-2 block h-1 w-1 rounded-full bg-border" />;
+  if (type === "slash") return <span aria-hidden className="mx-2 block select-none text-muted-foreground">/</span>;
+  // default bar - full height divider (flex item)
+  return <span aria-hidden className="mx-2 block w-px self-stretch bg-border shrink-0" />;
 }
 
 function ItemChip({ item, themeVariant, variant = "chip" }: { item: TickerItem; themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>; variant?: "chip" | "plain" }) {
@@ -374,7 +374,7 @@ function CssContinuousTicker({
   }, [copies, items, speed]);
 
   const block = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-stretch gap-2">
       {items.map((item, idx) => (
         <span key={`css-item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
@@ -388,10 +388,10 @@ function CssContinuousTicker({
     <div ref={viewportRef} className="ticker-viewport relative h-[32px] sm:h-[38px] overflow-hidden" aria-live="polite">
       <div
         ref={trackRef}
-        className="ticker-track absolute left-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-3 pr-6 will-change-transform"
+        className="ticker-track absolute left-0 top-1/2 -translate-y-1/2 inline-flex items-stretch gap-2 pr-4 will-change-transform"
       >
         {Array.from({ length: copies }).map((_, i) => (
-          <div key={`blk-${i}`} className="inline-flex items-center gap-3 pr-6">
+          <div key={`blk-${i}`} className="inline-flex items-stretch gap-2 pr-4">
             {block}
             <Divider type={divider} custom={customDivider} />
           </div>
@@ -488,6 +488,7 @@ function ContinuousTicker({
   const [offset, setOffset] = React.useState(0);
   const [baseWidth, setBaseWidth] = React.useState(0); // width of a single row
   const [repeatCount, setRepeatCount] = React.useState(2);
+  const initializedRef = React.useRef(false);
 
   // Measure content width and ensure we render enough copies to cover the viewport
   React.useEffect(() => {
@@ -496,13 +497,17 @@ function ContinuousTicker({
     if (!track || !container) return;
 
     const measure = () => {
-      // baseWidth = total / repeats
       const bw = Math.max(1, Math.floor(track.scrollWidth / Math.max(1, repeatCount)));
       const cw = container.clientWidth;
       const needed = Math.max(2, Math.ceil(cw / bw) + 2);
       const next = Math.max(2, Math.min(3, needed)); // clamp to avoid many duplicates on screen
       setBaseWidth(bw);
       if (next !== repeatCount) setRepeatCount(next);
+      // Start from the right edge so items enter the viewport from the end
+      if (!initializedRef.current && cw > 0) {
+        setOffset(cw);
+        initializedRef.current = true;
+      }
     };
     measure();
     const ro1 = new ResizeObserver(measure);
@@ -514,6 +519,11 @@ function ContinuousTicker({
       ro2.disconnect();
     };
   }, [items, repeatCount]);
+
+  // Re-initialize start position when items change
+  React.useEffect(() => {
+    initializedRef.current = false;
+  }, [items]);
 
   // RAF loop (looping)
   React.useEffect(() => {
@@ -558,7 +568,7 @@ function ContinuousTicker({
   }, [paused, speed, baseWidth, loop]);
 
   const row = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-stretch gap-2">
       {items.map((item, idx) => (
         <span key={`item-${item.id}-${idx}`} className="contents">
           <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
@@ -576,7 +586,7 @@ function ContinuousTicker({
         style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
       >
         {Array.from({ length: repeatCount }).map((_, i) => (
-          <div key={`row-${i}`} className="inline-flex items-center gap-3 pr-6">
+          <div key={`row-${i}`} className="inline-flex items-stretch gap-2 pr-4">
             {row}
           </div>
         ))}
@@ -626,7 +636,7 @@ function SlideTicker({
         className="absolute left-0 top-1/2 -translate-y-1/2 transition-transform duration-500 ease-out will-change-transform"
         style={{ transform: `translateY(-50%) translateX(calc(50% - ${index * 100}%))` }}
       >
-        <div className="flex items-center gap-3 pr-6">
+        <div className="flex items-stretch gap-2 pr-4">
           {items.map((item, idx) => (
             <span key={`slide-${item.id}-${idx}`} className="contents">
               <ItemChip item={item} themeVariant={themeVariant} variant={variant} />
