@@ -23,6 +23,7 @@ export interface FiltrosAvancados {
   valorMinimo: number;
   valorMaximo: number;
   clienteVip: boolean;
+  fonte?: 'interno' | 'mercadolivre';
 }
 
 interface FiltrosSalvos {
@@ -196,6 +197,17 @@ export function FiltrosAvancadosPedidos({
             onChange={(e) => onFiltroChange({ busca: e.target.value })}
           />
         </div>
+
+        {/* Fonte */}
+        <Select value={filtros.fonte || 'interno'} onValueChange={(v) => onFiltroChange({ fonte: v as 'interno' | 'mercadolivre' })}>
+          <SelectTrigger className="w-[180px] bg-background">
+            <SelectValue placeholder="Fonte" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="interno">Fonte: Interno</SelectItem>
+            <SelectItem value="mercadolivre">Fonte: Mercado Livre</SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Seletores de Período */}
         <div className="flex gap-2">
