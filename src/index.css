@@ -78,7 +78,7 @@
 
     /* App background and card tokens (exact palette) */
     --bg-app: #F3F5F7;
-    --bg-card: #FFFFFF;
+    --bg-card: #d9d9d9;
     --card-border: rgba(0,0,0,0.08);
     --card-radius: 12px;
     --card-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
@@ -155,7 +155,7 @@
     --gradient-subtle: linear-gradient(180deg, hsl(222 84% 4.9%), hsl(215 25% 20%));
 
     /* App background and card tokens (exact palette) */
-    --bg-app: #0E1422; /* azul-grafite */
+    --bg-app: #111d2e; /* azul-grafite */
     --bg-card: #1C2431; /* cinza-azulado claro */
     --card-border: rgba(255,255,255,0.08);
     --card-radius: 12px;
