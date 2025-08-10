@@ -244,11 +244,16 @@ export function Pedidos() {
         const qs = new URLSearchParams(baseQs);
         if (acc?.id) qs.set('account_id', acc.id);
         const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
-        const json = await resp.json();
-        if (!resp.ok) throw new Error(json?.error || 'Falha ao buscar pedidos do ML');
-        const results = json?.results || json?.orders || [];
+        const text = await resp.text();
+        let json: any = null;
+        try { json = text ? JSON.parse(text) : null; } catch (_) { /* resposta não JSON */ }
+        if (!resp.ok) {
+          const msg = (json && (json.error || json.message)) || text || `Erro HTTP ${resp.status}`;
+          throw new Error(msg);
+        }
+        const results = (json && (json.results || json.orders)) || [];
         const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
-        return mapResultsToItems(results, empresaLabel);
+        return mapResultsToItems(Array.isArray(results) ? results : [], empresaLabel);
       };
 
       let mapped: ItemPedido[] = [];
@@ -307,6 +312,22 @@ export function Pedidos() {
         title: 'Buscando pedidos',
         description: 'Os pedidos estão sendo carregados com os filtros aplicados.',
       });
+    } finally {
+      // ✅ Finalizar status para não ficar preso em "Iniciando busca..."
+      try {
+        await supabase.functions.invoke('sync-control', {
+          body: {
+            action: 'stop',
+            process_name: 'sync-pedidos-rapido',
+            progress: {
+              finished_at: new Date().toISOString(),
+              current_step: 'Concluído'
+            }
+          }
+        });
+      } catch (e) {
+        console.warn('Falha ao atualizar status do sync-control:', e);
+      }
     }
   };
 
