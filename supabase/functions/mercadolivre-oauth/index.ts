@@ -11,7 +11,7 @@ const ML_APP_ID = Deno.env.get("ML_APP_ID");
 const ML_APP_SECRET = Deno.env.get("ML_APP_SECRET");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey",
+  "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey, x-app-origin",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
