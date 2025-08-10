@@ -26,3 +26,13 @@ verify_jwt = false
 
 [functions.processar-baixa-estoque]
 verify_jwt = false
+
+# Mercado Livre integrations
+[functions.mercadolivre-oauth]
+verify_jwt = false  # callback precisa ser público
+
+[functions.mercadolivre-webhook]
+verify_jwt = false  # notificações do ML
+
+[functions.mercadolivre-orders-proxy]
+verify_jwt = true   # chamada autenticada pelo app
