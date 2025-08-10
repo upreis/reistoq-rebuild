@@ -28,6 +28,21 @@ async function getActiveMLAccount(supabase: any, userId: string) {
   return accs[0];
 }
 
+async function getMLAccountById(supabase: any, userId: string, accountId: string) {
+  const { data: profile, error: pErr } = await supabase.from('profiles').select('organizacao_id').eq('id', userId).single();
+  if (pErr || !profile?.organizacao_id) throw new Error('Organização não encontrada');
+  const { data: acc, error } = await supabase
+    .from('integration_accounts')
+    .select('*')
+    .eq('id', accountId)
+    .eq('organization_id', profile.organizacao_id)
+    .eq('provider', 'mercadolivre')
+    .single();
+  if (error || !acc) throw new Error('Conta Mercado Livre não encontrada');
+  return acc;
+}
+
+
 async function refreshIfNeeded(acc: any) {
   const now = Date.now();
   const expiresAt = acc?.auth_data?.expires_at ? Date.parse(acc.auth_data.expires_at) : 0;
@@ -46,10 +61,12 @@ serve(async (req) => {
   if (!user) return json({ error: 'Não autenticado' }, 401);
 
   try {
-    let acc = await getActiveMLAccount(supabase, user.id);
+    const params = new URL(req.url).searchParams;
+    const accountId = params.get('account_id');
+
+    let acc = accountId ? await getMLAccountById(supabase, user.id, accountId) : await getActiveMLAccount(supabase, user.id);
     acc = await refreshIfNeeded(acc);
 
-    const params = new URL(req.url).searchParams;
     const from = params.get('from');
     const to = params.get('to');
     const status = params.get('status');

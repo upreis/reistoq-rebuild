@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationAccountsManager } from "@/components/integrations/IntegrationAccountsManager";
@@ -37,6 +38,8 @@ export function MercadoLivre() {
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
+  const [contas, setContas] = useState<any[]>([]);
+  const [contaId, setContaId] = useState<string>('all');
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -48,6 +51,18 @@ export function MercadoLivre() {
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
+  }, []);
+
+  // Carregar contas Mercado Livre do usuário
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('integration_accounts')
+        .select('*')
+        .eq('provider', 'mercadolivre')
+        .order('name', { ascending: true });
+      setContas(data || []);
+    })();
   }, []);
 
   const redirectUri = useMemo(() => `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-oauth/callback`, []);
@@ -113,23 +128,48 @@ export function MercadoLivre() {
         );
       } catch {}
 
-      const qs = new URLSearchParams();
-      if (from) qs.set("from", from);
-      if (to) qs.set("to", to);
-      if (status) qs.set("status", status);
-      const resp = await fetch(
-        `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`,
-        {
-          headers: {
-            apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
-            Authorization: `Bearer ${access}`,
-          },
+      const baseQs = new URLSearchParams();
+      if (from) baseQs.set("from", from);
+      if (to) baseQs.set("to", to);
+      if (status) baseQs.set("status", status);
+
+      const headers = {
+        apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
+        Authorization: `Bearer ${access}`,
+      } as const;
+
+      const fetchForAccount = async (acc: any) => {
+        const qs = new URLSearchParams(baseQs);
+        if (acc?.id) qs.set('account_id', acc.id);
+        const resp = await fetch(
+          `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`,
+          { headers }
+        );
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error || "Erro ao consultar pedidos");
+        const results = json?.results || json?.orders || [];
+        const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
+        return results.map((o: any) => ({ ...o, empresa: empresaLabel }));
+      };
+
+      let allOrders: any[] = [];
+      if (contaId === 'all') {
+        const ativas = contas.filter((c) => c.is_active);
+        if (ativas.length === 0) {
+          toast({ title: "Nenhuma conta ativa", description: "Ative ao menos uma conta do Mercado Livre.", variant: "destructive" });
+          setOrders([]);
+          return;
         }
-      );
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json?.error || "Erro ao consultar pedidos");
-      setOrders(json?.results || json?.orders || []);
-      toast({ title: "Pedidos carregados", description: `${(json?.results || []).length} pedidos encontrados` });
+        const chunks = await Promise.all(ativas.map(fetchForAccount));
+        allOrders = chunks.flat();
+      } else {
+        const acc = contas.find((c) => c.id === contaId);
+        if (!acc) throw new Error('Conta selecionada não encontrada');
+        allOrders = await fetchForAccount(acc);
+      }
+
+      setOrders(allOrders);
+      toast({ title: "Pedidos carregados", description: `${allOrders.length} registros encontrados` });
     } catch (e: any) {
       toast({ title: "Erro ao buscar pedidos", description: e.message, variant: "destructive" });
     } finally {
