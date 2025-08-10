@@ -172,13 +172,15 @@ serve(async (req) => {
             setTimeout(() => { location.replace(redirectUrl); }, 300);
           </script>
         </body></html>`;
-        return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS } });
+        return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store, max-age=0, must-revalidate', 'Pragma': 'no-cache', ...CORS } });
     }
     const target = `${new URL(req.url).origin.replace('.functions', '')}/mercado-livre?connected=1`;
     return new Response(null, {
       status: 302,
       headers: {
         Location: target,
+        'Cache-Control': 'no-store, max-age=0, must-revalidate',
+        'Pragma': 'no-cache',
         ...CORS,
       },
     });
