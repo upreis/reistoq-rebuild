@@ -440,7 +440,7 @@ Deno.serve(async (req) => {
           .eq('is_active', true)
           .eq('organization_id', orgId);
         (contas || []).forEach((conta: any) => {
-          const token = conta?.auth_data?.tiny_token;
+          const token = conta?.auth_data?.tiny_token || conta?.auth_data?.token;
           if (token) contasTiny.push({ id: conta.id, name: conta.name, token });
         });
       } else {
