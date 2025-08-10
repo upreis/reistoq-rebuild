@@ -6,7 +6,7 @@
 @layer base {
   :root {
     /* REISTOQ Enhanced Brand Colors - Light Theme */
-    --background: 0 0% 100%;           /* Pure white background */
+    --background: 0 0% 85%;           /* App light background #d9d9d9 */
     --foreground: 222 84% 4.9%;        /* Deep charcoal text */
     
     /* Primary - Professional Blue */
@@ -96,7 +96,7 @@
 
 .dark {
     /* REISTOQ Enhanced Dark Theme */
-    --background: 222 84% 4.9%;        /* Deep charcoal background */
+    --background: 232 7% 13%;        /* App dark background #191b27 */
     --foreground: 210 40% 98%;         /* Near white text */
     
     /* Primary - Brighter Blue for dark mode */
@@ -112,7 +112,7 @@
     --accent-light: 43 96% 25%;        /* Dark yellow background */
     
     /* Cards & Surfaces - DARK CARDS FOR BETTER CONTRAST */
-    --card: 215 25% 22%;               /* Dark cards for better contrast */
+    --card: 217 12% 15%;               /* Cards #1C2431 */
     --card-foreground: 0 0% 100%;      /* White text on dark cards */
     --popover: 215 25% 22%;            /* Dark popovers */
     --popover-foreground: 0 0% 100%;   /* White text */
