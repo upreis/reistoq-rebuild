@@ -113,8 +113,7 @@ serve(async (req) => {
 
     try {
       const orgId = await getOrgIdForUser(supabase, user.id);
-      // Salvar/atualizar conta de integração
-      const { error } = await supabase.from('integration_accounts').upsert({
+      const base = {
         organization_id: orgId,
         provider: 'mercadolivre',
         name: `ML ${user_id ?? 'conta'}`,
@@ -123,11 +122,35 @@ serve(async (req) => {
         is_active: true,
         auth_data: { access_token, refresh_token, user_id, expires_at },
         updated_at: new Date().toISOString(),
-      } as any, { onConflict: 'organization_id,provider,account_identifier' });
-      if (error) throw error;
-    } catch (e) {
-      console.error(e);
-      return json({ error: 'Falha ao salvar conta ML', details: String(e) }, 500);
+      } as any;
+
+      // Procurar existente e decidir entre UPDATE/INSERT (evita depender de índice único)
+      const { data: existing, error: selErr } = await supabase
+        .from('integration_accounts')
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('provider', 'mercadolivre')
+        .eq('account_identifier', String(user_id ?? ''))
+        .maybeSingle();
+      if (selErr) throw selErr;
+
+      let saveErr: any = null;
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('integration_accounts')
+          .update(base)
+          .eq('id', existing.id);
+        saveErr = error;
+      } else {
+        const { error } = await supabase
+          .from('integration_accounts')
+          .insert(base);
+        saveErr = error;
+      }
+      if (saveErr) throw saveErr;
+    } catch (e: any) {
+      console.error('Salvar conta ML falhou:', e);
+      return json({ error: 'Falha ao salvar conta ML', details: e?.message || e?.hint || e }, 500);
     }
 
     // Redireciona de volta ao app
