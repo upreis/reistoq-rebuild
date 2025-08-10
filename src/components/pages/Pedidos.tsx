@@ -209,6 +209,8 @@ export function Pedidos() {
       const baseQs = new URLSearchParams();
       if (from) baseQs.set('from', from);
       if (to) baseQs.set('to', to);
+      // Garantir retorno de campos detalhados (buyer, order_items.seller_sku, feedback, shipping, etc.)
+      baseQs.set('expand', 'details');
       // Apenas enviar status quando a fonte for Mercado Livre e o valor for suportado pela API ML
       const allowedMLStatuses = new Set(['paid', 'cancelled', 'confirmed', 'payment_required', 'payment_in_process']);
       const status = filtros.fonte === 'mercadolivre' ? filtros.situacoes?.[0] : undefined;
