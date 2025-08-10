@@ -108,6 +108,7 @@ serve(async (req) => {
     const from = params.get('from');
     const to = params.get('to');
     const status = params.get('status');
+    const logisticsType = params.get('logistics_type');
 
     const buildQS = (seller?: string) => {
       const qs = new URLSearchParams();
@@ -115,6 +116,7 @@ serve(async (req) => {
       if (from) qs.set('order.date_created.from', `${from}T00:00:00.000-00:00`);
       if (to) qs.set('order.date_created.to', `${to}T23:59:59.000-00:00`);
       if (status) qs.set('order.status', status);
+      if (logisticsType) qs.set('logistics_type', logisticsType);
       qs.set('sort', sort);
       qs.set('limit', String(limit));
       qs.set('offset', String(offset));
@@ -146,8 +148,40 @@ serve(async (req) => {
         return (db || 0) - (da || 0);
       });
 
-      const total = combined.length;
-      const sliced = combined.slice(offset, offset + limit);
+      let total = combined.length;
+      let sliced = combined.slice(offset, offset + limit);
+
+      // Optional filter by logistics_type using shipments API when needed
+      if (logisticsType) {
+        const filtered: any[] = [];
+        for (const entry of sliced) {
+          const ord = entry.order;
+          const lt =
+            ord?.shipping?.logistic_type ||
+            ord?.shipping?.logistics_type ||
+            ord?._details?.shipping?.logistic_type ||
+            ord?.logistic_type;
+          if (lt) {
+            if (String(lt).toLowerCase() === String(logisticsType).toLowerCase()) filtered.push(entry);
+            continue;
+          }
+          const shipId = ord?.shipping?.id || ord?._details?.shipping?.id;
+          if (shipId) {
+            try {
+              const r = await fetchWithBackoff(`https://api.mercadolibre.com/shipments/${shipId}`, {
+                headers: { Authorization: `Bearer ${entry.__token}` },
+              });
+              const sd = await r.json();
+              if (sd?.logistic_type && String(sd.logistic_type).toLowerCase() === String(logisticsType).toLowerCase()) {
+                entry.order = { ...ord, _shipping: sd };
+                filtered.push(entry);
+              }
+            } catch (_) { /* ignore */ }
+          }
+        }
+        sliced = filtered;
+        total = sliced.length;
+      }
 
       // expand=details opcional
       if (expandSet.has('details')) {
@@ -193,6 +227,37 @@ serve(async (req) => {
           jsonBody.results[i] = { ...ord, _details: det };
         } catch (_) { /* ignore detail errors */ }
       }
+    }
+
+    // Optional filter by logistics_type (fulfillment, cross_docking, etc.)
+    if (params.get('logistics_type') && Array.isArray(jsonBody?.results)) {
+      const lt = String(params.get('logistics_type')).toLowerCase();
+      const filtered: any[] = [];
+      for (const ord of jsonBody.results) {
+        const localLt =
+          ord?.shipping?.logistic_type ||
+          ord?.shipping?.logistics_type ||
+          ord?._details?.shipping?.logistic_type ||
+          ord?.logistic_type;
+        if (localLt) {
+          if (String(localLt).toLowerCase() === lt) filtered.push(ord);
+          continue;
+        }
+        const shipId = ord?.shipping?.id || ord?._details?.shipping?.id;
+        if (shipId) {
+          try {
+            const r = await fetchWithBackoff(`https://api.mercadolibre.com/shipments/${shipId}`, {
+              headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
+            });
+            const sd = await r.json();
+            if (sd?.logistic_type && String(sd.logistic_type).toLowerCase() === lt) {
+              filtered.push({ ...ord, _shipping: sd });
+            }
+          } catch (_) { /* ignore */ }
+        }
+      }
+      jsonBody.results = filtered;
+      if (jsonBody.paging) jsonBody.paging.total = filtered.length;
     }
 
     return json(jsonBody);

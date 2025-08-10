@@ -26,6 +26,7 @@ export interface FiltrosAvancados {
   fonte?: 'interno' | 'mercadolivre' | 'ambas';
   mlPedidoId?: string;
   mlComprador?: string;
+  mlFulfillmentOnly?: boolean;
 }
 
 interface FiltrosSalvos {
@@ -240,6 +241,16 @@ export function FiltrosAvancadosPedidos({
                 value={filtros.mlComprador || ''}
                 onChange={(e) => onFiltroChange({ mlComprador: e.target.value })}
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="ml-fulfillment"
+                checked={!!filtros.mlFulfillmentOnly}
+                onCheckedChange={(checked) => onFiltroChange({ mlFulfillmentOnly: !!checked })}
+              />
+              <Label htmlFor="ml-fulfillment" className="text-sm font-medium cursor-pointer">
+                Apenas Fulfillment
+              </Label>
             </div>
           </>
         )}

@@ -46,7 +46,8 @@ export function Pedidos() {
     clienteVip: false,
     fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre' | 'ambas') || 'interno',
     mlPedidoId: localStorage.getItem('mlPedidoId') || '',
-    mlComprador: localStorage.getItem('mlComprador') || ''
+    mlComprador: localStorage.getItem('mlComprador') || '',
+    mlFulfillmentOnly: localStorage.getItem('mlFulfillmentOnly') === 'true'
   };
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosAvancados>) => {
@@ -65,6 +66,9 @@ export function Pedidos() {
     }
     if (typeof (novosFiltros as any).mlComprador !== 'undefined') {
       localStorage.setItem('mlComprador', (novosFiltros as any).mlComprador || '');
+    }
+    if (typeof (novosFiltros as any).mlFulfillmentOnly !== 'undefined') {
+      localStorage.setItem('mlFulfillmentOnly', String((novosFiltros as any).mlFulfillmentOnly));
     }
     atualizarFiltrosBase(filtrosOriginais);
   };
@@ -233,6 +237,9 @@ export function Pedidos() {
         if (normalized && allowedMLStatuses.has(normalized)) {
           baseQs.set('status', normalized);
         }
+      }
+      if (filtros.mlFulfillmentOnly) {
+        baseQs.set('logistics_type', 'fulfillment');
       }
 
       const { data: session } = await supabase.auth.getSession();
