@@ -75,8 +75,8 @@ export function MercadoLivre() {
       );
       const json = await resp.json();
         if (json?.url) {
-          // Abre em nova aba para evitar bloqueio CSP (frame-ancestors 'none') do ML
-          const w = window.open(json.url, "_blank", "noopener,noreferrer");
+          // Abre em nova aba com window.opener disponível para postMessage/fechar
+          const w = window.open(json.url, "_blank");
           if (!w) {
             // Fallback caso pop-up seja bloqueado
             window.location.href = json.url;
