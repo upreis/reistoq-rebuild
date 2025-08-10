@@ -112,10 +112,10 @@ export function FiltrosAvancadosPedidos({
 
   const situacoesML = [
     { value: 'paid', label: 'Pago (paid)' },
-    { value: 'ready_to_ship', label: 'Pronto para envio (ready_to_ship)' },
-    { value: 'shipped', label: 'Enviado (shipped)' },
-    { value: 'delivered', label: 'Entregue (delivered)' },
     { value: 'cancelled', label: 'Cancelado (cancelled)' },
+    { value: 'confirmed', label: 'Confirmado (confirmed)' },
+    { value: 'payment_required', label: 'Aguardando Pagamento (payment_required)' },
+    { value: 'payment_in_process', label: 'Pagamento em processamento (payment_in_process)' },
   ];
 
   const situacoesMostrar = filtros.fonte === 'mercadolivre' ? situacoesML : situacoesTiny;

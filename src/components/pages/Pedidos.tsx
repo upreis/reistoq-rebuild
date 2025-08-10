@@ -209,23 +209,28 @@ export function Pedidos() {
       const baseQs = new URLSearchParams();
       if (from) baseQs.set('from', from);
       if (to) baseQs.set('to', to);
-      const status = filtros.situacoes?.[0];
+      // Apenas enviar status quando a fonte for Mercado Livre e o valor for suportado pela API ML
+      const allowedMLStatuses = new Set(['paid', 'cancelled', 'confirmed', 'payment_required', 'payment_in_process']);
+      const status = filtros.fonte === 'mercadolivre' ? filtros.situacoes?.[0] : undefined;
       if (status) {
-        const map: Record<string, string> = {
-          'em aberto': '',
+        // O usuário pode selecionar status Tiny (português) ou ML (inglês). Normalizamos aqui.
+        const mapTinyToML: Record<string, string> = {
+          'em aberto': 'confirmed',
           'aprovado': 'paid',
-          'preparando envio': 'ready_to_ship',
-          'faturado': 'ready_to_ship',
-          'pronto para envio': 'ready_to_ship',
-          'enviado': 'shipped',
-          'entregue': 'delivered',
-          'nao entregue': '',
-          'não entregue': '',
           'cancelado': 'cancelled',
+          'não entregue': '',
+          'nao entregue': '',
+          'preparando envio': '',
+          'faturado': '',
+          'pronto para envio': '',
+          'enviado': '',
+          'entregue': '',
         };
         const key = status.toLowerCase();
-        const mapped = map[key] ?? key;
-        if (mapped) baseQs.set('status', mapped);
+        const normalized = mapTinyToML[key] ?? key; // se já for ML, mantém
+        if (normalized && allowedMLStatuses.has(normalized)) {
+          baseQs.set('status', normalized);
+        }
       }
 
       const { data: session } = await supabase.auth.getSession();
