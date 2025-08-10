@@ -249,7 +249,8 @@ export function Pedidos() {
             id: `${order.id}-${idx}`,
             pedido_id: String(order.id),
             numero_pedido: String(order.id),
-            sku: oi?.item?.seller_sku || oi?.item?.sku || oi?.item?.id || 'SKU',
+            // SKU Pedido deve refletir EXATAMENTE o seller_sku do ML (sem fallback)
+            sku: (oi?.item?.seller_sku ?? ''),
             descricao: oi?.item?.title || 'Item',
             quantidade: oi?.quantity || 1,
             valor_unitario: oi?.unit_price || order?.total_amount || 0,
