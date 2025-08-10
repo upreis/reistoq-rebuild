@@ -444,33 +444,16 @@ export function Pedidos() {
         description: "Processando itens...",
       });
 
-      // ✅ CORRIGIDO: Filtrar itens com sku_kit válido
-      const itensComEstoque = itensEnriquecidos.filter(item => {
-        const temSkuKit = item.sku_kit || item.sku;
-        const temQuantidade = item.qtd_kit && item.qtd_kit > 0;
-        
-        // Verificar se está em situação de baixar estoque
-        const situacaoLower = item.situacao?.toLowerCase() || '';
-        const situacoesBaixarEstoque = [
-          'aprovado', 
-          'preparando envio', 
-          'faturado', 
-          'pronto para envio',
-          'em separacao',
-          'entregue'  // Adicionado para permitir teste com pedidos entregues
-        ];
-        
-        // Não processar se já foi baixado
-        const jaProcessado = item.ja_processado;
-        
-        // ✅ CORRIGIDO: Verificar estoque usando sku_kit
-        const skuProduto = item.sku_kit || item.sku;
-        const estoqueAtual = estoqueDisponivel[skuProduto || ''] || 0;
-        const quantidadeNecessaria = (item.qtd_kit || 1) * item.quantidade;
-        const temEstoque = estoqueAtual >= quantidadeNecessaria;
-        
-        return temSkuKit && (temQuantidade || item.quantidade > 0) && 
-               situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado && temEstoque;
+      // Preferir processar os itens selecionados quando houver seleção explícita
+      const baseParaProcessar = itensSelecionados.length > 0 ? itensSelecionados : itensEnriquecidos;
+
+      // Filtrar itens válidos apenas por mapeamento/sku e estoque suficiente
+      const itensComEstoque = baseParaProcessar.filter(item => {
+        const skuProduto = item.mapeamento_aplicado?.sku_simples || item.sku; // usa mapeamento quando existir
+        if (!skuProduto) return false;
+        const estoqueAtual = estoqueDisponivel[skuProduto] || 0;
+        const quantidadeNecessaria = (item.mapeamento_aplicado?.quantidade || item.qtd_kit || 1) * (item.quantidade || 1);
+        return estoqueAtual >= quantidadeNecessaria;
       });
 
       if (itensComEstoque.length === 0) {
@@ -654,7 +637,8 @@ export function Pedidos() {
                     obs: item.obs,
                     obs_interna: item.obs_interna,
                     url_rastreamento: item.url_rastreamento,
-                    codigo_rastreamento: item.codigo_rastreamento
+                    codigo_rastreamento: item.codigo_rastreamento,
+                    integration_account_id: item.integration_account_id,
                   }))},
                 });
                 await recarregarDados();
