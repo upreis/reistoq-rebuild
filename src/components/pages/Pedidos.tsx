@@ -14,6 +14,8 @@ import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 
 // Force rebuild to clear cache
@@ -83,6 +85,21 @@ export function Pedidos() {
     pedidosEntregues: 0,
     valorTotal: 0,
   });
+
+  // Contas Mercado Livre
+  const [contasML, setContasML] = useState<any[]>([]);
+  const [mlContaId, setMlContaId] = useState<string>('all');
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('integration_accounts')
+        .select('*')
+        .eq('provider', 'mercadolivre')
+        .order('name', { ascending: true });
+      setContasML(data || []);
+    })();
+  }, []);
 
   // Escolher fonte de dados
   const baseItens = filtros.fonte === 'mercadolivre' ? mlItens : itens;
@@ -179,54 +196,76 @@ export function Pedidos() {
       setMlLoading(true);
       const from = parseToISO(filtros.dataInicio);
       const to = parseToISO(filtros.dataFinal);
-      const qs = new URLSearchParams();
-      if (from) qs.set('from', from);
-      if (to) qs.set('to', to);
-      // opcional: mapear primeiras situações
+      const baseQs = new URLSearchParams();
+      if (from) baseQs.set('from', from);
+      if (to) baseQs.set('to', to);
       const status = filtros.situacoes?.[0];
-      if (status) qs.set('status', status.toLowerCase());
+      if (status) baseQs.set('status', status.toLowerCase());
 
       const { data: session } = await supabase.auth.getSession();
-      const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, {
-        headers: {
-          'Authorization': session.session ? `Bearer ${session.session.access_token}` : '',
-          'apikey': (supabase as any).headers?.apikey || ''
-        }
-      });
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json?.error || 'Falha ao buscar pedidos do ML');
-      const results = json?.results || json?.orders || [];
+      const headers = {
+        'Authorization': session.session ? `Bearer ${session.session.access_token}` : '',
+        'apikey': (supabase as any).headers?.apikey || ''
+      } as const;
 
-      const mapped: ItemPedido[] = results.flatMap((order: any) => {
-        const buyer = order.buyer || {};
-        const items = order.order_items || [];
-        return items.map((oi: any, idx: number) => ({
-          id: `${order.id}-${idx}`,
-          pedido_id: String(order.id),
-          numero_pedido: String(order.id),
-          sku: oi?.item?.seller_sku || oi?.item?.sku || oi?.item?.id || 'SKU',
-          descricao: oi?.item?.title || 'Item',
-          quantidade: oi?.quantity || 1,
-          valor_unitario: oi?.unit_price || order?.total_amount || 0,
-          valor_total: (oi?.unit_price || 0) * (oi?.quantity || 1),
-          numero_ecommerce: String(order.id),
-          nome_cliente: `${buyer?.first_name || ''} ${buyer?.last_name || ''}`.trim() || buyer?.nickname || 'Cliente ML',
-          cpf_cnpj: buyer?.billing_info?.doc_number || undefined,
-          cidade: order?.shipping?.receiver_address?.city?.name || undefined,
-          uf: order?.shipping?.receiver_address?.state?.id || undefined,
-          data_pedido: (order?.date_created || '').slice(0, 10),
-          data_prevista: undefined,
-          situacao: order?.status || 'Aprovado',
-          codigo_rastreamento: order?.shipping?.tracking_number || undefined,
-          url_rastreamento: order?.shipping?.tracking_url || undefined,
-          obs: undefined,
-          obs_interna: undefined,
-          valor_frete: order?.shipping_cost || 0,
-          valor_desconto: 0,
-          empresa: 'Mercado Livre',
-          numero_venda: String(order?.id),
-        }));
-      });
+      const mapResultsToItems = (results: any[], empresaLabel: string): ItemPedido[] =>
+        results.flatMap((order: any) => {
+          const buyer = order.buyer || {};
+          const items = order.order_items || [];
+          return items.map((oi: any, idx: number) => ({
+            id: `${order.id}-${idx}`,
+            pedido_id: String(order.id),
+            numero_pedido: String(order.id),
+            sku: oi?.item?.seller_sku || oi?.item?.sku || oi?.item?.id || 'SKU',
+            descricao: oi?.item?.title || 'Item',
+            quantidade: oi?.quantity || 1,
+            valor_unitario: oi?.unit_price || order?.total_amount || 0,
+            valor_total: (oi?.unit_price || 0) * (oi?.quantity || 1),
+            numero_ecommerce: String(order.id),
+            nome_cliente: `${buyer?.first_name || ''} ${buyer?.last_name || ''}`.trim() || buyer?.nickname || 'Cliente ML',
+            cpf_cnpj: buyer?.billing_info?.doc_number || undefined,
+            cidade: order?.shipping?.receiver_address?.city?.name || undefined,
+            uf: order?.shipping?.receiver_address?.state?.id || undefined,
+            data_pedido: (order?.date_created || '').slice(0, 10),
+            data_prevista: undefined,
+            situacao: order?.status || 'Aprovado',
+            codigo_rastreamento: order?.shipping?.tracking_number || undefined,
+            url_rastreamento: order?.shipping?.tracking_url || undefined,
+            obs: undefined,
+            obs_interna: undefined,
+            valor_frete: order?.shipping_cost || 0,
+            valor_desconto: 0,
+            empresa: empresaLabel,
+            numero_venda: String(order?.id),
+          }));
+        });
+
+      const fetchForAccount = async (acc: any): Promise<ItemPedido[]> => {
+        const qs = new URLSearchParams(baseQs);
+        if (acc?.id) qs.set('account_id', acc.id);
+        const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error || 'Falha ao buscar pedidos do ML');
+        const results = json?.results || json?.orders || [];
+        const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
+        return mapResultsToItems(results, empresaLabel);
+      };
+
+      let mapped: ItemPedido[] = [];
+      if (mlContaId === 'all') {
+        const ativas = contasML.filter(c => c.is_active);
+        if (ativas.length === 0) {
+          toast({ title: 'Nenhuma conta ativa', description: 'Ative ao menos uma conta ML.', variant: 'destructive' });
+          setMlItens([]);
+          return;
+        }
+        const chunks = await Promise.all(ativas.map(fetchForAccount));
+        mapped = chunks.flat();
+      } else {
+        const acc = contasML.find(c => c.id === mlContaId);
+        if (!acc) throw new Error('Conta selecionada não encontrada');
+        mapped = await fetchForAccount(acc);
+      }
 
       setMlItens(mapped);
       toast({ title: 'Pedidos ML carregados', description: `${mapped.length} itens` });
@@ -463,6 +502,22 @@ export function Pedidos() {
 
 
           {/* Filtros e Pesquisa */}
+          {filtros.fonte === 'mercadolivre' && (
+            <div className="max-w-3xl mb-2">
+              <Label>Conta Mercado Livre</Label>
+              <Select value={mlContaId} onValueChange={setMlContaId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a conta" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as contas</SelectItem>
+                  {contasML.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name || c.account_identifier || c.cnpj || c.id}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <FiltrosAvancadosPedidos
             filtros={filtros}
             onFiltroChange={atualizarFiltros}

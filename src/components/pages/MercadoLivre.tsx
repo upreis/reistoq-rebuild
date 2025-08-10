@@ -228,7 +228,21 @@ export function MercadoLivre() {
             <CardDescription>Consulta somente leitura direto na API do Mercado Livre.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <Label>Conta</Label>
+                <Select value={contaId} onValueChange={setContaId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as contas</SelectItem>
+                    {contas.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name || c.account_identifier || c.cnpj || c.id}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Data inicial (YYYY-MM-DD)</Label>
                 <Input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="2025-06-01" />
@@ -256,6 +270,7 @@ export function MercadoLivre() {
                       <th className="p-2">Status</th>
                       <th className="p-2">Total</th>
                       <th className="p-2">Comprador</th>
+                      <th className="p-2">Empresa</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -266,6 +281,7 @@ export function MercadoLivre() {
                         <td className="p-2">{o.status}</td>
                         <td className="p-2">{o.total_amount || o.order_amount || '-'}</td>
                         <td className="p-2">{o?.buyer?.nickname || o?.buyer?.id || '-'}</td>
+                        <td className="p-2">{o?.empresa || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
