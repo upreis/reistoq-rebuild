@@ -153,9 +153,21 @@ serve(async (req) => {
       return json({ error: 'Falha ao salvar conta ML', details: e?.message || e?.hint || e }, 500);
     }
 
-    // Redireciona de volta ao app
+    // Redireciona/fecha popup e notifica a aba original
     const appOrigin = parsed?.o || '';
-    const target = appOrigin ? `${appOrigin}/mercado-livre?connected=1` : `${new URL(req.url).origin.replace('.functions', '')}/mercado-livre?connected=1`;
+    if (appOrigin) {
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>Mercado Livre conectado</title></head><body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding:24px;">
+        <h3>Conexão realizada</h3>
+        <p>Você já pode fechar esta janela.</p>
+        <script>
+          try { window.opener && window.opener.postMessage({ source: 'mercadolivre-oauth', connected: true }, ${JSON.stringify(appOrigin)}); } catch (e) {}
+          setTimeout(() => { try { window.close(); } catch (e) {} }, 500);
+          setTimeout(() => { location.href = ${JSON.stringify(appOrigin + '/mercado-livre?connected=1')}; }, 1500);
+        </script>
+      </body></html>`;
+      return new Response(html, { headers: { 'Content-Type': 'text/html', ...CORS } });
+    }
+    const target = `${new URL(req.url).origin.replace('.functions', '')}/mercado-livre?connected=1`;
     return new Response(null, {
       status: 302,
       headers: {

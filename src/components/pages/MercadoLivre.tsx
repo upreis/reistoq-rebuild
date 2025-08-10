@@ -38,6 +38,18 @@ export function MercadoLivre() {
   const [loadingFetch, setLoadingFetch] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
 
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      const d = (e as any).data;
+      if (d?.source === 'mercadolivre-oauth' && d?.connected) {
+        toast({ title: 'Mercado Livre conectado', description: 'Conta conectada com sucesso.' });
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
   const redirectUri = useMemo(() => `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-oauth/callback`, []);
   const notificationsUri = useMemo(() => `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-webhook`, []);
 
