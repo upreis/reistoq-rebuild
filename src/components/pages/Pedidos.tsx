@@ -274,7 +274,7 @@ export function Pedidos() {
         let json: any = null;
         try { json = text ? JSON.parse(text) : null; } catch (_) { /* resposta não JSON */ }
         if (!resp.ok) {
-          const msg = (json && (json.error || json.message)) || text || `Erro HTTP ${resp.status}`;
+          const msg = (json && (json.error || json.message || (json.details && (json.details.message || json.details.error || JSON.stringify(json.details))))) || text || `Erro HTTP ${resp.status}`;
           throw new Error(msg);
         }
         const results = (json && (json.results || json.orders)) || [];
@@ -284,14 +284,18 @@ export function Pedidos() {
 
       let mapped: ItemPedido[] = [];
       if (mlContaId === 'all') {
-        const ativas = contasML.filter(c => c.is_active);
-        if (ativas.length === 0) {
-          toast({ title: 'Nenhuma conta ativa', description: 'Ative ao menos uma conta ML.', variant: 'destructive' });
-          setMlItens([]);
-          return;
+        const qs = new URLSearchParams(baseQs);
+        qs.set('all', 'true');
+        const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
+        const text = await resp.text();
+        let json: any = null;
+        try { json = text ? JSON.parse(text) : null; } catch (_) {}
+        if (!resp.ok) {
+          const msg = (json && (json.error || json.message || (json.details && (json.details.message || json.details.error || JSON.stringify(json.details))))) || text || `Erro HTTP ${resp.status}`;
+          throw new Error(msg);
         }
-        const chunks = await Promise.all(ativas.map(fetchForAccount));
-        mapped = chunks.flat();
+        const results = (json && (json.results || json.orders)) || [];
+        mapped = mapResultsToItems(Array.isArray(results) ? results : [], 'Mercado Livre');
       } else {
         const acc = contasML.find(c => c.id === mlContaId);
         if (!acc) throw new Error('Conta selecionada não encontrada');
@@ -587,7 +591,7 @@ export function Pedidos() {
             onFiltroChange={atualizarFiltros}
             onLimparFiltros={limparFiltros}
             onBuscarPedidos={handleBuscarPedidos}
-            loading={loading}
+            loading={loading || mlLoading}
           />
 
           {/* Barra de Status - Limitada em largura */}
