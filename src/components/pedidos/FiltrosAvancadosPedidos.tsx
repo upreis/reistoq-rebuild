@@ -24,6 +24,8 @@ export interface FiltrosAvancados {
   valorMaximo: number;
   clienteVip: boolean;
   fonte?: 'interno' | 'mercadolivre' | 'ambas';
+  mlPedidoId?: string;
+  mlComprador?: string;
 }
 
 interface FiltrosSalvos {
@@ -201,7 +203,7 @@ export function FiltrosAvancadosPedidos({
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder={filtros.fonte === 'mercadolivre' ? 'ID do pedido ou comprador (nickname/email)' : 'Pesquise por cliente ou número'}
+            placeholder={filtros.fonte !== 'interno' ? 'ID do pedido ou comprador (nickname/email)' : 'Pesquise por cliente ou número'}
             className="pl-10 bg-background"
             value={filtros.busca}
             onChange={(e) => onFiltroChange({ busca: e.target.value })}
@@ -220,6 +222,28 @@ export function FiltrosAvancadosPedidos({
           </SelectContent>
         </Select>
 
+        {/* Filtros específicos do Mercado Livre */}
+        {filtros.fonte !== 'interno' && (
+          <>
+            <div className="relative min-w-[160px] max-w-xs">
+              <Input
+                placeholder="ID do pedido (ML)"
+                className="bg-background"
+                value={filtros.mlPedidoId || ''}
+                onChange={(e) => onFiltroChange({ mlPedidoId: e.target.value })}
+              />
+            </div>
+            <div className="relative min-w-[200px] max-w-sm">
+              <Input
+                placeholder="Comprador (nickname/email)"
+                className="bg-background"
+                value={filtros.mlComprador || ''}
+                onChange={(e) => onFiltroChange({ mlComprador: e.target.value })}
+              />
+            </div>
+          </>
+        )}
+ 
         {/* Seletores de Período */}
         <div className="flex gap-2">
           <Popover>

@@ -44,7 +44,9 @@ export function Pedidos() {
     valorMinimo: 0,
     valorMaximo: 0,
     clienteVip: false,
-     fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre' | 'ambas') || 'interno'
+    fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre' | 'ambas') || 'interno',
+    mlPedidoId: localStorage.getItem('mlPedidoId') || '',
+    mlComprador: localStorage.getItem('mlComprador') || ''
   };
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosAvancados>) => {
@@ -57,6 +59,12 @@ export function Pedidos() {
     };
     if (typeof novosFiltros.fonte !== 'undefined') {
       localStorage.setItem('pedidos-fonte', novosFiltros.fonte);
+    }
+    if (typeof (novosFiltros as any).mlPedidoId !== 'undefined') {
+      localStorage.setItem('mlPedidoId', (novosFiltros as any).mlPedidoId || '');
+    }
+    if (typeof (novosFiltros as any).mlComprador !== 'undefined') {
+      localStorage.setItem('mlComprador', (novosFiltros as any).mlComprador || '');
     }
     atualizarFiltrosBase(filtrosOriginais);
   };
@@ -290,8 +298,19 @@ export function Pedidos() {
         mapped = await fetchForAccount(acc);
       }
 
-      setMlItens(mapped);
-      toast({ title: 'Pedidos ML carregados', description: `${mapped.length} itens` });
+      // Filtro local por ID do pedido e comprador (nickname/email)
+      let filtered = mapped;
+      if (filtros.mlPedidoId) {
+        const idQuery = String(filtros.mlPedidoId).toLowerCase();
+        filtered = filtered.filter(i => String(i.numero_pedido).toLowerCase().includes(idQuery));
+      }
+      if (filtros.mlComprador) {
+        const buyerQuery = String(filtros.mlComprador).toLowerCase();
+        filtered = filtered.filter(i => (i.nome_cliente || '').toLowerCase().includes(buyerQuery));
+      }
+
+      setMlItens(filtered);
+      toast({ title: 'Pedidos ML carregados', description: `${filtered.length} itens` });
     } catch (e: any) {
       console.error(e);
       toast({ title: 'Erro', description: e.message || 'Falha ao buscar ML', variant: 'destructive' });
@@ -547,7 +566,7 @@ export function Pedidos() {
 
 
           {/* Filtros e Pesquisa */}
-          {filtros.fonte === 'mercadolivre' && (
+          {(filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas') && (
             <div className="max-w-3xl mb-2">
               <Label>Conta Mercado Livre</Label>
               <Select value={mlContaId} onValueChange={setMlContaId}>
