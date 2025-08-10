@@ -62,11 +62,16 @@ export function MercadoLivre() {
         }
       );
       const json = await resp.json();
-      if (json?.url) {
-        window.location.href = json.url;
-      } else {
-        throw new Error(json?.error || "Falha ao gerar URL de autorização");
-      }
+        if (json?.url) {
+          // Abre em nova aba para evitar bloqueio CSP (frame-ancestors 'none') do ML
+          const w = window.open(json.url, "_blank", "noopener,noreferrer");
+          if (!w) {
+            // Fallback caso pop-up seja bloqueado
+            window.location.href = json.url;
+          }
+        } else {
+          throw new Error(json?.error || "Falha ao gerar URL de autorização");
+        }
     } catch (e: any) {
       toast({ title: "Erro ao iniciar conexão", description: e.message, variant: "destructive" });
     } finally {
