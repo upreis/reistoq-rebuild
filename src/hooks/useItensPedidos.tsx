@@ -54,6 +54,8 @@ export interface ItemPedido {
   produto_categoria?: string;
   estoque_atual?: number;
   ja_processado?: boolean;
+  // Integração de origem (para RLS do histórico)
+  integration_account_id?: string;
 }
 
 interface MetricasPedidos {

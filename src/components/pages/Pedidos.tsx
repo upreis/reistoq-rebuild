@@ -248,7 +248,7 @@ export function Pedidos() {
         'apikey': (supabase as any).headers?.apikey || ''
       } as const;
 
-      const mapResultsToItems = (results: any[], empresaLabel: string): ItemPedido[] =>
+      const mapResultsToItems = (results: any[], empresaLabel: string, integrationAccountId?: string): ItemPedido[] =>
         results.flatMap((order: any) => {
           const buyer = order.buyer || {};
           const items = order.order_items || [];
@@ -278,6 +278,7 @@ export function Pedidos() {
             valor_desconto: 0,
             empresa: empresaLabel,
             numero_venda: String(order?.id),
+            integration_account_id: integrationAccountId,
           }));
         });
 
@@ -294,7 +295,7 @@ export function Pedidos() {
         }
         const results = (json && (json.results || json.orders)) || [];
         const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
-        return mapResultsToItems(Array.isArray(results) ? results : [], empresaLabel);
+        return mapResultsToItems(Array.isArray(results) ? results : [], empresaLabel, acc?.id);
       };
 
       let mapped: ItemPedido[] = [];
@@ -519,7 +520,8 @@ export function Pedidos() {
             obs: item.obs,
             obs_interna: item.obs_interna,
             url_rastreamento: item.url_rastreamento,
-            codigo_rastreamento: item.codigo_rastreamento
+            codigo_rastreamento: item.codigo_rastreamento,
+            integration_account_id: item.integration_account_id,
           }))
         }
       });

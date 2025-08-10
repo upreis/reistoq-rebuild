@@ -43,6 +43,7 @@ interface ItemParaBaixaEstoque {
   obs_interna?: string;
   url_rastreamento?: string;
   codigo_rastreamento?: string;
+  integration_account_id?: string;
 }
 
 serve(async (req) => {
@@ -179,7 +180,8 @@ serve(async (req) => {
             url_rastreamento: item.url_rastreamento,
             codigo_rastreamento: item.codigo_rastreamento,
             status: 'estoque_baixado',
-            observacoes: `Baixa automática - SKU Pedido: ${item.sku_pedido} → SKU Kit: ${item.sku_kit}. QTD Kit: ${item.qtd_kit}. Total de Itens: ${item.quantidade_kit}. Valor: ${formatarMoeda(item.valor_total)}`
+            observacoes: `Baixa automática - SKU Pedido: ${item.sku_pedido} → SKU Kit: ${item.sku_kit}. QTD Kit: ${item.qtd_kit}. Total de Itens: ${item.quantidade_kit}. Valor: ${formatarMoeda(item.valor_total)}`,
+            integration_account_id: item.integration_account_id || null,
           });
 
         if (historicoError) {
