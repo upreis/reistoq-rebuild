@@ -44,7 +44,7 @@ export function Pedidos() {
     valorMinimo: 0,
     valorMaximo: 0,
     clienteVip: false,
-    fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre') || 'interno'
+     fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre' | 'ambas') || 'interno'
   };
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosAvancados>) => {
@@ -62,7 +62,7 @@ export function Pedidos() {
   };
 
   const { enriquecerItensPedidos } = useDeParaIntegration();
-  const [fonte, setFonte] = useState<'interno' | 'mercadolivre'>((localStorage.getItem('pedidos-fonte') as any) || 'interno');
+  const [fonte, setFonte] = useState<'interno' | 'mercadolivre' | 'ambas'>((localStorage.getItem('pedidos-fonte') as any) || 'interno');
   
   // Estados dos modais
   const [modalDetalhes, setModalDetalhes] = useState(false);
@@ -102,7 +102,9 @@ export function Pedidos() {
   }, []);
 
   // Escolher fonte de dados
-  const baseItens = filtros.fonte === 'mercadolivre' ? mlItens : itens;
+  const baseItens = filtros.fonte === 'mercadolivre' 
+    ? mlItens 
+    : (filtros.fonte === 'ambas' ? [...itens, ...mlItens] : itens);
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(baseItens);
 
@@ -200,7 +202,23 @@ export function Pedidos() {
       if (from) baseQs.set('from', from);
       if (to) baseQs.set('to', to);
       const status = filtros.situacoes?.[0];
-      if (status) baseQs.set('status', status.toLowerCase());
+      if (status) {
+        const map: Record<string, string> = {
+          'em aberto': '',
+          'aprovado': 'paid',
+          'preparando envio': 'ready_to_ship',
+          'faturado': 'ready_to_ship',
+          'pronto para envio': 'ready_to_ship',
+          'enviado': 'shipped',
+          'entregue': 'delivered',
+          'nao entregue': '',
+          'não entregue': '',
+          'cancelado': 'cancelled',
+        };
+        const key = status.toLowerCase();
+        const mapped = map[key] ?? key;
+        if (mapped) baseQs.set('status', mapped);
+      }
 
       const { data: session } = await supabase.auth.getSession();
       const headers = {
@@ -298,12 +316,18 @@ export function Pedidos() {
 
       if (filtros.fonte === 'mercadolivre') {
         await buscarPedidosML();
+      } else if (filtros.fonte === 'ambas') {
+        // Buscar interno e Mercado Livre
+        buscarComFiltros();
+        await buscarPedidosML();
       } else {
         buscarComFiltros();
       }
       toast({
         title: 'Buscando pedidos',
-        description: filtros.fonte === 'mercadolivre' ? 'Consultando API do Mercado Livre...' : 'Carregando do banco interno...',
+        description: filtros.fonte === 'mercadolivre' 
+          ? 'Consultando API do Mercado Livre...'
+          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...' : 'Carregando do banco interno...'),
       });
     } catch (error) {
       console.error('Erro ao iniciar busca:', error);
