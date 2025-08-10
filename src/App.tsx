@@ -20,6 +20,7 @@ import { Scanner } from '@/components/pages/Scanner';
 import { Configuracoes } from '@/components/pages/Configuracoes';
 import { Loader2 } from 'lucide-react';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import MercadoLivre from '@/components/pages/MercadoLivre';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -157,6 +158,16 @@ const App = () => {
                       <MainLayout>
                         <PermissionGate required="configuracoes:view">
                           <Configuracoes />
+                        </PermissionGate>
+                      </MainLayout>
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/mercado-livre" element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <PermissionGate required="pedidos:view">
+                          <MercadoLivre />
                         </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>

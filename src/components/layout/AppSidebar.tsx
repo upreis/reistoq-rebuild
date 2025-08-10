@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Home, Package, ShoppingCart, ScanLine, ArrowLeftRight, Settings, History } from 'lucide-react';
+import { Crown, Home, Package, ShoppingCart, ScanLine, ArrowLeftRight, Settings, History, Store } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '@/hooks/use-theme';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -57,6 +57,13 @@ const navigationItems = [
     icon: History,
     description: 'Histórico de ações',
     permission: 'historico:view'
+  },
+  {
+    title: 'Mercado Livre',
+    url: '/mercado-livre',
+    icon: Store,
+    description: 'Pedidos diretos do ML',
+    permission: 'pedidos:view'
   },
   {
     title: 'Configurações',
