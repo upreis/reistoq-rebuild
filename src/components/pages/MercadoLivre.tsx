@@ -40,10 +40,10 @@ export function MercadoLivre() {
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return;
       const d = (e as any).data;
       if (d?.source === 'mercadolivre-oauth' && d?.connected) {
         toast({ title: 'Mercado Livre conectado', description: 'Conta conectada com sucesso.' });
+        try { window.focus(); } catch {}
       }
     };
     window.addEventListener('message', handler);
