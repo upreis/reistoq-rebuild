@@ -96,6 +96,23 @@ export function MercadoLivre() {
       setLoadingFetch(true);
       const { data: sessionData } = await supabase.auth.getSession();
       const access = sessionData.session?.access_token;
+
+      // Tentar atualizar tokens ML antes da consulta (refresh silencioso)
+      try {
+        await fetch(
+          `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-refresh-token`,
+          {
+            method: 'POST',
+            headers: {
+              apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
+              Authorization: `Bearer ${access}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+          }
+        );
+      } catch {}
+
       const qs = new URLSearchParams();
       if (from) qs.set("from", from);
       if (to) qs.set("to", to);

@@ -36,3 +36,6 @@ verify_jwt = false  # notificações do ML
 
 [functions.mercadolivre-orders-proxy]
 verify_jwt = true   # chamada autenticada pelo app
+
+[functions.mercadolivre-refresh-token]
+verify_jwt = true   # exige JWT para atualizar tokens
