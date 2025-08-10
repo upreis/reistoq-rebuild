@@ -5,18 +5,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// ✅ CONFIGURAÇÕES OTIMIZADAS PARA EVITAR RATE LIMIT E CONDIÇÕES DE CORRIDA
-const REQUEST_TIMEOUT = 20000; // 20 segundos - aumentado para mais estabilidade
-const BASE_RETRY_DELAY = 1000; // 1s - aumentado para evitar rate limit
-const MAX_RETRIES = 3; // 3 tentativas - aumentado para mais confiabilidade
-const DELAY_ENTRE_PAGINAS = 1500; // 1.5s - muito aumentado para evitar rate limit
-const DELAY_ENTRE_LOTES = 2000; // 2s - muito aumentado para evitar rate limit
-const BATCH_SIZE = 3; // 3 pedidos por lote - reduzido para evitar rate limit
-const MAX_PAGINAS_POR_EXECUCAO = 100; // Reduzido para evitar timeouts
-const DELAY_RATE_LIMIT = 10000; // 10 segundos para rate limit - muito aumentado
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutos de cache - aumentado para reduzir calls
-const MAX_CONCURRENT_REQUESTS = 2; // Reduzido para evitar rate limit
-const INTELLIGENT_RATE_LIMIT_DETECTION = true; // Nova feature para detecção inteligente
+// ✅ CONFIGURAÇÕES OTIMIZADAS PARA PERFORMANCE E ESTABILIDADE
+const REQUEST_TIMEOUT = 20000; // 20s
+const BASE_RETRY_DELAY = 800; // backoff base um pouco menor
+const MAX_RETRIES = 3;
+const DELAY_ENTRE_PAGINAS = 300; // reduzir para acelerar varredura de páginas
+const DELAY_ENTRE_LOTES = 800; // reduzir para agilizar processamento
+const BATCH_SIZE = 6; // aumentar concorrência controlada por lote
+const MAX_PAGINAS_POR_EXECUCAO = 200; // seguro para períodos maiores
+const DELAY_RATE_LIMIT = 10000; // 10s para rate limit
+const CACHE_TTL = 15 * 60 * 1000; // 15 min
+const MAX_CONCURRENT_REQUESTS = 6; // alinhado ao BATCH_SIZE
+const INTELLIGENT_RATE_LIMIT_DETECTION = true; // mantém
+
+// Controla logs verbosos de request/response da API
+const VERBOSE_LOGS = false;
 
 // Função para verificar se o processo deve continuar
 async function verificarStatusProcesso(supabase: any): Promise<{shouldContinue: boolean, status: string}> {
@@ -223,8 +226,10 @@ async function makeApiCallWithRetry(
   for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
     try {
       console.log(`[${context}] Tentativa ${tentativa}/${maxTentativas}`);
-      console.log(`[${context}] URL:`, url);
-      console.log(`[${context}] Parâmetros:`, Object.fromEntries(params.entries()));
+if (VERBOSE_LOGS) {
+  console.log(`[${context}] URL:`, url);
+  console.log(`[${context}] Parâmetros:`, Object.fromEntries(params.entries()));
+}
       
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), timeout)
@@ -246,7 +251,9 @@ async function makeApiCallWithRetry(
       }
 
       const jsonData = await response.json();
-      console.log(`[${context}] Resposta da API:`, JSON.stringify(jsonData, null, 2));
+if (VERBOSE_LOGS) {
+  console.log(`[${context}] Resposta da API:`, JSON.stringify(jsonData, null, 2));
+}
       
       // Verificar se há erro de rate limit - CRÍTICO: reduzir tempo
       if (jsonData.retorno?.status === 'Erro' && jsonData.retorno?.codigo_erro === 6) {
@@ -263,10 +270,9 @@ async function makeApiCallWithRetry(
         const codigoErro = jsonData.retorno?.codigo_erro;
         console.log(`[${context}] ERRO DA API TINY - Código: ${codigoErro}, Erro: ${erro}`);
         
-        // Log completo dos erros para diagnóstico
-        if (jsonData.retorno?.erros) {
-          console.log(`[${context}] Lista completa de erros:`, jsonData.retorno.erros);
-        }
+if (VERBOSE_LOGS && jsonData.retorno?.erros) {
+  console.log(`[${context}] Lista completa de erros:`, jsonData.retorno.erros);
+}
 
         // Tratamento especial para "sem registros"
         if (erro === 'A consulta não retornou registros' || 
@@ -644,203 +650,193 @@ Deno.serve(async (req) => {
       console.log(`📊 Coleta de IDs concluída: ${allPedidos.length} pedidos identificados`);
       paginasProcessadasTotal += (paginaAtual - 1);
 
-      if (allPedidos.length > 0) {
-        console.log('🚀 NOVA ESTRATÉGIA: Buscando dados completos via pedido.obter para todos os pedidos...');
-        
-        const buscarDetalhesCompletos = async (pedidoRef: {id: string, numero: string}): Promise<{pedido: TinyPedido | null, itens: any[]}> => {
-          try {
-            const detalhesParams = new URLSearchParams({
-              token: conta.token,
-              formato: 'json',
-              id: pedidoRef.id
-            });
-            
-            const detalhesData = await makeApiCallWithRetry(
-              `https://api.tiny.com.br/api2/pedido.obter.php`,
-              detalhesParams,
-              { ...config, tiny_erp_token: conta.token },
-              `Detalhes completos pedido ${pedidoRef.numero}`
-            );
-            
-            const pedidoDetalhado = detalhesData.retorno?.pedido;
-            if (!pedidoDetalhado) return { pedido: null, itens: [] };
+if (allPedidos.length > 0) {
+  const todosPedidosIds = allPedidos;
+  console.log(`🚀 Agendando processamento em background para ${todosPedidosIds.length} pedidos da conta ${conta.name}`);
 
-            const pedidoCompleto: TinyPedido = {
-              id: pedidoDetalhado.id,
-              numero: pedidoDetalhado.numero,
-              numero_ecommerce: pedidoDetalhado.numero_ecommerce,
-              data_pedido: convertDateFormat(pedidoDetalhado.data_pedido),
-              data_prevista: pedidoDetalhado.data_prevista ? convertDateFormat(pedidoDetalhado.data_prevista) : null,
-              nome_cliente: pedidoDetalhado.cliente?.nome || 'Cliente não informado',
-              cpf_cnpj: pedidoDetalhado.cliente?.cpf_cnpj,
-              cidade: pedidoDetalhado.cliente?.cidade,
-              uf: pedidoDetalhado.cliente?.uf,
-              situacao: pedidoDetalhado.situacao,
-              codigo_rastreamento: pedidoDetalhado.codigo_rastreamento,
-              url_rastreamento: pedidoDetalhado.url_rastreamento,
-              valor_frete: parseFloat(pedidoDetalhado.valor_frete || '0'),
-              valor_desconto: parseFloat(pedidoDetalhado.valor_desconto || pedidoDetalhado.desconto || '0'),
-              valor_total: parseFloat(pedidoDetalhado.total_pedido || pedidoDetalhado.valor_total || '0'),
-              obs: pedidoDetalhado.obs,
-              obs_interna: pedidoDetalhado.obs_interna,
-              integration_account_id: CURRENT_ACCOUNT_ID,
-              empresa: CURRENT_ACCOUNT_NAME || null
-            };
-
-            const itensProcessados: any[] = [];
-            if (pedidoDetalhado.itens && Array.isArray(pedidoDetalhado.itens)) {
-              for (const itemWrapper of pedidoDetalhado.itens) {
-                const item = itemWrapper.item || itemWrapper;
-                itensProcessados.push({
-                  pedido_id: pedidoRef.id,
-                  numero_pedido: pedidoRef.numero,
-                  sku: item.codigo || '',
-                  descricao: item.descricao || '',
-                  quantidade: parseInt(item.quantidade || '0'),
-                  valor_unitario: parseFloat(item.valor_unitario || '0'),
-                  valor_total: parseFloat(item.valor_total || '0'),
-                  ncm: item.ncm || null,
-                  codigo_barras: item.codigo_barras || null,
-                  observacoes: item.observacoes || null,
-                  integration_account_id: CURRENT_ACCOUNT_ID
-                });
-              }
-            }
-            
-            return { pedido: pedidoCompleto, itens: itensProcessados };
-          } catch (error: any) {
-            console.warn(`⚠️ Erro ao buscar detalhes completos do pedido ${pedidoRef.numero}:`, error.message);
-            return { pedido: null, itens: [] };
-          }
-        };
-
-        const processarLoteComConcorrencia = async (lote: Array<{id: string, numero: string}>): Promise<{pedidos: TinyPedido[], itens: any[]}> => {
-          const promises = lote.map((pedidoRef, index) => 
-            new Promise(async (resolve) => {
-              await sleep(index * 20);
-              const resultado = await buscarDetalhesCompletos(pedidoRef);
-              resolve(resultado);
-            })
-          );
-          const resultados = await Promise.all(promises);
-          const pedidosLote: TinyPedido[] = [];
-          const itensLote: any[] = [];
-          for (const resultado of resultados as Array<{pedido: TinyPedido | null, itens: any[]}>) {
-            if (resultado.pedido) pedidosLote.push(resultado.pedido);
-            itensLote.push(...resultado.itens);
-          }
-          return { pedidos: pedidosLote, itens: itensLote };
-        };
-
-        // Processar todos os pedidos em lotes
-        const todosPedidosIds = allPedidos;
-        const totalLotes = Math.ceil(todosPedidosIds.length / BATCH_SIZE);
-        console.log(`🚀 Processando ${todosPedidosIds.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE}`);
-        for (let i = 0; i < todosPedidosIds.length; i += BATCH_SIZE) {
-          // ✅ VERIFICAR STATUS ANTES DE CADA LOTE
-          const { shouldContinue, status } = await verificarStatusProcesso(supabase);
-          if (!shouldContinue) {
-            console.log(`⏸️ Processo pausado/parado pelo usuário durante lotes. Status: ${status}. Parando no lote ${Math.floor(i / BATCH_SIZE) + 1}.`);
-            break;
-          }
-          const lote = todosPedidosIds.slice(i, i + BATCH_SIZE);
-          const loteNumero = Math.floor(i / BATCH_SIZE) + 1;
-          console.log(`⚡ Processando lote ${loteNumero}/${totalLotes} (${lote.length} pedidos)...`);
-          await atualizarProgresso(supabase, {
-            total_items: todosPedidosIds.length,
-            processed_items: i,
-            current_step: `Conta ${conta.name}: Processando lote ${loteNumero}/${totalLotes}...`
+  EdgeRuntime.waitUntil((async () => {
+    try {
+      // Função local para buscar detalhes completos de um pedido
+      const buscarDetalhesCompletos = async (pedidoRef: {id: string, numero: string}): Promise<{pedido: TinyPedido | null, itens: any[]}> => {
+        try {
+          const detalhesParams = new URLSearchParams({
+            token: conta.token,
+            formato: 'json',
+            id: pedidoRef.id
           });
-          const resultadoLote = await processarLoteComConcorrencia(lote);
-          pedidosCompletos.push(...resultadoLote.pedidos);
-          allItens.push(...resultadoLote.itens);
-          if (i + BATCH_SIZE < todosPedidosIds.length) {
-            await sleep(DELAY_ENTRE_LOTES);
+
+          const detalhesData = await makeApiCallWithRetry(
+            `https://api.tiny.com.br/api2/pedido.obter.php`,
+            detalhesParams,
+            { ...config, tiny_erp_token: conta.token },
+            `Detalhes completos pedido ${pedidoRef.numero}`
+          );
+
+          const pedidoDetalhado = detalhesData.retorno?.pedido;
+          if (!pedidoDetalhado) return { pedido: null, itens: [] };
+
+          const pedidoCompleto: TinyPedido = {
+            id: pedidoDetalhado.id,
+            numero: pedidoDetalhado.numero,
+            numero_ecommerce: pedidoDetalhado.numero_ecommerce,
+            data_pedido: convertDateFormat(pedidoDetalhado.data_pedido),
+            data_prevista: pedidoDetalhado.data_prevista ? convertDateFormat(pedidoDetalhado.data_prevista) : null,
+            nome_cliente: pedidoDetalhado.cliente?.nome || 'Cliente não informado',
+            cpf_cnpj: pedidoDetalhado.cliente?.cpf_cnpj,
+            cidade: pedidoDetalhado.cliente?.cidade,
+            uf: pedidoDetalhado.cliente?.uf,
+            situacao: pedidoDetalhado.situacao,
+            codigo_rastreamento: pedidoDetalhado.codigo_rastreamento,
+            url_rastreamento: pedidoDetalhado.url_rastreamento,
+            valor_frete: parseFloat(pedidoDetalhado.valor_frete || '0'),
+            valor_desconto: parseFloat(pedidoDetalhado.valor_desconto || pedidoDetalhado.desconto || '0'),
+            valor_total: parseFloat(pedidoDetalhado.total_pedido || pedidoDetalhado.valor_total || '0'),
+            obs: pedidoDetalhado.obs,
+            obs_interna: pedidoDetalhado.obs_interna,
+            integration_account_id: CURRENT_ACCOUNT_ID,
+            empresa: CURRENT_ACCOUNT_NAME || null
+          };
+
+          const itensProcessados: any[] = [];
+          if (pedidoDetalhado.itens && Array.isArray(pedidoDetalhado.itens)) {
+            for (const itemWrapper of pedidoDetalhado.itens) {
+              const item = itemWrapper.item || itemWrapper;
+              itensProcessados.push({
+                pedido_id: pedidoRef.id,
+                numero_pedido: pedidoRef.numero,
+                sku: item.codigo || '',
+                descricao: item.descricao || '',
+                quantidade: parseInt(item.quantidade || '0'),
+                valor_unitario: parseFloat(item.valor_unitario || '0'),
+                valor_total: parseFloat(item.valor_total || '0'),
+                ncm: item.ncm || null,
+                codigo_barras: item.codigo_barras || null,
+                observacoes: item.observacoes || null,
+                integration_account_id: CURRENT_ACCOUNT_ID
+              });
+            }
           }
+
+          return { pedido: pedidoCompleto, itens: itensProcessados };
+        } catch (error: any) {
+          console.warn(`⚠️ Erro ao buscar detalhes completos do pedido ${pedidoRef.numero}:`, error.message);
+          return { pedido: null, itens: [] };
         }
-        console.log(`🏁 Conta ${conta.name}: ${pedidosCompletos.length} pedidos e ${allItens.length} itens processados!`);
+      };
+
+      const processarLoteComConcorrencia = async (lote: Array<{id: string, numero: string}>): Promise<{pedidos: TinyPedido[], itens: any[]}> => {
+        const promises = lote.map((pedidoRef, index) => new Promise(async (resolve) => {
+          await sleep(index * 20); // pequeno jitter
+          const resultado = await buscarDetalhesCompletos(pedidoRef);
+          resolve(resultado);
+        }));
+        const resultados = await Promise.all(promises);
+        const pedidosLote: TinyPedido[] = [];
+        const itensLote: any[] = [];
+        for (const resultado of resultados as Array<{pedido: TinyPedido | null, itens: any[]}>) {
+          if (resultado.pedido) pedidosLote.push(resultado.pedido);
+          itensLote.push(...resultado.itens);
+        }
+        return { pedidos: pedidosLote, itens: itensLote };
+      };
+
+      const chunkArray = <T,>(arr: T[], size: number) => {
+        const out: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+        return out;
+      };
+
+      const pedidosCompletosBG: TinyPedido[] = [];
+      const itensBG: any[] = [];
+      const totalLotes = Math.ceil(todosPedidosIds.length / BATCH_SIZE);
+      console.log(`⚡ (BG) Processando ${todosPedidosIds.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE} (conta ${conta.name})`);
+      for (let i = 0; i < todosPedidosIds.length; i += BATCH_SIZE) {
+        const { shouldContinue } = await verificarStatusProcesso(supabase);
+        if (!shouldContinue) {
+          console.log(`⏸️ (BG) Processo pausado/parado pelo usuário. Parando no índice ${i}.`);
+          break;
+        }
+        const lote = todosPedidosIds.slice(i, i + BATCH_SIZE);
+        const loteNumero = Math.floor(i / BATCH_SIZE) + 1;
+        if (VERBOSE_LOGS) console.log(`(BG) Lote ${loteNumero}/${totalLotes}: ${lote.length} pedidos`);
+        const resultadoLote = await processarLoteComConcorrencia(lote);
+        pedidosCompletosBG.push(...resultadoLote.pedidos);
+        itensBG.push(...resultadoLote.itens);
+        if (i + BATCH_SIZE < todosPedidosIds.length) await sleep(DELAY_ENTRE_LOTES);
       }
 
-      // 💾 Salvar dados no Supabase para esta conta
-      if (pedidosCompletos.length > 0) {
-        const { error } = await supabase
-          .from('pedidos')
-          .upsert(pedidosCompletos, { onConflict: 'numero', ignoreDuplicates: false });
-        if (error) {
-          console.error('❌ ERRO ao salvar pedidos:', error);
-          throw new Error(`Erro ao salvar pedidos: ${error.message}`);
+      // Upsert em lotes (chunk) para evitar payloads grandes
+      if (pedidosCompletosBG.length > 0) {
+        for (const chunk of chunkArray(pedidosCompletosBG, 200)) {
+          const { error } = await supabase
+            .from('pedidos')
+            .upsert(chunk, { onConflict: 'numero', ignoreDuplicates: false });
+          if (error) console.error('❌ (BG) Erro ao salvar chunk de pedidos:', error);
         }
-        pedidosSalvosTotal += pedidosCompletos.length;
-        pedidosCompletosTotal.push(...pedidosCompletos);
       }
 
-      if (allItens.length > 0) {
-        const itensUnicos = allItens.reduce((acc, item) => {
+      if (itensBG.length > 0) {
+        const itensUnicos = itensBG.reduce((acc, item) => {
           const chave = `${item.numero_pedido}_${item.sku}`;
           if (!acc.has(chave)) acc.set(chave, item);
           return acc;
         }, new Map());
         const itensDeduplicated = Array.from(itensUnicos.values());
-        const { error } = await supabase
-          .from('itens_pedidos')
-          .upsert(itensDeduplicated, { onConflict: 'numero_pedido,sku', ignoreDuplicates: false });
-        if (error) {
-          console.error('❌ ERRO ao salvar itens:', error);
-          throw new Error(`Erro ao salvar itens: ${error.message}`);
+        for (const chunk of chunkArray(itensDeduplicated, 500)) {
+          const { error } = await supabase
+            .from('itens_pedidos')
+            .upsert(chunk, { onConflict: 'numero_pedido,sku', ignoreDuplicates: false });
+          if (error) console.error('❌ (BG) Erro ao salvar chunk de itens:', error);
         }
-        itensSalvosTotal += itensDeduplicated.length;
-        itensTotal.push(...itensDeduplicated);
       }
 
-      console.log(`✅ Concluída a conta ${conta.name}. Parando ${DELAY_ENTRE_LOTES}ms antes da próxima conta...`);
-      if (contaIndex + 1 < contasTiny.length) await sleep(DELAY_ENTRE_LOTES);
+      console.log(`🏁 (BG) Conta ${conta.name}: ${pedidosCompletosBG.length} pedidos e ${itensBG.length} itens salvos.`);
+
+      // Marcar processo como idle (ok chamar múltiplas vezes)
+      try {
+        await supabase
+          .from('sync_control')
+          .update({ 
+            status: 'idle',
+            progress: {
+              conta: conta.name,
+              completed_at: new Date().toISOString()
+            }
+          })
+          .eq('process_name', 'sync-pedidos-rapido');
+      } catch (e) {
+        console.warn('(BG) Erro ao finalizar status do processo:', e);
+      }
+    } catch (e) {
+      console.error('💥 (BG) Erro no processamento em background:', e);
+    }
+  })());
+}
+
+// Pequena pausa entre contas para não estourar rate limit
+console.log(`✅ Conta ${conta.name} agendada. Aguardando ${DELAY_ENTRE_LOTES}ms antes da próxima conta...`);
+if (contaIndex + 1 < contasTiny.length) await sleep(DELAY_ENTRE_LOTES);
     }
 
-    const tempoExecucao = Date.now() - startTime;
-    console.log(`✅ Sincronização multi-conta concluída em ${tempoExecucao}ms para ${contasTiny.length} conta(s)`);
+const tempoExecucao = Date.now() - startTime;
+console.log(`🧵 Processamentos em background agendados. Tempo até resposta: ${tempoExecucao}ms`);
 
-    const resultado = {
-      success: true,
-      dados: {
-        pedidos_encontrados: pedidosCompletosTotal.length,
-        itens_encontrados: itensTotal.length,
-        pedidos_salvos: pedidosSalvosTotal,
-        itens_salvos: itensSalvosTotal,
-        tempo_execucao_ms: tempoExecucao,
-        paginas_processadas: paginasProcessadasTotal,
-        total_paginas: totalPaginasEstimado,
-        registros_por_pagina: 100,
-        cache_utilizado: false,
-        contas_processadas: contasTiny.length
-      },
-      pedidos: pedidosCompletosTotal,
-      itens: itensTotal,
-      message: `Sincronização concluída: ${pedidosSalvosTotal} pedidos e ${itensSalvosTotal} itens processados em ${contasTiny.length} conta(s)`
-    };
+const resultadoInicial = {
+  success: true,
+  started: true,
+  message: `Sincronização iniciada em background para ${contasTiny.length} conta(s). Os pedidos aparecerão à medida que os detalhes forem processados.`,
+  dados: {
+    contas: contasTiny.length,
+    paginas_processadas: paginasProcessadasTotal,
+    total_paginas_estimado: totalPaginasEstimado,
+    registros_por_pagina: 100
+  }
+};
 
-    // ✅ NOVO: Salvar no cache para próximas consultas
-    setCache(cacheKey, resultado);
-
-    // ✅ MARCAR PROCESSO COMO FINALIZADO
-    try {
-      await supabase
-        .from('sync_control')
-        .update({ 
-          status: 'idle',
-          progress: {
-            ...resultado.dados,
-            completed_at: new Date().toISOString()
-          }
-        })
-        .eq('process_name', 'sync-pedidos-rapido');
-    } catch (error) {
-      console.warn('Erro ao finalizar status do processo:', error);
-    }
-
-    return new Response(JSON.stringify(resultado), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+return new Response(JSON.stringify(resultadoInicial), {
+  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  status: 202,
+});
 
   } catch (error) {
     console.error('💥 Erro na sincronização:', error);
