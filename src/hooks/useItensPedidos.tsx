@@ -255,12 +255,22 @@ export function useItensPedidos() {
         query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
       }
 
+      // Converter datas DD/MM/AAAA -> YYYY-MM-DD para PostgREST
+      const toISO = (d: string) => {
+        if (!d) return '' as any;
+        if (d.includes('/')) {
+          const [dd, mm, yyyy] = d.split('/');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+        return d;
+      };
+
       if (filtros.dataInicio) {
-        query = query.filter('pedidos.data_pedido', 'gte', filtros.dataInicio);
+        query = query.filter('pedidos.data_pedido', 'gte', toISO(filtros.dataInicio));
       }
 
       if (filtros.dataFinal) {
-        query = query.filter('pedidos.data_pedido', 'lte', filtros.dataFinal);
+        query = query.filter('pedidos.data_pedido', 'lte', toISO(filtros.dataFinal));
       }
 
       if (filtros.situacoes.length > 0) {
@@ -295,6 +305,26 @@ export function useItensPedidos() {
     }
   };
 
+  // Polling curto para aguardar dados do banco após iniciar o BG
+  const aguardarDadosNovos = async (timeoutMs = 45000, intervaloMs = 1200) => {
+    const inicio = Date.now();
+    let ultimaQtd = 0;
+    while (Date.now() - inicio < timeoutMs) {
+      const dados = await buscarDadosLocais();
+      const qtd = dados?.length || 0;
+      if (qtd > 0 && qtd >= ultimaQtd) {
+        const itensProcessados = await aplicarMapeamentos(aplicarFiltrosLocais(dados));
+        localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
+        setItens(itensProcessados);
+        calcularMetricas(itensProcessados);
+        return true;
+      }
+      ultimaQtd = qtd;
+      await new Promise((r) => setTimeout(r, intervaloMs));
+    }
+    return false;
+  };
+
   // ✅ Sincronização em background sem bloquear UI
   const sincronizarEmBackground = async () => {
     try {
@@ -322,9 +352,16 @@ export function useItensPedidos() {
         }
       });
 
-      clearTimeout(timeoutId);
+clearTimeout(timeoutId);
 
-      if (!syncError && syncData?.itens && syncData?.pedidos) {
+// Edge retornou 202 (started) ou payload inicial sem dados: iniciar polling curto
+if (!syncError && (syncData?.started || (!syncData?.itens && !syncData?.pedidos))) {
+  toast({ title: "Sincronização iniciada", description: "Carregando pedidos em segundos..." });
+  await aguardarDadosNovos();
+  return;
+}
+
+if (!syncError && syncData?.itens && syncData?.pedidos) {
         // Atualizar dados apenas se a sincronização trouxe mais resultados
         if (syncData.itens.length > itens.length) {
           const itensEnriquecidos = syncData.itens.map((item: any) => {
@@ -421,6 +458,12 @@ export function useItensPedidos() {
             }
           }
         });
+        // 202 Accepted: processamento em background iniciado
+        if (!syncError && (syncData?.started || (!syncData?.itens && !syncData?.pedidos))) {
+          toast({ title: "Sincronização iniciada", description: "Carregando pedidos em segundos..." });
+          const ok = await aguardarDadosNovos();
+          if (ok) return;
+        }
 
         if (!syncError && syncData?.itens && syncData?.pedidos) {
           

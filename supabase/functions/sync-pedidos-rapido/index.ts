@@ -352,6 +352,16 @@ Deno.serve(async (req) => {
     const config = await buscarConfiguracoesTiny(supabase);
     console.log('✅ Configurações carregadas');
 
+    // Garantir que o processo fique como running durante o BG
+    try {
+      await supabase
+        .from('sync_control')
+        .update({ status: 'running', progress: { started_at: new Date().toISOString() } })
+        .eq('process_name', 'sync-pedidos-rapido');
+    } catch (e) {
+      console.warn('Não foi possível marcar status running:', e);
+    }
+
     // Tentar resolver a organização do usuário e pegar token de Integrações · Contas (Tiny)
     let CURRENT_ACCOUNT_ID: string | null = null;
     let CURRENT_ACCOUNT_NAME: string | null = null;
@@ -751,9 +761,9 @@ if (allPedidos.length > 0) {
       const totalLotes = Math.ceil(todosPedidosIds.length / BATCH_SIZE);
       console.log(`⚡ (BG) Processando ${todosPedidosIds.length} pedidos em ${totalLotes} lotes de ${BATCH_SIZE} (conta ${conta.name})`);
       for (let i = 0; i < todosPedidosIds.length; i += BATCH_SIZE) {
-        const { shouldContinue } = await verificarStatusProcesso(supabase);
-        if (!shouldContinue) {
-          console.log(`⏸️ (BG) Processo pausado/parado pelo usuário. Parando no índice ${i}.`);
+        const { status } = await verificarStatusProcesso(supabase);
+        if (status === 'stopped') {
+          console.log(`⏹️ (BG) Processo parado pelo usuário. Parando no índice ${i}.`);
           break;
         }
         const lote = todosPedidosIds.slice(i, i + BATCH_SIZE);
