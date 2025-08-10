@@ -21,6 +21,12 @@ function json(body: any, status = 200) {
 
 function b64(s: string) { return btoa(s); }
 function b64d(s: string) { try { return atob(s); } catch { return ""; } }
+// URL-safe base64 encoder for bytes (used by PKCE)
+function b64url(bytes: Uint8Array) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/,'');
+}
 
 async function getOrgIdForUser(supabase: any, userId: string) {
   const { data, error } = await supabase.from('profiles').select('organizacao_id').eq('id', userId).single();
@@ -44,13 +50,22 @@ serve(async (req) => {
     const auth = req.headers.get('authorization') || '';
     const appOrigin = req.headers.get('x-app-origin') || req.headers.get('referer') || '';
     const jwt = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-    const state = b64(JSON.stringify({ t: jwt, ts: Date.now(), o: appOrigin }));
+
+    // PKCE: gerar code_verifier e code_challenge (S256)
+    const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
+    const code_verifier = b64url(verifierBytes);
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code_verifier));
+    const code_challenge = b64url(new Uint8Array(digest));
+
+    const state = b64(JSON.stringify({ t: jwt, ts: Date.now(), o: appOrigin, v: code_verifier }));
     const redirectUri = `${SUPABASE_URL}/functions/v1/mercadolivre-oauth/callback`;
     const authorizeUrl = new URL('https://auth.mercadolivre.com.br/authorization');
     authorizeUrl.searchParams.set('response_type', 'code');
     authorizeUrl.searchParams.set('client_id', ML_APP_ID);
     authorizeUrl.searchParams.set('redirect_uri', redirectUri);
     authorizeUrl.searchParams.set('state', state);
+    authorizeUrl.searchParams.set('code_challenge', code_challenge);
+    authorizeUrl.searchParams.set('code_challenge_method', 'S256');
     return json({ url: authorizeUrl.toString(), redirect_uri: redirectUri });
   }
 
@@ -70,6 +85,7 @@ serve(async (req) => {
     form.set('client_secret', ML_APP_SECRET);
     form.set('code', code);
     form.set('redirect_uri', redirectUri);
+    if (parsed?.v) form.set('code_verifier', parsed.v);
 
     const tokenResp = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
