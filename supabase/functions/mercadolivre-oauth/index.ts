@@ -156,16 +156,23 @@ serve(async (req) => {
     // Redireciona/fecha popup e notifica a aba original
     const appOrigin = parsed?.o || '';
     if (appOrigin) {
-      const html = `<!doctype html><html><head><meta charset="utf-8"><title>Mercado Livre conectado</title></head><body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding:24px;">
-        <h3>Conexão realizada</h3>
-        <p>Você já pode fechar esta janela.</p>
-        <script>
-          try { window.opener && window.opener.postMessage({ source: 'mercadolivre-oauth', connected: true }, ${JSON.stringify(appOrigin)}); } catch (e) {}
-          setTimeout(() => { try { window.close(); } catch (e) {} }, 500);
-          setTimeout(() => { location.href = ${JSON.stringify(appOrigin + '/mercado-livre?connected=1')}; }, 1500);
-        </script>
-      </body></html>`;
-      return new Response(html, { headers: { 'Content-Type': 'text/html', ...CORS } });
+        const html = `<!doctype html><html><head><meta charset="utf-8"><title>Mercado Livre conectado</title><meta http-equiv="refresh" content="2; url=${appOrigin + '/mercado-livre?connected=1'}"></head><body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding:24px;">
+          <h3>Conexão realizada</h3>
+          <p>Você já pode fechar esta janela.</p>
+          <p><a href=${JSON.stringify(appOrigin + '/mercado-livre?connected=1')}>Se não redirecionar automaticamente, clique aqui</a></p>
+          <script>
+            const targetOrigin = ${JSON.stringify(appOrigin)};
+            const redirectUrl = ${JSON.stringify(appOrigin + '/mercado-livre?connected=1')};
+            try {
+              if (window.opener && !window.opener.closed) {
+                window.opener.postMessage({ source: 'mercadolivre-oauth', connected: true }, targetOrigin);
+              }
+            } catch (e) {}
+            try { window.close(); } catch (e) {}
+            setTimeout(() => { location.replace(redirectUrl); }, 300);
+          </script>
+        </body></html>`;
+        return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS } });
     }
     const target = `${new URL(req.url).origin.replace('.functions', '')}/mercado-livre?connected=1`;
     return new Response(null, {
