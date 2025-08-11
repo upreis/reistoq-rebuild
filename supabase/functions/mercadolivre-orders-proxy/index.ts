@@ -122,6 +122,41 @@ async function refreshIfNeeded(acc: any) {
 }
 
 
+// Force a refresh now (rotates refresh_token if returned)
+async function refreshNow(acc: any) {
+  try {
+    if (!acc?.auth_data?.refresh_token) return acc;
+    const body = new URLSearchParams();
+    body.set('grant_type', 'refresh_token');
+    body.set('client_id', ML_APP_ID);
+    body.set('client_secret', ML_APP_SECRET);
+    body.set('refresh_token', acc.auth_data.refresh_token);
+    const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString(),
+    });
+    const txt = await resp.text();
+    let json: any = null; try { json = txt ? JSON.parse(txt) : null; } catch (_) { json = { raw: txt }; }
+    if (!resp.ok) return acc;
+    const { access_token, refresh_token, expires_in } = json || {};
+    const expires_at = new Date(Date.now() + Number(expires_in || 0) * 1000).toISOString();
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const nextAuth = { ...(acc.auth_data || {}), access_token, refresh_token: refresh_token || acc.auth_data.refresh_token, expires_at };
+    await admin.from('integration_accounts').update({ auth_data: nextAuth }).eq('id', acc.id);
+    return { ...acc, auth_data: nextAuth };
+  } catch (_) { return acc; }
+}
+
+// Fetch with single 401 retry using refresh_token
+async function mlFetchWith401Retry(acc: any, url: string): Promise<{ resp: Response, acc: any }> {
+  let resp = await fetchWithBackoff(url, { headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` } });
+  if (resp.status === 401) {
+    const acc2 = await refreshNow(acc);
+    const resp2 = await fetchWithBackoff(url, { headers: { Authorization: `Bearer ${acc2?.auth_data?.access_token}` } });
+    return { resp: resp2, acc: acc2 };
+  }
+  return { resp, acc };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
@@ -136,7 +171,8 @@ serve(async (req) => {
     const expandParam = params.get('expand') || '';
     const expandSet = new Set(expandParam.split(',').map(s => s.trim()).filter(Boolean));
     const sort = params.get('sort') || 'date_desc';
-    const limit = Math.max(1, Math.min(50, Number(params.get('limit') || '50')));
+    const defaultLimit = Math.max(1, Math.min(50, Number(Deno.env.get('ML_PAGE_SIZE') || '50')));
+    const limit = Math.max(1, Math.min(50, Number(params.get('limit') || String(defaultLimit))));
     const offset = Math.max(0, Number(params.get('offset') || '0'));
 
     const from = params.get('from');
@@ -163,13 +199,14 @@ serve(async (req) => {
 
       const perAcc = await Promise.all(refreshed.map(async (acc: any) => {
         const qs = buildQS(acc?.account_identifier);
-        const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-          headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
-        });
-const raw = await resp.text();
-let body: any = null;
-try { body = raw ? JSON.parse(raw) : null; } catch (_) { body = { raw }; }
-        return { acc, ok: resp.ok, body };
+        const { resp, acc: acc2 } = await mlFetchWith401Retry(acc, `https://api.mercadolibre.com/orders/search?${qs.toString()}`);
+        const raw = await resp.text();
+        let body: any = null;
+        try { body = raw ? JSON.parse(raw) : null; } catch (_) { body = { raw }; }
+        if (resp.status === 401) {
+          body = { error: 'token_expired', action: 'reconnect' };
+        }
+        return { acc: acc2, ok: resp.ok, body };
       }));
 
       const errors = perAcc.filter(x => !x.ok).map(x => ({ account_id: x.acc?.id, details: x.body }));
@@ -248,14 +285,17 @@ try { det = rawDet ? JSON.parse(rawDet) : null; } catch (_) { det = { raw: rawDe
     acc = await refreshIfNeeded(acc);
 
     const qs = buildQS(acc?.account_identifier);
-    const mlResp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
-    });
+    const { resp: mlResp, acc: acc2 } = await mlFetchWith401Retry(acc, `https://api.mercadolibre.com/orders/search?${qs.toString()}`);
+    acc = acc2;
 const rawBody = await mlResp.text();
 let jsonBody: any = null;
 try { jsonBody = rawBody ? JSON.parse(rawBody) : null; } catch (_) { jsonBody = { raw: rawBody }; }
 if (!mlResp.ok) {
   const status = mlResp.status;
+  if (status === 401) {
+    const reqId = (crypto as any)?.randomUUID?.() || String(Date.now());
+    return new Response(JSON.stringify({ error: 'token_expired', action: 'reconnect', requestId: reqId }), { status: 401, headers: { 'Content-Type': 'application/json', 'x-request-id': reqId, ...CORS } });
+  }
   const err = (jsonBody && (jsonBody.error || jsonBody.message || (jsonBody.cause && JSON.stringify(jsonBody.cause)))) || rawBody || 'Erro desconhecido';
   return json({ error: 'Falha na API ML', status, details: err }, 400);
 }

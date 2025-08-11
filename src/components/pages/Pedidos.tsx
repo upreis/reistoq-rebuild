@@ -20,7 +20,7 @@ import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 import { usePedidosML } from "@/hooks/usePedidosML";
 import { usePedidosTiny } from "@/hooks/usePedidosTiny";
 import { usePedidosShopee } from "@/hooks/usePedidosShopee";
-import { FEATURE_ML } from "@/config/features";
+import { FEATURE_ML, FEATURE_QA_TEST } from "@/config/features";
 
 // Force rebuild to clear cache
 export function Pedidos() {
@@ -122,6 +122,26 @@ export function Pedidos() {
     page: 1,
     pageSize: 100,
   });
+
+  const [qaResult, setQaResult] = useState<any>(null);
+  const handleTestSources = async () => {
+    const isQA = FEATURE_QA_TEST || import.meta.env.MODE !== 'production';
+    if (!isQA) return;
+    const results: any = {};
+    let t0 = performance.now();
+    await tiny.refetch();
+    results.tiny = { count: tiny.itens.length, ms: Math.round(performance.now() - t0) };
+    t0 = performance.now();
+    await ml.refetch();
+    results.ml = { count: ml.itens.length, ms: Math.round(performance.now() - t0), reqId: ml.lastRequestId };
+    t0 = performance.now();
+    await shopee.refetch();
+    results.shopee = { count: shopee.itens.length, ms: Math.round(performance.now() - t0) };
+    console.info('Tiny.fetch', { status: 200, requestId: 'n/a', ms: results.tiny.ms, count: results.tiny.count });
+    console.info('ML.fetch', { status: 200, requestId: results.ml.reqId || '', ms: results.ml.ms, count: results.ml.count });
+    console.info('Shopee.fetch', { status: 200, requestId: 'stub', ms: results.shopee.ms, count: results.shopee.count });
+    setQaResult(results);
+  };
 
   useEffect(() => {
     (async () => {
@@ -486,6 +506,21 @@ export function Pedidos() {
             onBuscarPedidos={handleBuscarPedidos}
             loading={loading || ml.loading}
           />
+
+          {(FEATURE_QA_TEST || import.meta.env.MODE !== 'production') && (
+            <div className="max-w-3xl mb-2 p-2 border rounded-md">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleTestSources}>Testar fontes</Button>
+                {qaResult && (
+                  <div className="text-sm text-muted-foreground">
+                    Tiny: {qaResult.tiny?.count ?? 0}/{qaResult.tiny?.ms ?? 0}ms |
+                    {' '}ML: {qaResult.ml?.count ?? 0}/{qaResult.ml?.ms ?? 0}ms{qaResult.ml?.reqId ? ` (req ${qaResult.ml.reqId})` : ''} |
+                    {' '}Shopee: {qaResult.shopee?.count ?? 0}/{qaResult.shopee?.ms ?? 0}ms
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Barra de Status - Limitada em largura */}
           <div className="max-w-3xl">
