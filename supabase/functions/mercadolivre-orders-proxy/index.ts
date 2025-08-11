@@ -6,13 +6,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const ML_PAGE_SIZE = Number(Deno.env.get("ML_PAGE_SIZE") || "100");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Expose-Headers": "x-request-id",
 };
 
-function json(body: any, status = 200) { return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...CORS } }); }
+function json(body: any, status = 200, reqId?: string) { return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...CORS, ...(reqId ? { "x-request-id": reqId } : {}) } }); }
 
 // Backoff helper for 429 rate limits with Retry-After support
 async function fetchWithBackoff(url: string, init: RequestInit, maxRetries = 5, baseMs = 500, capMs = 8000): Promise<Response> {
@@ -89,11 +91,12 @@ async function refreshIfNeeded(acc: any) {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
+  const reqId = crypto.randomUUID();
+  if (req.method === 'OPTIONS') return new Response(null, { headers: { ...CORS, 'x-request-id': reqId } });
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: req.headers.get('authorization') || '' } } });
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return json({ error: 'Não autenticado' }, 401);
+  if (!user) return json({ error: 'Não autenticado', requestId: reqId }, 401, reqId);
 
   try {
     const params = new URL(req.url).searchParams;

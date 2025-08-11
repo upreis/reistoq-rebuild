@@ -43,11 +43,21 @@ serve(async (req) => {
     const tinyToken = config.valor
     
     // Buscar pedidos dos últimos 7 dias
-    const dataInicio = new Date()
-    dataInicio.setDate(dataInicio.getDate() - 7)
-    const dataInicioStr = dataInicio.toISOString().split('T')[0]
+    const inicio = new Date()
+    inicio.setDate(inicio.getDate() - 7)
+    const hoje = new Date()
 
-    console.log(`📅 Buscando pedidos desde: ${dataInicioStr}`)
+    const fmt = (d: Date) => {
+      const dd = String(d.getDate()).padStart(2, '0')
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const yyyy = d.getFullYear()
+      return `${dd}/${mm}/${yyyy}`
+    }
+
+    const dataInicialStr = fmt(inicio)
+    const dataFinalStr = fmt(hoje)
+
+    console.log(`📅 Buscando pedidos desde: ${dataInicialStr} até ${dataFinalStr}`)
 
     // Fazer request para API do Tiny
     const tinyResponse = await fetch('https://api.tiny.com.br/api2/pedidos.pesquisa.php', {
@@ -55,7 +65,7 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: `token=${tinyToken}&formato=json&dataInicial=${dataInicioStr}`
+      body: `token=${tinyToken}&formato=json&dataInicial=${encodeURIComponent(dataInicialStr)}&dataFinal=${encodeURIComponent(dataFinalStr)}`
     })
 
     const tinyData = await tinyResponse.json()

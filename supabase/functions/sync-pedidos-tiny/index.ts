@@ -264,7 +264,7 @@ serve(async (req) => {
 // ✅ ESTRATÉGIA OTIMIZADA: Limitar páginas para evitar timeout
     const params = new URLSearchParams({
       token: tinyToken,
-      formato: 'JSON',
+      formato: 'json',
       pagina: '1',
       com_itens: 'S' // Busca com itens já incluídos
     });
@@ -280,7 +280,7 @@ serve(async (req) => {
         const [ano, mes, dia] = dataFormatada.split('-');
         dataFormatada = `${dia}/${mes}/${ano}`;
       }
-      params.append('dataInicio', dataFormatada);
+      params.append('dataInicial', dataFormatada);
       console.log('Data inicial formatada:', dataFormatada);
     }
     
@@ -291,7 +291,7 @@ serve(async (req) => {
         const [ano, mes, dia] = dataFormatada.split('-');
         dataFormatada = `${dia}/${mes}/${ano}`;
       }
-      params.append('dataFim', dataFormatada);
+      params.append('dataFinal', dataFormatada);
       console.log('Data final formatada:', dataFormatada);
     }
     
@@ -409,7 +409,7 @@ serve(async (req) => {
             try {
               const paramsIndividual = new URLSearchParams({
                 token: tinyToken,
-                formato: 'JSON',
+                formato: 'json',
                 id: pedido.id,
                 com_itens: 'S'
               });
