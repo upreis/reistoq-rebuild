@@ -171,8 +171,8 @@ serve(async (req) => {
     const expandParam = params.get('expand') || '';
     const expandSet = new Set(expandParam.split(',').map(s => s.trim()).filter(Boolean));
     const sort = params.get('sort') || 'date_desc';
-    const defaultLimit = Math.max(1, Math.min(50, Number(Deno.env.get('ML_PAGE_SIZE') || '50')));
-    const limit = Math.max(1, Math.min(50, Number(params.get('limit') || String(defaultLimit))));
+    const defaultLimit = Math.max(1, Math.min(100, Number(Deno.env.get('ML_PAGE_SIZE') || '100')));
+    const limit = Math.max(1, Math.min(100, Number(params.get('limit') || String(defaultLimit))));
     const offset = Math.max(0, Number(params.get('offset') || '0'));
 
     const from = params.get('from');
