@@ -205,7 +205,7 @@ if (Array.isArray(statusesTiny) && statusesTiny.length > 1) {
   console.log("tiny-proxy.call.pesquisa.multi", { requestId, statuses: statusesTiny, page, pageSize, hasNumero: !!numero });
   const resultsArrays: any[][] = [];
   let totalSum = 0;
-
+  const perStatusCounts: Record<string, number> = {};
   for (const st of statusesTiny) {
     const pesquisaParams: Record<string, string | number | undefined> = {
       pagina: page,
@@ -259,6 +259,7 @@ if (Array.isArray(statusesTiny) && statusesTiny.length > 1) {
     return json({ results: expanded, paging: { total: totalSum, page, pageSize }, page, pageSize, total: totalSum, requestId }, 200, requestId);
   }
 
+  console.log("tiny-proxy.multi.summary", { requestId, page, pageSize, totalFromAPIs: totalSum, totalAfterDedup: combinedUnique.length });
   return json({ results: combinedUnique, paging: { total: totalSum, page, pageSize }, page, pageSize, total: totalSum, requestId }, 200, requestId);
 } else {
   // Consulta única (sem status ou um único status)
