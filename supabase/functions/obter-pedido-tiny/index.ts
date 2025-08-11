@@ -63,26 +63,88 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Buscar configurações do Tiny ERP
+    // Obter dados do body e possível conta de integração
+    let numeroPedido: string | undefined;
+    let integrationAccountId: string | undefined;
+    try {
+      const body = await req.json();
+      numeroPedido = body?.numeroPedido;
+      integrationAccountId = body?.integration_account_id || body?.integrationAccountId;
+    } catch (_) {}
+
+    if (!numeroPedido) {
+      throw new Error('Número do pedido é obrigatório');
+    }
+
+    // Buscar configurações do Tiny ERP (URL e fallback de token)
     const { data: configs } = await supabaseClient
       .from('configuracoes')
       .select('chave, valor')
       .in('chave', ['tiny_token', 'tiny_api_url']);
 
-    const tinyToken = configs?.find(c => c.chave === 'tiny_token')?.valor;
+    let tinyToken: string | undefined = configs?.find(c => c.chave === 'tiny_token')?.valor;
     const tinyApiUrl = configs?.find(c => c.chave === 'tiny_api_url')?.valor || 'https://api.tiny.com.br/api2';
+
+    // Resolução de token Tiny com suporte multi-conta (sem ambiguidade)
+    try {
+      const authHeader = req.headers.get('Authorization') || '';
+      const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
+      if (integrationAccountId) {
+        const { data: acc, error: accErr } = await supabaseClient
+          .from('integration_accounts')
+          .select('id, provider, is_active, auth_data')
+          .eq('id', integrationAccountId)
+          .eq('provider', 'tiny')
+          .maybeSingle();
+        if (accErr) throw accErr;
+        if (!acc || !acc.is_active) throw new Error('Conta Tiny informada não existe ou está inativa');
+        const tokenFromAccount = acc?.auth_data?.tiny_token || acc?.auth_data?.token;
+        if (!tokenFromAccount) throw new Error('Conta Tiny informada não possui token configurado');
+        tinyToken = tokenFromAccount;
+        console.log('🔑 Token resolvido da conta Tiny específica:', integrationAccountId);
+      } else if (jwt) {
+        const { data: userData } = await supabaseClient.auth.getUser(jwt);
+        const userId = userData?.user?.id;
+        if (userId) {
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('organizacao_id')
+            .eq('id', userId)
+            .maybeSingle();
+          const orgId = profile?.organizacao_id;
+          if (orgId) {
+            const { data: accs } = await supabaseClient
+              .from('integration_accounts')
+              .select('id, provider, is_active, auth_data')
+              .eq('organization_id', orgId)
+              .eq('provider', 'tiny')
+              .eq('is_active', true);
+            const contasAtivas = (accs || []).filter((a: any) => (a.auth_data?.tiny_token || a.auth_data?.token));
+            if (contasAtivas.length === 1) {
+              const a = contasAtivas[0] as any;
+              tinyToken = a.auth_data?.tiny_token || a.auth_data?.token;
+              console.log('🔑 Token resolvido da única conta Tiny ativa da organização:', a.id);
+            } else if (contasAtivas.length > 1) {
+              throw new Error('Há múltiplas contas Tiny ativas. Informe integration_account_id.');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.log('⚠️ Falha ao resolver token via integration_accounts:', (e as any)?.message || e);
+      throw e;
+    }
+
+    // Fallback final: variável de ambiente
+    if (!tinyToken) {
+      const envToken = Deno.env.get('TINY_TOKEN');
+      if (envToken) tinyToken = envToken;
+    }
 
     if (!tinyToken) {
       throw new Error('Token do Tiny ERP não configurado');
     }
-
-    // Obter número do pedido da requisição
-    const { numeroPedido } = await req.json();
-    
-    if (!numeroPedido) {
-      throw new Error('Número do pedido é obrigatório');
-    }
-
     console.log('Buscando detalhes do pedido:', numeroPedido);
 
     // Parâmetros para a API do Tiny

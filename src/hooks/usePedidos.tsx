@@ -202,10 +202,10 @@ export function usePedidos() {
     buscarPedidos();
   };
 
-  const obterDetalhesPedido = async (numeroPedido: string) => {
+  const obterDetalhesPedido = async (numeroPedido: string, integrationAccountId?: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('obter-pedido-tiny', {
-        body: { numeroPedido }
+        body: { numeroPedido, integration_account_id: integrationAccountId }
       });
 
       if (error) {

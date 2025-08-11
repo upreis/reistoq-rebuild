@@ -43,6 +43,7 @@ interface ItemParaBaixaEstoque {
   obs_interna?: string;
   url_rastreamento?: string;
   codigo_rastreamento?: string;
+  integration_account_id?: string;
 }
 
 serve(async (req) => {
@@ -77,7 +78,7 @@ serve(async (req) => {
         console.log(`🔍 Buscando produto no estoque com SKU: ${item.sku_kit}`);
         const { data: produto, error: produtoError } = await supabase
           .from('produtos')
-          .select('id, sku_interno, nome, quantidade_atual')
+          .select('id, sku_interno, nome, quantidade_atual, integration_account_id')
           .eq('sku_interno', item.sku_kit)
           .single();
 
@@ -179,7 +180,8 @@ serve(async (req) => {
             url_rastreamento: item.url_rastreamento,
             codigo_rastreamento: item.codigo_rastreamento,
             status: 'estoque_baixado',
-            observacoes: `Baixa automática - SKU Pedido: ${item.sku_pedido} → SKU Kit: ${item.sku_kit}. QTD Kit: ${item.qtd_kit}. Total de Itens: ${item.quantidade_kit}. Valor: ${formatarMoeda(item.valor_total)}`
+            observacoes: `Baixa automática - SKU Pedido: ${item.sku_pedido} → SKU Kit: ${item.sku_kit}. QTD Kit: ${item.qtd_kit}. Total de Itens: ${item.quantidade_kit}. Valor: ${formatarMoeda(item.valor_total)}`,
+            integration_account_id: item.integration_account_id || produto.integration_account_id || null,
           });
 
         if (historicoError) {

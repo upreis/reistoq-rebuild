@@ -1,63 +1,51 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Filtros, UsePedidosReturn } from "@/config/features";
-import { useItensPedidos } from "@/hooks/useItensPedidos";
+import { useEffect } from 'react';
+import type { ItemPedido } from '@/hooks/useItensPedidos';
+import { useItensPedidos } from '@/hooks/useItensPedidos';
 
-export function toTinyDate(input?: string | Date): string {
-  if (!input) return '';
-  if (input instanceof Date) {
-    const dd = String(input.getDate()).padStart(2, '0');
-    const mm = String(input.getMonth() + 1).padStart(2, '0');
-    const yyyy = input.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-    }
-  const s = String(input);
-  if (s.includes('/')) return s; // assume DD/MM/YYYY
-  if (s.includes('-')) {
-    const [yyyy, mm, dd] = s.split('-');
-    return `${dd}/${mm}/${yyyy}`;
-  }
-  return s;
-}
+export type Filtros = {
+  dataInicio?: string;
+  dataFinal?: string;
+  situacoes?: string[];
+  busca?: string;
+  accountId?: string;
+  integrationAccountId?: string;
+  fulfillmentOnly?: boolean;
+  page?: number;
+  pageSize?: number;
+};
 
-export function usePedidosTiny(initialFiltros?: Partial<Filtros>): UsePedidosReturn {
+export type ResultadoPedido = ItemPedido;
+
+export type UsePedidosReturn = {
+  itens: ResultadoPedido[];
+  loading: boolean;
+  error: string | null;
+  total?: number;
+  fetchPage: (page?: number) => Promise<void>;
+  refetch: () => Promise<void>;
+};
+
+// Adapter 1:1 para reaproveitar o hook existente sem mudar comportamento
+export function usePedidosTiny(_filtros: Filtros): UsePedidosReturn {
   const {
     itens,
     loading,
     error,
-    filtros,
-    atualizarFiltros,
     buscarComFiltros,
+    recarregarDados,
   } = useItensPedidos();
 
-  const [page, setPage] = useState<number>(initialFiltros?.page || 1);
-  const [pageSize, setPageSize] = useState<number>(initialFiltros?.pageSize || 500);
-
   useEffect(() => {
-    // Mapear Filtros -> filtros do hook legado (mantendo comportamento)
-    const mapped = {
-      busca: initialFiltros?.busca ?? filtros.busca,
-      dataInicio: toTinyDate(initialFiltros?.dataInicio || filtros.dataInicio),
-      dataFinal: toTinyDate(initialFiltros?.dataFinal || filtros.dataFinal),
-      situacoes: initialFiltros?.situacoes ?? filtros.situacoes,
-    } as any;
-    atualizarFiltros(mapped);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFiltros?.busca, initialFiltros?.dataInicio, initialFiltros?.dataFinal, JSON.stringify(initialFiltros?.situacoes)]);
+    // Mantemos o controle de filtros no hook original via página; nada a fazer aqui
+  }, []);
 
-  const refetch = useCallback(async () => {
-    const t0 = performance.now();
+  const fetchPage = async () => {
     await buscarComFiltros();
-    // Expor duração no console (QA)
-    (window as any).__tiny_last_ms = Math.round(performance.now() - t0);
-  }, [buscarComFiltros]);
+  };
 
-  const fetchPage = useCallback(async (p?: number) => {
-    if (typeof p === 'number') setPage(p);
-    await refetch();
-  }, [refetch]);
+  const refetch = async () => {
+    await recarregarDados();
+  };
 
-  // Total simples por enquanto (mantém 1:1 comportamento atual de lista completa)
-  const total = useMemo(() => itens.length, [itens.length]);
-
-  return { itens, loading, error, total, fetchPage, refetch };
+  return { itens, loading, error, total: itens.length, fetchPage, refetch };
 }

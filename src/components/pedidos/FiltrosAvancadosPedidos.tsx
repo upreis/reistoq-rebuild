@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { FEATURE_ML, FEATURE_TINY, FEATURE_SHOPEE } from "@/config/features";
 
 export interface FiltrosAvancados {
   busca: string;
@@ -23,9 +24,10 @@ export interface FiltrosAvancados {
   valorMinimo: number;
   valorMaximo: number;
   clienteVip: boolean;
-  fonte?: 'interno' | 'mercadolivre' | 'ambas';
+  fonte?: 'interno' | 'mercadolivre' | 'ambas' | 'shopee';
   mlPedidoId?: string;
   mlComprador?: string;
+  mlFulfillmentOnly?: boolean;
 }
 
 interface FiltrosSalvos {
@@ -211,19 +213,19 @@ export function FiltrosAvancadosPedidos({
         </div>
 
         {/* Fonte */}
-        <Select value={filtros.fonte || 'interno'} onValueChange={(v) => onFiltroChange({ fonte: v as 'interno' | 'mercadolivre' | 'ambas' })}>
+        <Select value={filtros.fonte || 'interno'} onValueChange={(v) => onFiltroChange({ fonte: v as 'interno' | 'mercadolivre' | 'ambas' | 'shopee' })}>
           <SelectTrigger className="w-[200px] bg-background">
             <SelectValue placeholder="Fonte" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="interno">Fonte: Interno (Tiny)</SelectItem>
-            <SelectItem value="mercadolivre">Fonte: Mercado Livre</SelectItem>
-            <SelectItem value="ambas">Fonte: Ambas</SelectItem>
+            {FEATURE_TINY && <SelectItem value="interno">Fonte: Interno (Tiny)</SelectItem>}
+            {FEATURE_ML && <SelectItem value="mercadolivre">Fonte: Mercado Livre</SelectItem>}
+            {FEATURE_ML && FEATURE_TINY && <SelectItem value="ambas">Fonte: Ambas</SelectItem>}
+            {FEATURE_SHOPEE && <SelectItem value="shopee">Fonte: Shopee</SelectItem>}
           </SelectContent>
         </Select>
 
-        {/* Filtros específicos do Mercado Livre */}
-        {filtros.fonte !== 'interno' && (
+        {filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas' ? (
           <>
             <div className="relative min-w-[160px] max-w-xs">
               <Input
@@ -241,8 +243,18 @@ export function FiltrosAvancadosPedidos({
                 onChange={(e) => onFiltroChange({ mlComprador: e.target.value })}
               />
             </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="ml-fulfillment"
+                checked={!!filtros.mlFulfillmentOnly}
+                onCheckedChange={(checked) => onFiltroChange({ mlFulfillmentOnly: !!checked })}
+              />
+              <Label htmlFor="ml-fulfillment" className="text-sm font-medium cursor-pointer">
+                Apenas Fulfillment
+              </Label>
+            </div>
           </>
-        )}
+        ) : null}
  
         {/* Seletores de Período */}
         <div className="flex gap-2">
