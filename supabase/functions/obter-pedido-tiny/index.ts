@@ -85,19 +85,24 @@ serve(async (req) => {
     let tinyToken: string | undefined = configs?.find(c => c.chave === 'tiny_token')?.valor;
     const tinyApiUrl = configs?.find(c => c.chave === 'tiny_api_url')?.valor || 'https://api.tiny.com.br/api2';
 
-    // Preferir token das Integrações · Contas (multi-conta) quando disponível
+    // Resolução de token Tiny com suporte multi-conta (sem ambiguidade)
     try {
       const authHeader = req.headers.get('Authorization') || '';
       const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      let account: any = null;
 
       if (integrationAccountId) {
-        const { data: acc } = await supabaseClient
+        const { data: acc, error: accErr } = await supabaseClient
           .from('integration_accounts')
-          .select('id, auth_data, is_active')
+          .select('id, provider, is_active, auth_data')
           .eq('id', integrationAccountId)
+          .eq('provider', 'tiny')
           .maybeSingle();
-        if (acc?.is_active) account = acc;
+        if (accErr) throw accErr;
+        if (!acc || !acc.is_active) throw new Error('Conta Tiny informada não existe ou está inativa');
+        const tokenFromAccount = acc?.auth_data?.tiny_token || acc?.auth_data?.token;
+        if (!tokenFromAccount) throw new Error('Conta Tiny informada não possui token configurado');
+        tinyToken = tokenFromAccount;
+        console.log('🔑 Token resolvido da conta Tiny específica:', integrationAccountId);
       } else if (jwt) {
         const { data: userData } = await supabaseClient.auth.getUser(jwt);
         const userId = userData?.user?.id;
@@ -111,20 +116,24 @@ serve(async (req) => {
           if (orgId) {
             const { data: accs } = await supabaseClient
               .from('integration_accounts')
-              .select('id, auth_data, is_active')
+              .select('id, provider, is_active, auth_data')
               .eq('organization_id', orgId)
               .eq('provider', 'tiny')
-              .eq('is_active', true)
-              .limit(1);
-            if (accs && accs.length > 0) account = accs[0];
+              .eq('is_active', true);
+            const contasAtivas = (accs || []).filter((a: any) => (a.auth_data?.tiny_token || a.auth_data?.token));
+            if (contasAtivas.length === 1) {
+              const a = contasAtivas[0] as any;
+              tinyToken = a.auth_data?.tiny_token || a.auth_data?.token;
+              console.log('🔑 Token resolvido da única conta Tiny ativa da organização:', a.id);
+            } else if (contasAtivas.length > 1) {
+              throw new Error('Há múltiplas contas Tiny ativas. Informe integration_account_id.');
+            }
           }
         }
       }
-
-      const tokenFromAccount = account?.auth_data?.tiny_token || account?.auth_data?.token;
-      if (tokenFromAccount) tinyToken = tokenFromAccount;
     } catch (e) {
-      console.log('⚠️ Não foi possível resolver token via integration_accounts:', (e as any)?.message || e);
+      console.log('⚠️ Falha ao resolver token via integration_accounts:', (e as any)?.message || e);
+      throw e;
     }
 
     // Fallback final: variável de ambiente
