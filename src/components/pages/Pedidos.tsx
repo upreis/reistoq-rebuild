@@ -397,7 +397,7 @@ export function Pedidos() {
 
   const handleVerDetalhes = async (item: ItemPedido) => {
     try {
-      const detalhes = await obterDetalhesPedido(item.numero_pedido);
+      const detalhes = await obterDetalhesPedido(item.numero_pedido, item.integration_account_id);
       setItemSelecionado(item);
       setModalDetalhes(true);
       toast({
