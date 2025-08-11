@@ -24,6 +24,7 @@ export type UsePedidosReturn = {
   total?: number;
   fetchPage: (page?: number) => Promise<void>;
   refetch: () => Promise<void>;
+  lastRequestId?: string;
 };
 
 function parseToISO(d?: string) {
@@ -40,6 +41,7 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState<number | undefined>(undefined);
+  const [lastRequestId, setLastRequestId] = useState<string | undefined>(undefined);
   const pageRef = useRef(filtros.page || 1);
   const pageSizeRef = useRef(filtros.pageSize || 100);
 
@@ -117,6 +119,7 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
     setLoading(true);
     setError(null);
     const t0 = performance.now();
+    let requestId = '';
     try {
       const { data: session } = await supabase.auth.getSession();
       const headers = {
@@ -129,16 +132,18 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
 
       let mapped: ItemPedido[] = [];
       let respStatus = 0;
-      let requestId = '';
 
       if (!accId || accId === 'all') {
         qs.set('all', 'true');
         const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
         respStatus = resp.status;
         requestId = resp.headers.get('x-request-id') || '';
+        setLastRequestId(requestId || undefined);
+        const ct = resp.headers.get('content-type') || '';
         const text = await resp.text();
         let json: any = null;
-        try { json = text ? JSON.parse(text) : null; } catch (_) { json = { raw: text }; }
+        if (ct.includes('application/json')) { try { json = text ? JSON.parse(text) : null; } catch (_) { json = { raw: text }; } }
+        else { json = { raw: text }; }
         if (!resp.ok) {
           const msg = (json && (json.error || json.message || json.details || text)) || `Erro HTTP ${resp.status}`;
           throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
@@ -151,9 +156,12 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
         const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
         respStatus = resp.status;
         requestId = resp.headers.get('x-request-id') || '';
+        setLastRequestId(requestId || undefined);
+        const ct = resp.headers.get('content-type') || '';
         const text = await resp.text();
         let json: any = null;
-        try { json = text ? JSON.parse(text) : null; } catch (_) { json = { raw: text }; }
+        if (ct.includes('application/json')) { try { json = text ? JSON.parse(text) : null; } catch (_) { json = { raw: text }; } }
+        else { json = { raw: text }; }
         if (!resp.ok) {
           const msg = (json && (json.error || json.message || json.details || text)) || `Erro HTTP ${resp.status}`;
           throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
@@ -180,9 +188,9 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
       console.info('ML.fetch', { status: respStatus, requestId, ms: Math.round(t1 - t0), count: filtered.length });
     } catch (e: any) {
       const t1 = performance.now();
-      console.error('ML.fetch.error', { ms: Math.round(t1 - t0), err: e?.message || String(e) });
+      console.error('ML.fetch.error', { ms: Math.round(t1 - t0), err: e?.message || String(e), requestId });
       setError(e?.message || 'Falha ao buscar ML');
-      toast({ title: 'Erro', description: e?.message || 'Falha ao buscar ML', variant: 'destructive' });
+      toast({ title: 'Erro', description: `${e?.message || 'Falha ao buscar ML'}${requestId ? ` (req ${requestId})` : ''}`, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -203,5 +211,5 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
     pageSizeRef.current = filtros.pageSize || 100;
   }, [filtros.page, filtros.pageSize]);
 
-  return { itens, loading, error, total, fetchPage, refetch };
+  return { itens, loading, error, total, fetchPage, refetch, lastRequestId };
 }

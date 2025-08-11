@@ -6,13 +6,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ML_APP_ID = Deno.env.get('ML_APP_ID')!;
+const ML_APP_SECRET = Deno.env.get('ML_APP_SECRET')!;
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 };
 
-function json(body: any, status = 200) { return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...CORS } }); }
+function json(body: any, status = 200) { const reqId = (crypto as any)?.randomUUID?.() || String(Date.now()); return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "x-request-id": reqId, ...CORS } }); }
 
 // Backoff helper for 429 rate limits with Retry-After support
 async function fetchWithBackoff(url: string, init: RequestInit, maxRetries = 5, baseMs = 500, capMs = 8000): Promise<Response> {
@@ -79,14 +82,45 @@ async function getMLAccountById(supabase: any, userId: string, accountId: string
 
 
 async function refreshIfNeeded(acc: any) {
-  const now = Date.now();
-  const expiresAt = acc?.auth_data?.expires_at ? Date.parse(acc.auth_data.expires_at) : 0;
-  if (expiresAt && expiresAt - now > 60 * 1000) return acc; // válido >60s
-  if (!acc?.auth_data?.refresh_token) return acc;
-  // NOTE: refresh é feito no endpoint /oauth/token com grant_type=refresh_token, mas precisamos do client_id/secret
-  // Para simplificar, deixamos o refresh para uma iteração futura; o token pode ainda estar válido.
-  return acc;
+  try {
+    const now = Date.now();
+    const expiresAtMs = acc?.auth_data?.expires_at ? Date.parse(acc.auth_data.expires_at) : 0;
+    if (expiresAtMs && expiresAtMs - now > 5 * 60 * 1000) return acc; // válido por >5min
+    if (!acc?.auth_data?.refresh_token) return acc;
+
+    const body = new URLSearchParams();
+    body.set('grant_type', 'refresh_token');
+    body.set('client_id', ML_APP_ID);
+    body.set('client_secret', ML_APP_SECRET);
+    body.set('refresh_token', acc.auth_data.refresh_token);
+
+    const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const raw = await resp.text();
+    let json: any = null;
+    try { json = raw ? JSON.parse(raw) : null; } catch (_) { json = { raw }; }
+    if (!resp.ok) return acc; // fallback silencioso; uma 401 no fluxo principal tentará novamente
+
+    const { access_token, refresh_token, expires_in } = json || {};
+    const expires_at = new Date(Date.now() + Number(expires_in || 0) * 1000).toISOString();
+
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const nextAuth = {
+      ...(acc.auth_data || {}),
+      access_token,
+      refresh_token: refresh_token || acc.auth_data.refresh_token,
+      expires_at,
+    };
+    await admin.from('integration_accounts').update({ auth_data: nextAuth }).eq('id', acc.id);
+    return { ...acc, auth_data: nextAuth };
+  } catch (_) {
+    return acc;
+  }
 }
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
