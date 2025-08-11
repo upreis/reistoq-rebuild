@@ -18,12 +18,14 @@ export type UsePedidosReturn = {
   fetchPage: (page?: number) => Promise<void>;
   refetch: () => Promise<void>;
   lastRequestId?: string; // ML
+  ms?: number;            // duração da última chamada
+  reqId?: string;         // alias amigável para lastRequestId
 };
 
 export const FEATURE_ML = true;
 export const FEATURE_TINY = true;
-export const FEATURE_SHOPEE = false; // stub
-export const FEATURE_QA_TEST = false;
+export const FEATURE_SHOPEE = true; // habilitado nesta branch
+export const FEATURE_QA_TEST = true; // temporário nesta branch
 
 // Helper to detect non-production quickly without relying on VITE_* variables
 export const IS_NON_PRODUCTION = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.MODE !== 'production');

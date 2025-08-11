@@ -42,6 +42,7 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
   const [page, setPage] = useState<number>(initialFiltros?.page || 1);
   const [pageSize, setPageSize] = useState<number>(initialFiltros?.pageSize || 50);
   const [lastRequestId, setLastRequestId] = useState<string | undefined>(undefined);
+  const [ms, setMs] = useState<number | undefined>(undefined);
   const filtrosRef = useRef<Partial<Filtros>>(initialFiltros || {});
 
   const headersPromise = useMemo(async () => {
@@ -118,6 +119,7 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
   }, [page, pageSize]);
 
   const refetch = useCallback(async () => {
+    const t0 = performance.now();
     try {
       setLoading(true);
       setError(null);
@@ -145,6 +147,7 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
       setError(e?.message || 'Falha ao buscar ML');
       toast({ title: 'Erro', description: e?.message || 'Falha ao buscar ML', variant: 'destructive' });
     } finally {
+      setMs(Math.round(performance.now() - t0));
       setLoading(false);
     }
   }, [buildQuery, headersPromise, mapResultsToItems]);
@@ -159,5 +162,5 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
     filtrosRef.current = { ...filtrosRef.current, ...initialFiltros, page, pageSize };
   }, [initialFiltros, page, pageSize]);
 
-  return { itens, loading, error, total, fetchPage, refetch, lastRequestId };
+  return { itens, loading, error, total, fetchPage, refetch, lastRequestId, ms, reqId: lastRequestId };
 }

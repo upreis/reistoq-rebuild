@@ -45,7 +45,10 @@ export function usePedidosTiny(initialFiltros?: Partial<Filtros>): UsePedidosRet
   }, [initialFiltros?.busca, initialFiltros?.dataInicio, initialFiltros?.dataFinal, JSON.stringify(initialFiltros?.situacoes)]);
 
   const refetch = useCallback(async () => {
+    const t0 = performance.now();
     await buscarComFiltros();
+    // Expor duração no console (QA)
+    (window as any).__tiny_last_ms = Math.round(performance.now() - t0);
   }, [buscarComFiltros]);
 
   const fetchPage = useCallback(async (p?: number) => {
