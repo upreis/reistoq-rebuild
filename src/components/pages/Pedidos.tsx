@@ -112,6 +112,15 @@ export function Pedidos() {
     page: 1,
     pageSize: 500,
   });
+  // Hook Shopee (stub)
+  const shopee = usePedidosShopee({
+    dataInicio: filtros.dataInicio,
+    dataFinal: filtros.dataFinal,
+    situacoes: filtros.situacoes,
+    busca: filtros.busca,
+    page: 1,
+    pageSize: 100,
+  });
 
   useEffect(() => {
     (async () => {
@@ -125,9 +134,10 @@ export function Pedidos() {
   }, []);
 
   // Escolher fonte de dados
-  const baseItens = filtros.fonte === 'mercadolivre' 
-    ? ml.itens 
-    : (filtros.fonte === 'ambas' ? [...tiny.itens, ...ml.itens] : tiny.itens);
+  const baseItens = filtros.fonte === 'mercadolivre'
+    ? ml.itens
+    : (filtros.fonte === 'ambas' ? [...tiny.itens, ...ml.itens]
+      : (filtros.fonte === 'shopee' ? shopee.itens : tiny.itens));
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(baseItens);
 
