@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { Filtros, UsePedidosReturn } from "@/config/features";
+import { toMLDateISO } from "@/lib/date-providers";
 
 // Map Tiny-like statuses to ML when possible
 const mapTinyToML: Record<string, string> = {
@@ -25,14 +26,6 @@ const allowedMLStatuses = new Set([
   "payment_in_process",
 ]);
 
-function toISO(d?: string) {
-  if (!d) return "";
-  if (d.includes("/")) {
-    const [dd, mm, yyyy] = d.split("/");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-  return d;
-}
 
 export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosReturn {
   const [itens, setItens] = useState<any[]>([]);
@@ -88,8 +81,8 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
 
   const buildQuery = useCallback((f?: Partial<Filtros>) => {
     const p = new URLSearchParams();
-    const from = toISO(f?.dataInicio);
-    const to = toISO(f?.dataFinal);
+    const from = toMLDateISO(f?.dataInicio);
+    const to = toMLDateISO(f?.dataFinal);
     if (from) p.set("from", from);
     if (to) p.set("to", to);
     p.set("expand", "details");
