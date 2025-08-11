@@ -208,6 +208,52 @@ export function useItensPedidos() {
       );
     }
 
+    // Filtros de data (DD/MM/AAAA ou YYYY-MM-DD)
+    const parseDate = (d?: string) => {
+      if (!d) return null as Date | null;
+      if (d.includes('/')) {
+        const [dd, mm, yyyy] = d.split('/');
+        return new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+      }
+      return new Date(`${d}T00:00:00`);
+    };
+
+    if (filtros.dataInicio) {
+      const start = parseDate(filtros.dataInicio);
+      itensFiltrados = itensFiltrados.filter((item: any) => {
+        const dp = parseDate(item.pedidos?.data_pedido || item.data_pedido);
+        return !start || (dp && dp >= start);
+      });
+    }
+
+    if (filtros.dataFinal) {
+      const end = parseDate(filtros.dataFinal);
+      itensFiltrados = itensFiltrados.filter((item: any) => {
+        const dp = parseDate(item.pedidos?.data_pedido || item.data_pedido);
+        return !end || (dp && dp <= end);
+      });
+    }
+
+    // Filtro por situação (mapeando PT -> valores reais salvos)
+    if (filtros.situacoes && filtros.situacoes.length > 0) {
+      const mapeamentoSituacoes: { [key: string]: string } = {
+        'Em Aberto': 'Em aberto',
+        'Aprovado': 'Aprovado', 
+        'Preparando Envio': 'Preparando envio',
+        'Faturado': 'Faturado',
+        'Pronto para Envio': 'Pronto para envio',
+        'Enviado': 'Enviado',
+        'Entregue': 'Entregue',
+        'Nao Entregue': 'Não entregue',
+        'Cancelado': 'Cancelado'
+      };
+      const alvo = filtros.situacoes.map(s => (mapeamentoSituacoes[s] || s).toLowerCase());
+      itensFiltrados = itensFiltrados.filter((item: any) => {
+        const sit = (item.pedidos?.situacao || item.situacao || '').toLowerCase();
+        return alvo.includes(sit);
+      });
+    }
+
     // Ordenar os dados 
     itensFiltrados.sort((a: any, b: any) => {
       // Primeiro por data (mais recente primeiro)
@@ -232,7 +278,7 @@ export function useItensPedidos() {
         .from('itens_pedidos')
         .select(`
           *,
-          pedidos!inner (
+          pedidos!itens_pedidos_pedido_id_fkey (
             numero,
             numero_ecommerce,
             nome_cliente,
@@ -252,50 +298,11 @@ export function useItensPedidos() {
           )
         `);
 
-      // Aplicar filtros básicos
-      if (filtros.busca) {
-        query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
-      }
-
-      // Converter datas DD/MM/AAAA -> YYYY-MM-DD para PostgREST
-      const toISO = (d: string) => {
-        if (!d) return '' as any;
-        if (d.includes('/')) {
-          const [dd, mm, yyyy] = d.split('/');
-          return `${yyyy}-${mm}-${dd}`;
-        }
-        return d;
-      };
-
-      if (filtros.dataInicio) {
-        query = query.filter('pedidos.data_pedido', 'gte', toISO(filtros.dataInicio));
-      }
-
-      if (filtros.dataFinal) {
-        query = query.filter('pedidos.data_pedido', 'lte', toISO(filtros.dataFinal));
-      }
-
-      if (filtros.situacoes.length > 0) {
-        const mapeamentoSituacoes: { [key: string]: string } = {
-          'Em Aberto': 'Em aberto',
-          'Aprovado': 'Aprovado', 
-          'Preparando Envio': 'Preparando envio',
-          'Faturado': 'Faturado',
-          'Pronto para Envio': 'Pronto para envio',
-          'Enviado': 'Enviado',
-          'Entregue': 'Entregue',
-          'Nao Entregue': 'Não entregue',
-          'Cancelado': 'Cancelado'
-        };
-        
-        const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
-        query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
-      }
+      // Evitar filtros no servidor que exigem alias de relação (ambiguidade 300)
+      // Todos os filtros (busca, datas e situação) serão aplicados localmente abaixo
 
       const { data, error } = await query
-        .order('data_pedido', { ascending: false, foreignTable: 'pedidos' })
-        .order('valor_total', { ascending: false, foreignTable: 'pedidos' })
-        .limit(5000); // Limite menor para busca rápida inicial
+        .limit(5000);
 
       if (error) {
         return [];
