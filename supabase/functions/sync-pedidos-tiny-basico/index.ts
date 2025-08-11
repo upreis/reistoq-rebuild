@@ -45,7 +45,10 @@ serve(async (req) => {
     // Buscar pedidos dos últimos 7 dias
     const dataInicio = new Date()
     dataInicio.setDate(dataInicio.getDate() - 7)
-    const dataInicioStr = dataInicio.toISOString().split('T')[0]
+    const dia = String(dataInicio.getDate()).padStart(2, '0')
+    const mes = String(dataInicio.getMonth() + 1).padStart(2, '0')
+    const ano = dataInicio.getFullYear()
+    const dataInicioStr = `${dia}/${mes}/${ano}`
 
     console.log(`📅 Buscando pedidos desde: ${dataInicioStr}`)
 
