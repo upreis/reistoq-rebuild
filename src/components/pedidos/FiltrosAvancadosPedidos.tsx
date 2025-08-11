@@ -23,7 +23,9 @@ export interface FiltrosAvancados {
   valorMinimo: number;
   valorMaximo: number;
   clienteVip: boolean;
-  fonte?: 'interno' | 'mercadolivre';
+  fonte?: 'interno' | 'mercadolivre' | 'ambas';
+  mlPedidoId?: string;
+  mlComprador?: string;
 }
 
 interface FiltrosSalvos {
@@ -96,7 +98,7 @@ export function FiltrosAvancadosPedidos({
     setDataFim(parseDateFlexible(filtros.dataFinal));
   }, [filtros.dataInicio, filtros.dataFinal]);
 
-  const situacoes = [
+  const situacoesTiny = [
     { value: 'Em Aberto', label: 'Em Aberto' },
     { value: 'Aprovado', label: 'Aprovado' },
     { value: 'Preparando Envio', label: 'Preparando Envio' },
@@ -107,6 +109,16 @@ export function FiltrosAvancadosPedidos({
     { value: 'Nao Entregue', label: 'Não Entregue' },
     { value: 'Cancelado', label: 'Cancelado' }
   ];
+
+  const situacoesML = [
+    { value: 'paid', label: 'Pago (paid)' },
+    { value: 'cancelled', label: 'Cancelado (cancelled)' },
+    { value: 'confirmed', label: 'Confirmado (confirmed)' },
+    { value: 'payment_required', label: 'Aguardando Pagamento (payment_required)' },
+    { value: 'payment_in_process', label: 'Pagamento em processamento (payment_in_process)' },
+  ];
+
+  const situacoesMostrar = filtros.fonte === 'mercadolivre' ? situacoesML : situacoesTiny;
 
   const handleSituacaoChange = (situacao: string, checked: boolean) => {
     const novasSituacoes = checked
@@ -191,7 +203,7 @@ export function FiltrosAvancadosPedidos({
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Pesquise por cliente ou número"
+            placeholder={filtros.fonte !== 'interno' ? 'ID do pedido ou comprador (nickname/email)' : 'Pesquise por cliente ou número'}
             className="pl-10 bg-background"
             value={filtros.busca}
             onChange={(e) => onFiltroChange({ busca: e.target.value })}
@@ -199,16 +211,39 @@ export function FiltrosAvancadosPedidos({
         </div>
 
         {/* Fonte */}
-        <Select value={filtros.fonte || 'interno'} onValueChange={(v) => onFiltroChange({ fonte: v as 'interno' | 'mercadolivre' })}>
-          <SelectTrigger className="w-[180px] bg-background">
+        <Select value={filtros.fonte || 'interno'} onValueChange={(v) => onFiltroChange({ fonte: v as 'interno' | 'mercadolivre' | 'ambas' })}>
+          <SelectTrigger className="w-[200px] bg-background">
             <SelectValue placeholder="Fonte" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="interno">Fonte: Interno</SelectItem>
+            <SelectItem value="interno">Fonte: Interno (Tiny)</SelectItem>
             <SelectItem value="mercadolivre">Fonte: Mercado Livre</SelectItem>
+            <SelectItem value="ambas">Fonte: Ambas</SelectItem>
           </SelectContent>
         </Select>
 
+        {/* Filtros específicos do Mercado Livre */}
+        {filtros.fonte !== 'interno' && (
+          <>
+            <div className="relative min-w-[160px] max-w-xs">
+              <Input
+                placeholder="ID do pedido (ML)"
+                className="bg-background"
+                value={filtros.mlPedidoId || ''}
+                onChange={(e) => onFiltroChange({ mlPedidoId: e.target.value })}
+              />
+            </div>
+            <div className="relative min-w-[200px] max-w-sm">
+              <Input
+                placeholder="Comprador (nickname/email)"
+                className="bg-background"
+                value={filtros.mlComprador || ''}
+                onChange={(e) => onFiltroChange({ mlComprador: e.target.value })}
+              />
+            </div>
+          </>
+        )}
+ 
         {/* Seletores de Período */}
         <div className="flex gap-2">
           <Popover>
@@ -342,7 +377,7 @@ export function FiltrosAvancadosPedidos({
                 )}
               </Label>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {situacoes.map((situacao) => (
+                {situacoesMostrar.map((situacao) => (
                   <div key={situacao.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={situacao.value}
@@ -359,42 +394,46 @@ export function FiltrosAvancadosPedidos({
 
             <Separator />
 
-            {/* Filtro por Valor */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Valor Mínimo (R$)</Label>
-                <Input
-                  type="number"
-                  placeholder="0,00"
-                  value={filtros.valorMinimo || ''}
-                  onChange={(e) => onFiltroChange({ valorMinimo: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Valor Máximo (R$)</Label>
-                <Input
-                  type="number"
-                  placeholder="1000,00"
-                  value={filtros.valorMaximo || ''}
-                  onChange={(e) => onFiltroChange({ valorMaximo: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
+            {filtros.fonte !== 'mercadolivre' && (
+              <>
+                {/* Filtro por Valor */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Valor Mínimo (R$)</Label>
+                    <Input
+                      type="number"
+                      placeholder="0,00"
+                      value={filtros.valorMinimo || ''}
+                      onChange={(e) => onFiltroChange({ valorMinimo: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Valor Máximo (R$)</Label>
+                    <Input
+                      type="number"
+                      placeholder="1000,00"
+                      value={filtros.valorMaximo || ''}
+                      onChange={(e) => onFiltroChange({ valorMaximo: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
 
-            <Separator />
+                <Separator />
 
-            {/* Cliente VIP */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="cliente-vip"
-                checked={filtros.clienteVip}
-                onCheckedChange={(checked) => onFiltroChange({ clienteVip: checked as boolean })}
-              />
-              <Label htmlFor="cliente-vip" className="text-sm font-medium cursor-pointer flex items-center">
-                <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                Apenas clientes VIP (pedidos acima de R$ 500)
-              </Label>
-            </div>
+                {/* Cliente VIP */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="cliente-vip"
+                    checked={filtros.clienteVip}
+                    onCheckedChange={(checked) => onFiltroChange({ clienteVip: checked as boolean })}
+                  />
+                  <Label htmlFor="cliente-vip" className="text-sm font-medium cursor-pointer flex items-center">
+                    <Star className="mr-1 h-4 w-4 text-yellow-500" />
+                    Apenas clientes VIP (pedidos acima de R$ 500)
+                  </Label>
+                </div>
+              </>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>

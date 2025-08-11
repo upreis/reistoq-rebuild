@@ -14,6 +14,8 @@ import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 
 // Force rebuild to clear cache
@@ -42,7 +44,9 @@ export function Pedidos() {
     valorMinimo: 0,
     valorMaximo: 0,
     clienteVip: false,
-    fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre') || 'interno'
+    fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre' | 'ambas') || 'interno',
+    mlPedidoId: localStorage.getItem('mlPedidoId') || '',
+    mlComprador: localStorage.getItem('mlComprador') || ''
   };
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosAvancados>) => {
@@ -56,11 +60,17 @@ export function Pedidos() {
     if (typeof novosFiltros.fonte !== 'undefined') {
       localStorage.setItem('pedidos-fonte', novosFiltros.fonte);
     }
+    if (typeof (novosFiltros as any).mlPedidoId !== 'undefined') {
+      localStorage.setItem('mlPedidoId', (novosFiltros as any).mlPedidoId || '');
+    }
+    if (typeof (novosFiltros as any).mlComprador !== 'undefined') {
+      localStorage.setItem('mlComprador', (novosFiltros as any).mlComprador || '');
+    }
     atualizarFiltrosBase(filtrosOriginais);
   };
 
   const { enriquecerItensPedidos } = useDeParaIntegration();
-  const [fonte, setFonte] = useState<'interno' | 'mercadolivre'>((localStorage.getItem('pedidos-fonte') as any) || 'interno');
+  const [fonte, setFonte] = useState<'interno' | 'mercadolivre' | 'ambas'>((localStorage.getItem('pedidos-fonte') as any) || 'interno');
   
   // Estados dos modais
   const [modalDetalhes, setModalDetalhes] = useState(false);
@@ -84,8 +94,25 @@ export function Pedidos() {
     valorTotal: 0,
   });
 
+  // Contas Mercado Livre
+  const [contasML, setContasML] = useState<any[]>([]);
+  const [mlContaId, setMlContaId] = useState<string>('all');
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('integration_accounts')
+        .select('*')
+        .eq('provider', 'mercadolivre')
+        .order('name', { ascending: true });
+      setContasML(data || []);
+    })();
+  }, []);
+
   // Escolher fonte de dados
-  const baseItens = filtros.fonte === 'mercadolivre' ? mlItens : itens;
+  const baseItens = filtros.fonte === 'mercadolivre' 
+    ? mlItens 
+    : (filtros.fonte === 'ambas' ? [...itens, ...mlItens] : itens);
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(baseItens);
 
@@ -179,57 +206,122 @@ export function Pedidos() {
       setMlLoading(true);
       const from = parseToISO(filtros.dataInicio);
       const to = parseToISO(filtros.dataFinal);
-      const qs = new URLSearchParams();
-      if (from) qs.set('from', from);
-      if (to) qs.set('to', to);
-      // opcional: mapear primeiras situações
-      const status = filtros.situacoes?.[0];
-      if (status) qs.set('status', status.toLowerCase());
+      const baseQs = new URLSearchParams();
+      if (from) baseQs.set('from', from);
+      if (to) baseQs.set('to', to);
+      // Garantir retorno de campos detalhados (buyer, order_items.seller_sku, feedback, shipping, etc.)
+      baseQs.set('expand', 'details');
+      // Apenas enviar status quando a fonte for Mercado Livre e o valor for suportado pela API ML
+      const allowedMLStatuses = new Set(['paid', 'cancelled', 'confirmed', 'payment_required', 'payment_in_process']);
+      const status = filtros.fonte === 'mercadolivre' ? filtros.situacoes?.[0] : undefined;
+      if (status) {
+        // O usuário pode selecionar status Tiny (português) ou ML (inglês). Normalizamos aqui.
+        const mapTinyToML: Record<string, string> = {
+          'em aberto': 'confirmed',
+          'aprovado': 'paid',
+          'cancelado': 'cancelled',
+          'não entregue': '',
+          'nao entregue': '',
+          'preparando envio': '',
+          'faturado': '',
+          'pronto para envio': '',
+          'enviado': '',
+          'entregue': '',
+        };
+        const key = status.toLowerCase();
+        const normalized = mapTinyToML[key] ?? key; // se já for ML, mantém
+        if (normalized && allowedMLStatuses.has(normalized)) {
+          baseQs.set('status', normalized);
+        }
+      }
 
       const { data: session } = await supabase.auth.getSession();
-      const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, {
-        headers: {
-          'Authorization': session.session ? `Bearer ${session.session.access_token}` : '',
-          'apikey': (supabase as any).headers?.apikey || ''
+      const headers = {
+        'Authorization': session.session ? `Bearer ${session.session.access_token}` : '',
+        'apikey': (supabase as any).headers?.apikey || ''
+      } as const;
+
+      const mapResultsToItems = (results: any[], empresaLabel: string): ItemPedido[] =>
+        results.flatMap((order: any) => {
+          const buyer = order.buyer || {};
+          const items = order.order_items || [];
+          return items.map((oi: any, idx: number) => ({
+            id: `${order.id}-${idx}`,
+            pedido_id: String(order.id),
+            numero_pedido: String(order.id),
+            sku: oi?.item?.seller_sku || oi?.item?.sku || oi?.item?.id || 'SKU',
+            descricao: oi?.item?.title || 'Item',
+            quantidade: oi?.quantity || 1,
+            valor_unitario: oi?.unit_price || order?.total_amount || 0,
+            valor_total: (oi?.unit_price || 0) * (oi?.quantity || 1),
+            numero_ecommerce: String(order.id),
+            nome_cliente: `${buyer?.first_name || ''} ${buyer?.last_name || ''}`.trim() || buyer?.nickname || 'Cliente ML',
+            cpf_cnpj: buyer?.billing_info?.doc_number || undefined,
+            cidade: order?.shipping?.receiver_address?.city?.name || undefined,
+            uf: order?.shipping?.receiver_address?.state?.id || undefined,
+            data_pedido: (order?.date_created || '').slice(0, 10),
+            data_prevista: undefined,
+            situacao: order?.status || 'Aprovado',
+            codigo_rastreamento: order?.shipping?.tracking_number || undefined,
+            url_rastreamento: order?.shipping?.tracking_url || undefined,
+            obs: undefined,
+            obs_interna: undefined,
+            valor_frete: order?.shipping_cost || 0,
+            valor_desconto: 0,
+            empresa: empresaLabel,
+            numero_venda: String(order?.id),
+          }));
+        });
+
+      const fetchForAccount = async (acc: any): Promise<ItemPedido[]> => {
+        const qs = new URLSearchParams(baseQs);
+        if (acc?.id) qs.set('account_id', acc.id);
+        const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
+        const text = await resp.text();
+        let json: any = null;
+        try { json = text ? JSON.parse(text) : null; } catch (_) { /* resposta não JSON */ }
+        if (!resp.ok) {
+          const msg = (json && (json.error || json.message || (json.details && (json.details.message || json.details.error || JSON.stringify(json.details))))) || text || `Erro HTTP ${resp.status}`;
+          throw new Error(msg);
         }
-      });
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json?.error || 'Falha ao buscar pedidos do ML');
-      const results = json?.results || json?.orders || [];
+        const results = (json && (json.results || json.orders)) || [];
+        const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
+        return mapResultsToItems(Array.isArray(results) ? results : [], empresaLabel);
+      };
 
-      const mapped: ItemPedido[] = results.flatMap((order: any) => {
-        const buyer = order.buyer || {};
-        const items = order.order_items || [];
-        return items.map((oi: any, idx: number) => ({
-          id: `${order.id}-${idx}`,
-          pedido_id: String(order.id),
-          numero_pedido: String(order.id),
-          sku: oi?.item?.seller_sku || oi?.item?.sku || oi?.item?.id || 'SKU',
-          descricao: oi?.item?.title || 'Item',
-          quantidade: oi?.quantity || 1,
-          valor_unitario: oi?.unit_price || order?.total_amount || 0,
-          valor_total: (oi?.unit_price || 0) * (oi?.quantity || 1),
-          numero_ecommerce: String(order.id),
-          nome_cliente: `${buyer?.first_name || ''} ${buyer?.last_name || ''}`.trim() || buyer?.nickname || 'Cliente ML',
-          cpf_cnpj: buyer?.billing_info?.doc_number || undefined,
-          cidade: order?.shipping?.receiver_address?.city?.name || undefined,
-          uf: order?.shipping?.receiver_address?.state?.id || undefined,
-          data_pedido: (order?.date_created || '').slice(0, 10),
-          data_prevista: undefined,
-          situacao: order?.status || 'Aprovado',
-          codigo_rastreamento: order?.shipping?.tracking_number || undefined,
-          url_rastreamento: order?.shipping?.tracking_url || undefined,
-          obs: undefined,
-          obs_interna: undefined,
-          valor_frete: order?.shipping_cost || 0,
-          valor_desconto: 0,
-          empresa: 'Mercado Livre',
-          numero_venda: String(order?.id),
-        }));
-      });
+      let mapped: ItemPedido[] = [];
+      if (mlContaId === 'all') {
+        const qs = new URLSearchParams(baseQs);
+        qs.set('all', 'true');
+        const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
+        const text = await resp.text();
+        let json: any = null;
+        try { json = text ? JSON.parse(text) : null; } catch (_) {}
+        if (!resp.ok) {
+          const msg = (json && (json.error || json.message || (json.details && (json.details.message || json.details.error || JSON.stringify(json.details))))) || text || `Erro HTTP ${resp.status}`;
+          throw new Error(msg);
+        }
+        const results = (json && (json.results || json.orders)) || [];
+        mapped = mapResultsToItems(Array.isArray(results) ? results : [], 'Mercado Livre');
+      } else {
+        const acc = contasML.find(c => c.id === mlContaId);
+        if (!acc) throw new Error('Conta selecionada não encontrada');
+        mapped = await fetchForAccount(acc);
+      }
 
-      setMlItens(mapped);
-      toast({ title: 'Pedidos ML carregados', description: `${mapped.length} itens` });
+      // Filtro local por ID do pedido e comprador (nickname/email)
+      let filtered = mapped;
+      if (filtros.mlPedidoId) {
+        const idQuery = String(filtros.mlPedidoId).toLowerCase();
+        filtered = filtered.filter(i => String(i.numero_pedido).toLowerCase().includes(idQuery));
+      }
+      if (filtros.mlComprador) {
+        const buyerQuery = String(filtros.mlComprador).toLowerCase();
+        filtered = filtered.filter(i => (i.nome_cliente || '').toLowerCase().includes(buyerQuery));
+      }
+
+      setMlItens(filtered);
+      toast({ title: 'Pedidos ML carregados', description: `${filtered.length} itens` });
     } catch (e: any) {
       console.error(e);
       toast({ title: 'Erro', description: e.message || 'Falha ao buscar ML', variant: 'destructive' });
@@ -254,12 +346,18 @@ export function Pedidos() {
 
       if (filtros.fonte === 'mercadolivre') {
         await buscarPedidosML();
+      } else if (filtros.fonte === 'ambas') {
+        // Buscar interno e Mercado Livre
+        buscarComFiltros();
+        await buscarPedidosML();
       } else {
         buscarComFiltros();
       }
       toast({
         title: 'Buscando pedidos',
-        description: filtros.fonte === 'mercadolivre' ? 'Consultando API do Mercado Livre...' : 'Carregando do banco interno...',
+        description: filtros.fonte === 'mercadolivre' 
+          ? 'Consultando API do Mercado Livre...'
+          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...' : 'Carregando do banco interno...'),
       });
     } catch (error) {
       console.error('Erro ao iniciar busca:', error);
@@ -268,6 +366,22 @@ export function Pedidos() {
         title: 'Buscando pedidos',
         description: 'Os pedidos estão sendo carregados com os filtros aplicados.',
       });
+    } finally {
+      // ✅ Finalizar status para não ficar preso em "Iniciando busca..."
+      try {
+        await supabase.functions.invoke('sync-control', {
+          body: {
+            action: 'stop',
+            process_name: 'sync-pedidos-rapido',
+            progress: {
+              finished_at: new Date().toISOString(),
+              current_step: 'Concluído'
+            }
+          }
+        });
+      } catch (e) {
+        console.warn('Falha ao atualizar status do sync-control:', e);
+      }
     }
   };
 
@@ -463,12 +577,28 @@ export function Pedidos() {
 
 
           {/* Filtros e Pesquisa */}
+          {(filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas') && (
+            <div className="max-w-3xl mb-2">
+              <Label>Conta Mercado Livre</Label>
+              <Select value={mlContaId} onValueChange={setMlContaId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a conta" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as contas</SelectItem>
+                  {contasML.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name || c.account_identifier || c.cnpj || c.id}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <FiltrosAvancadosPedidos
             filtros={filtros}
             onFiltroChange={atualizarFiltros}
             onLimparFiltros={limparFiltros}
             onBuscarPedidos={handleBuscarPedidos}
-            loading={loading}
+            loading={loading || mlLoading}
           />
 
           {/* Barra de Status - Limitada em largura */}
