@@ -46,6 +46,7 @@ export function usePedidosTinyLive(initialFiltros?: Partial<Filtros>): UsePedido
         dateFrom,
         dateTo,
         situacao,
+        situacoes: filtros.situacoes || [],
         numero,
         expand: "items",
       };
