@@ -183,7 +183,7 @@ export function usePedidosML(filtros: Filtros): UsePedidosReturn {
       }
 
       setItens(filtered);
-      toast({ title: 'Pedidos ML carregados', description: `${filtered.length} itens` });
+      toast({ title: 'Pedidos ML carregados', description: `${filtered.length} itens${requestId ? ` (req ${requestId})` : ''}` });
       const t1 = performance.now();
       console.info('ML.fetch', { status: respStatus, requestId, ms: Math.round(t1 - t0), count: filtered.length });
     } catch (e: any) {

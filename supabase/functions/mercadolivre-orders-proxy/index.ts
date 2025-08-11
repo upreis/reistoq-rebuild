@@ -13,6 +13,7 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Expose-Headers": "x-request-id, content-type",
 };
 
 function json(body: any, status = 200) { const reqId = (crypto as any)?.randomUUID?.() || String(Date.now()); return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "x-request-id": reqId, ...CORS } }); }
@@ -148,10 +149,14 @@ async function refreshNow(acc: any) {
 
 // Fetch with single 401 retry using refresh_token
 async function mlFetchWith401Retry(acc: any, url: string): Promise<{ resp: Response, acc: any }> {
+  const mlReq1 = (crypto as any)?.randomUUID?.() || String(Date.now());
   let resp = await fetchWithBackoff(url, { headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` } });
+  console.log('mlFetchWith401Retry:first', { status: resp.status, acc_id: acc?.id, url, ml_req_id: mlReq1 });
   if (resp.status === 401) {
     const acc2 = await refreshNow(acc);
+    const mlReq2 = (crypto as any)?.randomUUID?.() || String(Date.now());
     const resp2 = await fetchWithBackoff(url, { headers: { Authorization: `Bearer ${acc2?.auth_data?.access_token}` } });
+    console.log('mlFetchWith401Retry:retry', { status: resp2.status, acc_id: acc2?.id, url, ml_req_id: mlReq2 });
     return { resp: resp2, acc: acc2 };
   }
   return { resp, acc };
@@ -163,7 +168,7 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: req.headers.get('authorization') || '' } } });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return json({ error: 'Não autenticado' }, 401);
-
+  console.log('orders-proxy.invoke', { user_id: user.id, url: req.url });
   try {
     const params = new URL(req.url).searchParams;
     const accountId = params.get('account_id');
@@ -180,7 +185,7 @@ serve(async (req) => {
     const status = params.get('status');
     const logisticsType = params.get('logistics_type');
 
-    const buildQS = (seller?: string) => {
+const buildQS = (seller?: string) => {
       const qs = new URLSearchParams();
       if (seller) qs.set('seller', String(seller));
       if (from) qs.set('order.date_created.from', `${from}T00:00:00.000-00:00`);
@@ -188,7 +193,8 @@ serve(async (req) => {
       if (status) qs.set('order.status', status);
       if (logisticsType) qs.set('logistics_type', logisticsType);
       qs.set('sort', sort);
-      qs.set('limit', String(limit));
+      const mlLimit = Math.min(limit, 51); // cap imposto pela API ML
+      qs.set('limit', String(mlLimit));
       qs.set('offset', String(offset));
       return qs;
     };
