@@ -153,17 +153,22 @@ setQaRunning(true);
       } else {
         await buscarComFiltros();
       }
-      const tinyMs = Math.round(performance.now() - t0);
+      const tinyMsMeasured = Math.round(performance.now() - t0);
+      const tinyMs = tinyLiveHook.ms ?? tinyMsMeasured;
+      const tinyId = tinyLiveHook.reqId;
+
       const mlT0 = performance.now();
       await mlHook.refetch();
       const mlMs = mlHook.ms ?? Math.round(performance.now() - mlT0);
       const mlId = mlHook.lastRequestId;
+
       const shT0 = performance.now();
       await shopeeHook.refetch();
       const shMs = shopeeHook.ms ?? Math.round(performance.now() - shT0);
-      setQaReqId(mlId);
+
+      setQaReqId(tinyId || mlId);
       const tinyCount = FEATURE_TINY_LIVE && fonte === 'interno' ? (tinyLiveHook.itens || []).length : (itens || []).length;
-      setQaSummary(`Tiny: ${tinyCount} / ${tinyMs}ms | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
+      setQaSummary(`Tiny: ${tinyCount} / ${tinyMs}ms (req ${tinyId || '-'}) | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
     } catch (e: any) {
       toast({ title: 'QA falhou', description: e?.message || String(e), variant: 'destructive' });
     } finally {
@@ -536,7 +541,7 @@ toast({
             onFiltroChange={atualizarFiltros}
             onLimparFiltros={limparFiltros}
             onBuscarPedidos={handleBuscarPedidos}
-            loading={loading || mlLoading}
+            loading={(FEATURE_TINY_LIVE && fonte === 'interno') ? tinyLiveHook.loading : (loading || mlLoading)}
           />
 
           {/* Barra de Status - Limitada em largura */}
@@ -605,7 +610,7 @@ toast({
                 itens={itensEnriquecidos.slice((paginaAtual - 1) * 100, paginaAtual * 100)}
                 itensSelecionados={itensSelecionados}
                 onSelecaoChange={setItensSelecionados}
-                loading={loading}
+                loading={(FEATURE_TINY_LIVE && fonte === 'interno') ? tinyLiveHook.loading : loading}
                 paginaAtual={paginaAtual}
                 totalPaginas={totalPaginas}
                 totalItens={totalItens}

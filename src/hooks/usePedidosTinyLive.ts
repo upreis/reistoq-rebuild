@@ -40,16 +40,18 @@ export function usePedidosTinyLive(initialFiltros?: Partial<Filtros>): UsePedido
       const situacao = (filtros.situacoes?.[0] || "").trim();
       const numero = (filtros.busca || "").trim();
 
+      const body = {
+        page,
+        pageSize,
+        dateFrom,
+        dateTo,
+        situacao,
+        numero,
+        expand: "items",
+      };
+      console.info('[tiny-live] chamando tiny-orders-proxy', body);
       const { data, error } = await supabase.functions.invoke("tiny-orders-proxy", {
-        body: {
-          page,
-          pageSize,
-          dateFrom,
-          dateTo,
-          situacao,
-          numero,
-          expand: "items",
-        },
+        body,
       });
 
       const dt = performance.now() - t0;
