@@ -161,35 +161,84 @@ export function useItensPedidos() {
     try {
       setLoading(true);
       setError(null);
-      
-      // Verificar dados locais primeiro para evitar condição de corrida
-      const dadosLocais = await buscarDadosLocais();
-      const temDadosLocais = dadosLocais && dadosLocais.length > 0;
-      
-      // Se há dados locais, usá-los imediatamente e sincronizar em background
-      if (temDadosLocais) {
-        // Aplicar mapeamentos aos dados locais
-        const itensProcessadosLocais = await aplicarMapeamentos(dadosLocais);
-        
-        // Aplicar filtros nos dados locais
-        const itensFiltradosLocais = aplicarFiltrosLocais(itensProcessadosLocais);
-        
-        // Exibir dados locais imediatamente
-        setItens(itensFiltradosLocais);
-        calcularMetricas(itensFiltradosLocais);
-        setLoading(false);
-        
-        // Sincronizar em background (sem bloquear a UI)
-        sincronizarEmBackground();
-        return;
-      }
-      
-      // Se não há dados locais, tentar edge function com fallback robusto
-      await sincronizarComFallback();
-      
-    } catch (error) {
-      console.error('❌ Erro na busca de itens:', error);
-      setError(error instanceof Error ? error.message : 'Erro desconhecido');
+
+      // Converter datas para YYYY-MM-DD (Tiny usa DATE no banco)
+      const toISO = (d?: string) => {
+        if (!d) return '';
+        if (d.includes('/')) {
+          const [dd, mm, yyyy] = d.split('/');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+        return d;
+      };
+
+      const dateFrom = toISO(filtros.dataInicio);
+      const dateTo = toISO(filtros.dataFinal);
+      const status = filtros.situacoes && filtros.situacoes.length > 0 ? filtros.situacoes[0] : undefined; // servidor aceita 1 status
+      const numero = filtros.busca?.trim() || undefined;
+
+      const { data: resp, error } = await supabase.functions.invoke('tiny-orders', {
+        body: {
+          page: 1,
+          pageSize: 1000,
+          dateFrom,
+          dateTo,
+          status,
+          numero,
+          expand: 'items'
+        }
+      });
+
+      if (error) throw error;
+
+      const pedidos = (resp as any)?.pedidos || [];
+      const itens = (resp as any)?.itens || [];
+
+      // Montar estrutura esperada pela UI (item com campo `pedidos` contendo dados do pedido)
+      const pedidosById = new Map<string, any>();
+      pedidos.forEach((p: any) => { if (p?.id) pedidosById.set(p.id, p); });
+
+      const itensComPedidos = itens.map((item: any) => {
+        const pedido = pedidosById.get(item.pedido_id);
+        return {
+          ...item,
+          valor_total_pedido: pedido?.valor_total || 0,
+          valor_frete_pedido: pedido?.valor_frete || 0,
+          valor_desconto_pedido: pedido?.valor_desconto || 0,
+          pedidos: pedido ? {
+            numero_ecommerce: pedido.numero_ecommerce,
+            nome_cliente: pedido.nome_cliente,
+            cpf_cnpj: pedido.cpf_cnpj,
+            cidade: pedido.cidade,
+            uf: pedido.uf,
+            data_pedido: pedido.data_pedido,
+            data_prevista: pedido.data_prevista,
+            situacao: pedido.situacao,
+            codigo_rastreamento: pedido.codigo_rastreamento,
+            url_rastreamento: pedido.url_rastreamento,
+            obs: pedido.obs,
+            obs_interna: pedido.obs_interna,
+            valor_frete: pedido.valor_frete,
+            valor_desconto: pedido.valor_desconto,
+            valor_total: pedido.valor_total,
+            canal_venda: (pedido as any).canal_venda,
+            nome_ecommerce: (pedido as any).nome_ecommerce,
+          } : null
+        };
+      });
+
+      // APLICAR MAPEAMENTOS MAS SEM FILTRAR NO CLIENTE
+      const itensProcessados = await aplicarMapeamentos(itensComPedidos);
+
+      localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
+      setItens(itensProcessados);
+      calcularMetricas(itensProcessados);
+
+      toast({ title: 'Pedidos carregados', description: `${itensProcessados.length} itens (Tiny)` });
+    } catch (err: any) {
+      console.error('Erro ao buscar itens (tiny-orders):', err);
+      setError(err?.message || 'Erro ao buscar pedidos (Tiny)');
+      toast({ title: 'Erro', description: err?.message || 'Erro ao buscar pedidos (Tiny)', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
