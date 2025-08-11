@@ -63,26 +63,79 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Buscar configurações do Tiny ERP
+    // Obter dados do body e possível conta de integração
+    let numeroPedido: string | undefined;
+    let integrationAccountId: string | undefined;
+    try {
+      const body = await req.json();
+      numeroPedido = body?.numeroPedido;
+      integrationAccountId = body?.integration_account_id || body?.integrationAccountId;
+    } catch (_) {}
+
+    if (!numeroPedido) {
+      throw new Error('Número do pedido é obrigatório');
+    }
+
+    // Buscar configurações do Tiny ERP (URL e fallback de token)
     const { data: configs } = await supabaseClient
       .from('configuracoes')
       .select('chave, valor')
       .in('chave', ['tiny_token', 'tiny_api_url']);
 
-    const tinyToken = configs?.find(c => c.chave === 'tiny_token')?.valor;
+    let tinyToken: string | undefined = configs?.find(c => c.chave === 'tiny_token')?.valor;
     const tinyApiUrl = configs?.find(c => c.chave === 'tiny_api_url')?.valor || 'https://api.tiny.com.br/api2';
+
+    // Preferir token das Integrações · Contas (multi-conta) quando disponível
+    try {
+      const authHeader = req.headers.get('Authorization') || '';
+      const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      let account: any = null;
+
+      if (integrationAccountId) {
+        const { data: acc } = await supabaseClient
+          .from('integration_accounts')
+          .select('id, auth_data, is_active')
+          .eq('id', integrationAccountId)
+          .maybeSingle();
+        if (acc?.is_active) account = acc;
+      } else if (jwt) {
+        const { data: userData } = await supabaseClient.auth.getUser(jwt);
+        const userId = userData?.user?.id;
+        if (userId) {
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('organizacao_id')
+            .eq('id', userId)
+            .maybeSingle();
+          const orgId = profile?.organizacao_id;
+          if (orgId) {
+            const { data: accs } = await supabaseClient
+              .from('integration_accounts')
+              .select('id, auth_data, is_active')
+              .eq('organization_id', orgId)
+              .eq('provider', 'tiny')
+              .eq('is_active', true)
+              .limit(1);
+            if (accs && accs.length > 0) account = accs[0];
+          }
+        }
+      }
+
+      const tokenFromAccount = account?.auth_data?.tiny_token || account?.auth_data?.token;
+      if (tokenFromAccount) tinyToken = tokenFromAccount;
+    } catch (e) {
+      console.log('⚠️ Não foi possível resolver token via integration_accounts:', (e as any)?.message || e);
+    }
+
+    // Fallback final: variável de ambiente
+    if (!tinyToken) {
+      const envToken = Deno.env.get('TINY_TOKEN');
+      if (envToken) tinyToken = envToken;
+    }
 
     if (!tinyToken) {
       throw new Error('Token do Tiny ERP não configurado');
     }
-
-    // Obter número do pedido da requisição
-    const { numeroPedido } = await req.json();
-    
-    if (!numeroPedido) {
-      throw new Error('Número do pedido é obrigatório');
-    }
-
     console.log('Buscando detalhes do pedido:', numeroPedido);
 
     // Parâmetros para a API do Tiny

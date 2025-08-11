@@ -293,8 +293,8 @@ export function useItensPedidos() {
       }
 
       const { data, error } = await query
-        .order('data_pedido', { ascending: false, referencedTable: 'pedidos' })
-        .order('valor_total', { ascending: false, referencedTable: 'pedidos' })
+        .order('data_pedido', { ascending: false, foreignTable: 'pedidos' })
+        .order('valor_total', { ascending: false, foreignTable: 'pedidos' })
         .limit(5000); // Limite menor para busca rápida inicial
 
       if (error) {
