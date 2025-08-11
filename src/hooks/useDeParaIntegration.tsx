@@ -60,7 +60,6 @@ export interface ItemPedidoEnriquecido {
   produto_nome?: string;
   estoque_atual?: number;
   ja_processado?: boolean;
-  integration_account_id?: string;
 }
 
 export function useDeParaIntegration() {

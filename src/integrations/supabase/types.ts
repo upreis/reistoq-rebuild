@@ -447,20 +447,6 @@ export type Database = {
             referencedRelation: "integration_accounts"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "itens_pedidos_pedido_fk"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "itens_pedidos_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos"
-            referencedColumns: ["id"]
-          },
         ]
       }
       mapeamentos_depara: {

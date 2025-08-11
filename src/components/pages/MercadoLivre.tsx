@@ -132,8 +132,6 @@ export function MercadoLivre() {
       if (from) baseQs.set("from", from);
       if (to) baseQs.set("to", to);
       if (status) baseQs.set("status", status);
-      baseQs.set('limit', '100');
-      baseQs.set('offset', '0');
 
       const headers = {
         apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
@@ -147,11 +145,9 @@ export function MercadoLivre() {
           `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`,
           { headers }
         );
-        const text = await resp.text();
-        let json: any = null;
-        try { json = text ? JSON.parse(text) : null; } catch (_) { /* resposta não JSON */ }
-        if (!resp.ok) throw new Error((json && (json.error || json.message)) || text || "Erro ao consultar pedidos");
-        const results = (json?.results || json?.orders || []) as any[];
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error || "Erro ao consultar pedidos");
+        const results = json?.results || json?.orders || [];
         const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
         return results.map((o: any) => ({ ...o, empresa: empresaLabel }));
       };

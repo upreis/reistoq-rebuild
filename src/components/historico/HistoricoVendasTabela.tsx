@@ -170,13 +170,13 @@ export function HistoricoVendasTabela({
     }
   };
 
-  if (loading && vendas.length === 0) {
+  if (loading) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Carregando histórico...</CardTitle>
         </CardHeader>
-        <CardContent className="min-h-[400px]">
+        <CardContent>
           <div className="space-y-4">
             {[...Array(10)].map((_, i) => (
               <div key={i} className="flex space-x-4">
@@ -289,7 +289,7 @@ export function HistoricoVendasTabela({
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
-      <CardContent className="min-h-[400px]">
+      <CardContent>
         <div className="rounded-md border">
           <Table className="min-w-[1400px]">
             <TableHeader>
