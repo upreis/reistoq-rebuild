@@ -42,3 +42,6 @@ verify_jwt = true   # exige JWT para atualizar tokens
 
 [functions.tiny-orders]
 verify_jwt = true   # autenticada para respeitar RLS
+
+[functions.tiny-orders-proxy]
+verify_jwt = true   # autenticada para respeitar RLS

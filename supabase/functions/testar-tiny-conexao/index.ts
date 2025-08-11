@@ -12,24 +12,33 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
-  try {
-    // Obter token do Supabase Secrets (modo seguro)
-    const tinyToken = Deno.env.get('TINY_TOKEN');
-    
-    if (!tinyToken) {
-      console.error('Token Tiny ERP não configurado nos secrets');
+try {
+    const requestId = crypto.randomUUID();
+
+    // Supabase client com JWT do chamador (RLS)
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
+    });
+
+    // Buscar token do Tiny nas Configurações
+    const { data: cfg, error: cfgErr } = await supabase
+      .from('configuracoes')
+      .select('valor')
+      .eq('chave', 'tiny_token')
+      .single();
+
+    if (cfgErr || !cfg?.valor) {
+      console.error('Token Tiny ERP não configurado nas Configurações');
       return new Response(
-        JSON.stringify({ 
-          error: 'Token Tiny ERP não configurado. Configure o secret TINY_TOKEN.',
-          success: false 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ success: false, error: 'Token Tiny ERP não configurado nas Configurações', requestId }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
       );
     }
-    console.log('Testando conexão com Tiny ERP...')
+
+    const tinyToken = cfg.valor as string;
+    console.log('Testando conexão com Tiny ERP...', { requestId });
 
     // Testar conexão com API do Tiny - endpoint de info da empresa
     const tinyResponse = await fetch('https://api.tiny.com.br/api2/info.php', {
@@ -47,7 +56,7 @@ serve(async (req) => {
       // Sucesso - extrair informações da empresa
       const empresa = tinyData.retorno?.empresa || {}
       
-      return new Response(
+return new Response(
         JSON.stringify({
           success: true,
           empresa: {
@@ -56,10 +65,11 @@ serve(async (req) => {
             cidade: empresa.cidade || 'Não informado',
             uf: empresa.uf || 'Não informado'
           },
-          message: 'Conexão com Tiny ERP estabelecida com sucesso!'
+          message: 'Conexão com Tiny ERP estabelecida com sucesso!',
+          requestId
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
           status: 200 
         }
       )
@@ -68,13 +78,14 @@ serve(async (req) => {
       const errorMsg = tinyData.retorno?.erros?.[0]?.erro || 'Erro desconhecido'
       console.error('Erro na API do Tiny:', errorMsg)
       
-      return new Response(
+return new Response(
         JSON.stringify({
           success: false,
-          error: `Erro do Tiny ERP: ${errorMsg}`
+          error: `Erro do Tiny ERP: ${errorMsg}`,
+          requestId
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
           status: 400 
         }
       )
@@ -82,13 +93,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Erro ao testar conexão com Tiny:', error)
-    return new Response(
+return new Response(
       JSON.stringify({
         success: false,
-        error: 'Erro interno do servidor ao conectar com Tiny ERP'
+        error: 'Erro interno do servidor ao conectar com Tiny ERP',
+        requestId
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
         status: 500 
       }
     )

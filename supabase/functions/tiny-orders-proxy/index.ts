@@ -4,6 +4,10 @@
 // NOTE: Requires the TINY_API_TOKEN to be set as a Function Secret.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,17 +43,10 @@ function toFormBody(params: Record<string, string | number | undefined>) {
 async function fetchTiny(
   endpoint: string,
   formParams: Record<string, string | number | undefined>,
+  token: string,
   requestId: string,
   retry = 0,
 ): Promise<Response> {
-  const token = Deno.env.get("TINY_API_TOKEN");
-  if (!token) {
-    return new Response(JSON.stringify({ error: "missing_tiny_token", message: "Configure TINY_API_TOKEN as a function secret", requestId }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders, "x-request-id": requestId },
-    });
-  }
-
   const body = toFormBody({ token, formato: "json", ...formParams });
   const resp = await fetch(`https://api.tiny.com.br/api2/${endpoint}`, {
     method: "POST",
@@ -60,7 +57,7 @@ async function fetchTiny(
   if (resp.status === 429 && retry < 3) {
     const retryAfter = Number(resp.headers.get("Retry-After")) || 1 + retry;
     await new Promise((r) => setTimeout(r, retryAfter * 1000));
-    return fetchTiny(endpoint, formParams, requestId, retry + 1);
+    return fetchTiny(endpoint, formParams, token, requestId, retry + 1);
   }
   return resp;
 }
@@ -89,10 +86,10 @@ function pedidoMatchesNumero(pedido: any, numero: string): boolean {
   return fields.some((f) => f.includes(n));
 }
 
-async function expandPedidoItens(basePedido: any, requestId: string) {
+async function expandPedidoItens(basePedido: any, token: string, requestId: string) {
   const idOrNumero = basePedido?.id || basePedido?.numero;
   if (!idOrNumero) return basePedido; // nothing to expand
-  const resp = await fetchTiny("pedido.obter.php", { id: basePedido?.id, numero: basePedido?.numero, com_itens: "S" }, requestId);
+  const resp = await fetchTiny("pedido.obter.php", { id: basePedido?.id, numero: basePedido?.numero, com_itens: "S" }, token, requestId);
   const parsed = await safeParseJson(resp);
   const pedido = parsed?.retorno?.pedido || basePedido;
   return pedido;
@@ -110,13 +107,14 @@ serve(async (req) => {
       body = Object.fromEntries(p.entries());
     }
 
-    const page = Math.max(1, Number(body.page || 1));
-    const pageSize = Math.max(1, Math.min(500, Number(body.pageSize || 50)));
-    const dateFrom = body.dateFrom as string | undefined;
-    const dateTo = body.dateTo as string | undefined;
-    const situacao = normalizeSituacao(body.situacao as string | undefined);
-    const numero = body.numero as string | undefined;
-    const expand = String(body.expand || "").toLowerCase();
+const page = Math.max(1, Number(body.page || 1));
+const pageSize = Math.max(1, Math.min(500, Number(body.pageSize || 50)));
+const dateFrom = body.dateFrom as string | undefined;
+const dateTo = body.dateTo as string | undefined;
+const statusRaw = normalizeSituacao(body.status as string | undefined);
+const situacao = normalizeSituacao(body.situacao as string | undefined) || statusRaw;
+const numero = body.numero as string | undefined;
+const expand = String(body.expand || "").toLowerCase();
 
     // Validate required dates in DD/MM/AAAA
     if (!isDDMMYYYY(dateFrom)) {
@@ -126,21 +124,40 @@ serve(async (req) => {
       return json({ error: "invalid_date_format", field: "dateTo", expected: "DD/MM/AAAA", requestId }, 400, requestId);
     }
 
-    // Build pesquisa payload
-    const pesquisaParams: Record<string, string | number | undefined> = {
-      pagina: page,
-      limite: pageSize,
-      dataInicial: dateFrom,
-      dataFinal: dateTo,
-      situacao: situacao || undefined,
-      numero: numero || undefined,
-    };
+// Resolve token do Tiny a partir das Configurações (RLS via JWT do chamador)
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
+});
+console.log("tiny-proxy.invoke", { requestId, page, pageSize });
+const { data: cfg, error: cfgErr } = await supabase
+  .from("configuracoes")
+  .select("valor")
+  .eq("chave", "tiny_token")
+  .single();
+if (cfgErr || !cfg?.valor) {
+  return json({ error: "missing_tiny_token", details: "Configure o token do Tiny em Configurações", requestId }, 400, requestId);
+}
+const token = cfg.valor as string;
 
-    const resp = await fetchTiny("pedidos.pesquisa.php", pesquisaParams, requestId);
-    const parsed = await safeParseJson(resp);
+// Build pesquisa payload
+const pesquisaParams: Record<string, string | number | undefined> = {
+  pagina: page,
+  limite: pageSize,
+  dataInicial: dateFrom,
+  dataFinal: dateTo,
+  situacao: situacao || undefined,
+  numero: numero || undefined,
+};
 
-    // Extract pedidos and total
-    let { pedidos, total } = extractPedidosAndTotal(parsed);
+console.log("tiny-proxy.call.pesquisa", { requestId, page, pageSize, hasNumero: !!numero });
+const resp = await fetchTiny("pedidos.pesquisa.php", pesquisaParams, token, requestId);
+const parsed = await safeParseJson(resp);
+const tinyStatus = parsed?.retorno?.status;
+if (tinyStatus && String(tinyStatus).toUpperCase() !== "OK") {
+  return json({ error: "tiny_api_error", details: parsed?.retorno?.erros || parsed, requestId }, 400, requestId);
+}
+// Extract pedidos and total
+let { pedidos, total } = extractPedidosAndTotal(parsed);
 
     // If Tiny doesn't support numero param, ensure filter client-side
     if (numero) {
@@ -148,20 +165,21 @@ serve(async (req) => {
     }
 
     // Expand items if requested
-    if (expand === "items" && Array.isArray(pedidos)) {
-      const expanded: any[] = [];
-      for (const p of pedidos) {
-        try {
-          const full = await expandPedidoItens(p, requestId);
-          expanded.push(full);
-        } catch (_) {
-          expanded.push(p);
-        }
-      }
-      pedidos = expanded;
+if (expand === "items" && Array.isArray(pedidos)) {
+  const expanded: any[] = [];
+  for (const p of pedidos) {
+    try {
+      console.log("tiny-proxy.call.obter", { requestId, id: p?.id || p?.numero });
+      const full = await expandPedidoItens(p, token, requestId);
+      expanded.push(full);
+    } catch (_) {
+      expanded.push(p);
     }
+  }
+  pedidos = expanded;
+}
 
-    return json({ results: pedidos, paging: { total, page, pageSize }, requestId }, 200, requestId);
+    return json({ results: pedidos, paging: { total, page, pageSize }, page, pageSize, total, requestId }, 200, requestId);
   } catch (e) {
     return json({ error: String(e), requestId }, 500, requestId);
   }
