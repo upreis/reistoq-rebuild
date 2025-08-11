@@ -20,7 +20,8 @@ import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 import { usePedidosML } from "@/hooks/usePedidosML";
 import { usePedidosTiny } from "@/hooks/usePedidosTiny";
 import { usePedidosShopee } from "@/hooks/usePedidosShopee";
-import { FEATURE_QA_TEST, IS_NON_PRODUCTION } from "@/config/features";
+import { FEATURE_QA_TEST, IS_NON_PRODUCTION, FEATURE_TINY_LIVE } from "@/config/features";
+import { usePedidosTinyLive } from "@/hooks/usePedidosTinyLive";
 
 // Force rebuild to clear cache
 export function Pedidos() {
@@ -112,7 +113,7 @@ export function Pedidos() {
   const [mlLoading, setMlLoading] = useState(false);
   useEffect(() => { setMlItens(mlHook.itens as any); }, [mlHook.itens]);
 
-  // Shopee via hook
+// Shopee via hook
   const shopeeHook = usePedidosShopee({
     dataInicio: filtros.dataInicio,
     dataFinal: filtros.dataFinal,
@@ -120,10 +121,21 @@ export function Pedidos() {
     pageSize: 50,
   });
 
-  // Escolher fonte de dados
+  // Tiny Live (sempre inicializa o hook; ele só atua quando a flag estiver ON)
+  const tinyLiveHook = usePedidosTinyLive({
+    dataInicio: filtros.dataInicio,
+    dataFinal: filtros.dataFinal,
+    situacoes: filtros.situacoes,
+    page: 1,
+    pageSize: 50,
+    busca: filtros.busca,
+  });
+
+// Escolher fonte de dados
+  const tinyItens = (FEATURE_TINY_LIVE && fonte === 'interno') ? (tinyLiveHook.itens as any) : itens;
   const baseItens = filtros.fonte === 'mercadolivre' 
     ? mlItens 
-    : (filtros.fonte === 'ambas' ? [...itens, ...mlItens] : itens);
+    : (filtros.fonte === 'ambas' ? [...itens, ...mlItens] : tinyItens);
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(baseItens);
 
@@ -133,10 +145,14 @@ export function Pedidos() {
   const [qaReqId, setQaReqId] = useState<string | undefined>(undefined);
   const [qaRunning, setQaRunning] = useState(false);
   const handleQATestar = async () => {
-    setQaRunning(true);
+setQaRunning(true);
     try {
       const t0 = performance.now();
-      await buscarComFiltros();
+      if (FEATURE_TINY_LIVE && fonte === 'interno') {
+        await tinyLiveHook.refetch();
+      } else {
+        await buscarComFiltros();
+      }
       const tinyMs = Math.round(performance.now() - t0);
       const mlT0 = performance.now();
       await mlHook.refetch();
@@ -146,7 +162,8 @@ export function Pedidos() {
       await shopeeHook.refetch();
       const shMs = shopeeHook.ms ?? Math.round(performance.now() - shT0);
       setQaReqId(mlId);
-      setQaSummary(`Tiny: ${(itens || []).length} / ${tinyMs}ms | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
+      const tinyCount = FEATURE_TINY_LIVE && fonte === 'interno' ? (tinyLiveHook.itens || []).length : (itens || []).length;
+      setQaSummary(`Tiny: ${tinyCount} / ${tinyMs}ms | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
     } catch (e: any) {
       toast({ title: 'QA falhou', description: e?.message || String(e), variant: 'destructive' });
     } finally {
@@ -267,20 +284,24 @@ export function Pedidos() {
         }
       });
 
-      if (filtros.fonte === 'mercadolivre') {
+if (filtros.fonte === 'mercadolivre') {
         await buscarPedidosML();
       } else if (filtros.fonte === 'ambas') {
         // Buscar interno e Mercado Livre
         buscarComFiltros();
         await buscarPedidosML();
       } else {
-        buscarComFiltros();
+        if (FEATURE_TINY_LIVE) {
+          await tinyLiveHook.refetch();
+        } else {
+          buscarComFiltros();
+        }
       }
-      toast({
+toast({
         title: 'Buscando pedidos',
         description: filtros.fonte === 'mercadolivre' 
           ? 'Consultando API do Mercado Livre...'
-          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...' : 'Carregando do banco interno...'),
+          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...' : (FEATURE_TINY_LIVE ? 'Consultando API do Tiny (live)...' : 'Carregando do banco interno...')),
       });
     } catch (error) {
       console.error('Erro ao iniciar busca:', error);
