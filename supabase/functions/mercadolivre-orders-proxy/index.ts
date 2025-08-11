@@ -102,8 +102,7 @@ async function refreshIfNeeded(acc: any) {
     });
     const raw = await resp.text();
     let json: any = null;
-    try { json = raw ? JSON.parse(raw) : null; } catch (_) { json = { raw: raw.slice(0, 200) }; }
-    console.log('ml.refreshIfNeeded.oauth', { acc_id: acc?.id, status: resp.status, ok: resp.ok, summary: json && typeof json === 'object' ? { error: json.error, message: json.message, cause: json.cause, expires_in: json.expires_in } : { parsed: false } });
+    try { json = raw ? JSON.parse(raw) : null; } catch (_) { json = { raw }; }
     if (!resp.ok) return acc; // fallback silencioso; uma 401 no fluxo principal tentará novamente
 
     const { access_token, refresh_token, expires_in } = json || {};
@@ -117,10 +116,8 @@ async function refreshIfNeeded(acc: any) {
       expires_at,
     };
     await admin.from('integration_accounts').update({ auth_data: nextAuth }).eq('id', acc.id);
-    console.log('ml.refreshIfNeeded.updated', { acc_id: acc?.id, expires_at });
     return { ...acc, auth_data: nextAuth };
-  } catch (e) {
-    console.log('ml.refreshIfNeeded.error', { acc_id: acc?.id, err: String(e) });
+  } catch (_) {
     return acc;
   }
 }
@@ -139,17 +136,15 @@ async function refreshNow(acc: any) {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString(),
     });
     const txt = await resp.text();
-    let json: any = null; try { json = txt ? JSON.parse(txt) : null; } catch (_) { json = { raw: txt.slice(0, 200) }; }
-    console.log('ml.refreshNow.oauth', { acc_id: acc?.id, status: resp.status, ok: resp.ok, summary: json && typeof json === 'object' ? { error: json.error, message: json.message, cause: json.cause, expires_in: json.expires_in } : { parsed: false } });
+    let json: any = null; try { json = txt ? JSON.parse(txt) : null; } catch (_) { json = { raw: txt }; }
     if (!resp.ok) return acc;
     const { access_token, refresh_token, expires_in } = json || {};
     const expires_at = new Date(Date.now() + Number(expires_in || 0) * 1000).toISOString();
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const nextAuth = { ...(acc.auth_data || {}), access_token, refresh_token: refresh_token || acc.auth_data.refresh_token, expires_at };
     await admin.from('integration_accounts').update({ auth_data: nextAuth }).eq('id', acc.id);
-    console.log('ml.refreshNow.updated', { acc_id: acc?.id, expires_at });
     return { ...acc, auth_data: nextAuth };
-  } catch (e) { console.log('ml.refreshNow.error', { acc_id: acc?.id, err: String(e) }); return acc; }
+  } catch (_) { return acc; }
 }
 
 // Fetch with single 401 retry using refresh_token
