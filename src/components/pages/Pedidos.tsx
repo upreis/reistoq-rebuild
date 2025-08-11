@@ -86,27 +86,13 @@ export function Pedidos() {
   const [itensSelecionados, setItensSelecionados] = useState<ItemPedidoEnriquecido[]>([]);
 
   // Dados vindos do Mercado Livre via hook
-  // Estado para seleção de conta ML e lista de contas
-  const [mlContaId, setMlContaId] = useState<string>('all');
-  const [contasML, setContasML] = useState<any[]>([]);
-  useEffect(() => {
-    let mounted = true;
-    supabase
-      .from('integration_accounts')
-      .select('id,name,account_identifier,cnpj')
-      .eq('provider', 'mercadolivre')
-      .eq('is_active', true)
-      .then(({ data }) => { if (mounted) setContasML(data || []); });
-    return () => { mounted = false; };
-  }, []);
-
   const mlHook = usePedidosML({
     dataInicio: filtros.dataInicio,
     dataFinal: filtros.dataFinal,
     situacoes: filtros.situacoes,
     page: 1,
     pageSize: 50,
-    accountId: mlContaId,
+    accountId: 'all',
   });
   const [mlItens, setMlItens] = useState<ItemPedido[]>([]);
   const [mlLoading, setMlLoading] = useState(false);
@@ -129,30 +115,6 @@ export function Pedidos() {
 
   // QA: Testar fontes
   const showQA = FEATURE_QA_TEST || IS_NON_PRODUCTION;
-  const [qaSummary, setQaSummary] = useState('');
-  const [qaReqId, setQaReqId] = useState<string | undefined>(undefined);
-  const [qaRunning, setQaRunning] = useState(false);
-  const handleQATestar = async () => {
-    setQaRunning(true);
-    try {
-      const t0 = performance.now();
-      await buscarComFiltros();
-      const tinyMs = Math.round(performance.now() - t0);
-      const mlT0 = performance.now();
-      await mlHook.refetch();
-      const mlMs = mlHook.ms ?? Math.round(performance.now() - mlT0);
-      const mlId = mlHook.lastRequestId;
-      const shT0 = performance.now();
-      await shopeeHook.refetch();
-      const shMs = shopeeHook.ms ?? Math.round(performance.now() - shT0);
-      setQaReqId(mlId);
-      setQaSummary(`Tiny: ${(itens || []).length} / ${tinyMs}ms | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
-    } catch (e: any) {
-      toast({ title: 'QA falhou', description: e?.message || String(e), variant: 'destructive' });
-    } finally {
-      setQaRunning(false);
-    }
-  };
 
   // Função para verificar estoque disponível
   const verificarEstoqueDisponivel = async () => {

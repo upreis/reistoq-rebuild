@@ -1,8 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Filtros, UsePedidosReturn } from "@/config/features";
 import { useItensPedidos } from "@/hooks/useItensPedidos";
-import { toTinyDate } from "@/lib/date-providers";
 
+export function toTinyDate(input?: string | Date): string {
+  if (!input) return '';
+  if (input instanceof Date) {
+    const dd = String(input.getDate()).padStart(2, '0');
+    const mm = String(input.getMonth() + 1).padStart(2, '0');
+    const yyyy = input.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+    }
+  const s = String(input);
+  if (s.includes('/')) return s; // assume DD/MM/YYYY
+  if (s.includes('-')) {
+    const [yyyy, mm, dd] = s.split('-');
+    return `${dd}/${mm}/${yyyy}`;
+  }
+  return s;
+}
 
 export function usePedidosTiny(initialFiltros?: Partial<Filtros>): UsePedidosReturn {
   const {
