@@ -1,61 +1,48 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Filtros, UsePedidosReturn } from "@/config/features";
+import { useItensPedidos } from "@/hooks/useItensPedidos";
 import { toTinyDate } from "@/lib/date-providers";
-import { supabase } from "@/integrations/supabase/client";
+
 
 export function usePedidosTiny(initialFiltros?: Partial<Filtros>): UsePedidosReturn {
-  const [itens, setItens] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState<number | undefined>(undefined);
+  const {
+    itens,
+    loading,
+    error,
+    filtros,
+    atualizarFiltros,
+    buscarComFiltros,
+  } = useItensPedidos();
+
   const [page, setPage] = useState<number>(initialFiltros?.page || 1);
   const [pageSize, setPageSize] = useState<number>(initialFiltros?.pageSize || 500);
-  const filtrosRef = useRef<Partial<Filtros>>(initialFiltros || {});
-  const [ms, setMs] = useState<number | undefined>(undefined);
 
-  const buildBody = useCallback((f?: Partial<Filtros>) => {
-    const body: any = {
-      page: f?.page ?? page,
-      pageSize: Math.min(500, f?.pageSize ?? pageSize),
-      dateFrom: toTinyDate(f?.dataInicio),
-      dateTo: toTinyDate(f?.dataFinal),
-      status: Array.isArray(f?.situacoes) ? f?.situacoes?.[0] : f?.situacoes,
-      expand: "items",
-    };
-    if ((f as any)?.integrationAccountId) body.integration_account_id = (f as any).integrationAccountId;
-    if ((f as any)?.numero) body.numero = (f as any).numero;
-    return body;
-  }, [page, pageSize]);
+  useEffect(() => {
+    // Mapear Filtros -> filtros do hook legado (mantendo comportamento)
+    const mapped = {
+      busca: initialFiltros?.busca ?? filtros.busca,
+      dataInicio: toTinyDate(initialFiltros?.dataInicio || filtros.dataInicio),
+      dataFinal: toTinyDate(initialFiltros?.dataFinal || filtros.dataFinal),
+      situacoes: initialFiltros?.situacoes ?? filtros.situacoes,
+    } as any;
+    atualizarFiltros(mapped);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFiltros?.busca, initialFiltros?.dataInicio, initialFiltros?.dataFinal, JSON.stringify(initialFiltros?.situacoes)]);
 
   const refetch = useCallback(async () => {
     const t0 = performance.now();
-    setLoading(true);
-    setError(null);
-    try {
-      const body = buildBody(filtrosRef.current);
-      const { data, error } = await supabase.functions.invoke('tiny-orders', { body });
-      if (error) throw new Error(error.message || 'Falha tiny-orders');
-      const itensResp = (data?.itens || []) as any[];
-      setItens(itensResp);
-      setTotal(data?.total);
-    } catch (e: any) {
-      setError(e?.message || 'Falha tiny-orders');
-      console.error('[tiny-orders]', e);
-    } finally {
-      setMs(Math.round(performance.now() - t0));
-      setLoading(false);
-    }
-  }, [buildBody]);
+    await buscarComFiltros();
+    // Expor duração no console (QA)
+    (window as any).__tiny_last_ms = Math.round(performance.now() - t0);
+  }, [buscarComFiltros]);
 
   const fetchPage = useCallback(async (p?: number) => {
     if (typeof p === 'number') setPage(p);
     await refetch();
   }, [refetch]);
 
-  // Atualiza filtros locais
-  useEffect(() => {
-    filtrosRef.current = { ...filtrosRef.current, ...initialFiltros, page, pageSize };
-  }, [initialFiltros, page, pageSize]);
+  // Total simples por enquanto (mantém 1:1 comportamento atual de lista completa)
+  const total = useMemo(() => itens.length, [itens.length]);
 
-  return { itens, loading, error, total, fetchPage, refetch, ms };
+  return { itens, loading, error, total, fetchPage, refetch };
 }
