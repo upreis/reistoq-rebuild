@@ -78,18 +78,64 @@ async function getMLAccountById(supabase: any, userId: string, accountId: string
   if (error || !acc) throw new Error('Conta Mercado Livre não encontrada');
   return acc;
 }
-
-
-async function refreshIfNeeded(acc: any) {
+async function refreshIfNeeded(acc: any, reqId: string, service?: any) {
   const now = Date.now();
   const expiresAt = acc?.auth_data?.expires_at ? Date.parse(acc.auth_data.expires_at) : 0;
-  if (expiresAt && expiresAt - now > 60 * 1000) return acc; // válido >60s
+  const msLeft = expiresAt ? expiresAt - now : 0;
+  if (msLeft > 5 * 60 * 1000) return acc; // válido por >5min
   if (!acc?.auth_data?.refresh_token) return acc;
-  // NOTE: refresh é feito no endpoint /oauth/token com grant_type=refresh_token, mas precisamos do client_id/secret
-  // Para simplificar, deixamos o refresh para uma iteração futura; o token pode ainda estar válido.
-  return acc;
+  return await refreshNow(acc, reqId, service);
 }
 
+async function refreshNow(acc: any, reqId: string, service?: any) {
+  try {
+    const client_id = Deno.env.get('ML_APP_ID')!;
+    const client_secret = Deno.env.get('ML_APP_SECRET')!;
+    const form = new URLSearchParams();
+    form.set('grant_type', 'refresh_token');
+    form.set('client_id', client_id);
+    form.set('client_secret', client_secret);
+    form.set('refresh_token', acc?.auth_data?.refresh_token || '');
+
+    console.log(`[${reqId}] ml.refreshNow.oauth`);
+    const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form.toString(),
+    });
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(`refresh_failed: ${resp.status}`);
+
+    const updated = {
+      ...acc,
+      auth_data: {
+        ...(acc.auth_data || {}),
+        access_token: body.access_token,
+        refresh_token: body.refresh_token || acc.auth_data?.refresh_token,
+        expires_in: body.expires_in,
+        expires_at: new Date(Date.now() + (Number(body.expires_in || 0) * 1000)).toISOString(),
+      },
+    };
+
+    // Persist via service role
+    const serviceSupabase = service || createClient(SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    await serviceSupabase.from('integration_accounts').update({ auth_data: updated.auth_data }).eq('id', acc.id);
+    console.log(`[${reqId}] ml.refreshNow.updated`);
+    return updated;
+  } catch (e) {
+    console.log(`[${reqId}] ml.refreshNow.error`, String(e));
+    return acc;
+  }
+}
+
+async function mlFetchWith401Retry(url: string, token: string, reqId: string, acc: any, service?: any, init: RequestInit = {}) {
+  console.log(`[${reqId}] mlFetchWith401Retry:first ${url.split('?')[0]}`);
+  let resp = await fetchWithBackoff(url, { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${token}` } });
+  if (resp.status !== 401) return { resp, acc };
+  // try refresh once
+  const refreshed = await refreshNow(acc, reqId, service);
+  console.log(`[${reqId}] mlFetchWith401Retry:retry`);
+  resp = await fetchWithBackoff(url, { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${refreshed?.auth_data?.access_token}` } });
+  return { resp, acc: refreshed };
+}
 serve(async (req) => {
   const reqId = crypto.randomUUID();
   if (req.method === 'OPTIONS') return new Response(null, { headers: { ...CORS, 'x-request-id': reqId } });
@@ -104,8 +150,8 @@ serve(async (req) => {
     const all = params.get('all') === 'true';
     const expandParam = params.get('expand') || '';
     const expandSet = new Set(expandParam.split(',').map(s => s.trim()).filter(Boolean));
-    const sort = params.get('sort') || 'date_desc';
-    const limit = Math.max(1, Math.min(50, Number(params.get('limit') || '50')));
+    const rawLimit = Math.max(1, Math.min(1000, Number(params.get('limit') || '50')));
+    const limit = Math.max(1, Math.min(ML_PAGE_SIZE, rawLimit));
     const offset = Math.max(0, Number(params.get('offset') || '0'));
 
     const from = params.get('from');
