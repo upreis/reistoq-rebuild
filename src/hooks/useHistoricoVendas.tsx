@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -65,24 +65,18 @@ export function useHistoricoVendas() {
     ticket_medio: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [refetching, setRefetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosHistoricoVendas>({
     termo_busca: '',
     data_inicio: '',
     data_fim: '',
   });
-  const isFirstLoadRef = useRef(true);
 
   const { toast } = useToast();
 
   const buscarVendas = async () => {
     try {
-      if (isFirstLoadRef.current) {
-        setLoading(true);
-      } else {
-        setRefetching(true);
-      }
+      setLoading(true);
       setError(null);
 
       let query = supabase
@@ -119,11 +113,7 @@ export function useHistoricoVendas() {
         variant: "destructive",
       });
     } finally {
-      if (isFirstLoadRef.current) {
-        setLoading(false);
-        isFirstLoadRef.current = false;
-      }
-      setRefetching(false);
+      setLoading(false);
     }
   };
 
@@ -373,7 +363,6 @@ export function useHistoricoVendas() {
     vendas,
     metricas,
     loading,
-    refetching,
     error,
     filtros,
     atualizarFiltros,

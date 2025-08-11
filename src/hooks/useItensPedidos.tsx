@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useDeParaIntegration, ItemPedidoEnriquecido } from '@/hooks/useDeParaIntegration';
-import { toTinyDate } from '@/lib/utils';
+
 // Interface para item de pedido (cada linha da tabela)
 export interface ItemPedido {
   id: string;
@@ -54,8 +54,6 @@ export interface ItemPedido {
   produto_categoria?: string;
   estoque_atual?: number;
   ja_processado?: boolean;
-  // Integração de origem (para RLS do histórico)
-  integration_account_id?: string;
 }
 
 interface MetricasPedidos {
@@ -161,81 +159,35 @@ export function useItensPedidos() {
     try {
       setLoading(true);
       setError(null);
-      const t0 = performance.now();
-
-      // Converter datas para DD/MM/AAAA (padrão Tiny)
-      const dateFrom = toTinyDate(filtros.dataInicio);
-      const dateTo = toTinyDate(filtros.dataFinal);
-      const status = filtros.situacoes && filtros.situacoes.length > 0 ? filtros.situacoes[0] : undefined; // servidor aceita 1 status
-      const numero = filtros.busca?.trim() || undefined;
-      const integrationAccountId = (localStorage.getItem('tinyContaId') || undefined) as string | undefined;
-
-      const { data: resp, error } = await supabase.functions.invoke('tiny-orders', {
-        body: {
-          page: 1,
-          pageSize: 500,
-          dateFrom,
-          dateTo,
-          status,
-          numero,
-          integration_account_id: integrationAccountId,
-          expand: 'items'
-        }
-      });
-
-      if (error) throw error;
-
-      const pedidos = (resp as any)?.pedidos || [];
-      const itens = (resp as any)?.itens || [];
-
-      // Montar estrutura esperada pela UI (item com campo `pedidos` contendo dados do pedido)
-      const pedidosById = new Map<string, any>();
-      pedidos.forEach((p: any) => { if (p?.id) pedidosById.set(p.id, p); });
-
-      const itensComPedidos = itens.map((item: any) => {
-        const pedido = pedidosById.get(item.pedido_id);
-        return {
-          ...item,
-          valor_total_pedido: pedido?.valor_total || 0,
-          valor_frete_pedido: pedido?.valor_frete || 0,
-          valor_desconto_pedido: pedido?.valor_desconto || 0,
-          pedidos: pedido ? {
-            numero_ecommerce: pedido.numero_ecommerce,
-            nome_cliente: pedido.nome_cliente,
-            cpf_cnpj: pedido.cpf_cnpj,
-            cidade: pedido.cidade,
-            uf: pedido.uf,
-            data_pedido: pedido.data_pedido,
-            data_prevista: pedido.data_prevista,
-            situacao: pedido.situacao,
-            codigo_rastreamento: pedido.codigo_rastreamento,
-            url_rastreamento: pedido.url_rastreamento,
-            obs: pedido.obs,
-            obs_interna: pedido.obs_interna,
-            valor_frete: pedido.valor_frete,
-            valor_desconto: pedido.valor_desconto,
-            valor_total: pedido.valor_total,
-            canal_venda: (pedido as any).canal_venda,
-            nome_ecommerce: (pedido as any).nome_ecommerce,
-          } : null
-        };
-      });
-
-      // APLICAR MAPEAMENTOS MAS SEM FILTRAR NO CLIENTE
-      const itensProcessados = await aplicarMapeamentos(itensComPedidos);
-
-      localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
-      setItens(itensProcessados);
-      calcularMetricas(itensProcessados);
-
-      const t1 = performance.now();
-      console.info('Tiny.fetch', { status: 200, requestId: 'n/a', ms: Math.round(t1 - t0), count: itensProcessados.length });
-
-      toast({ title: 'Pedidos carregados', description: `${itensProcessados.length} itens (Tiny)` });
-    } catch (err: any) {
-      console.error('Erro ao buscar itens (tiny-orders):', err);
-      setError(err?.message || 'Erro ao buscar pedidos (Tiny)');
-      toast({ title: 'Erro', description: err?.message || 'Erro ao buscar pedidos (Tiny)', variant: 'destructive' });
+      
+      // Verificar dados locais primeiro para evitar condição de corrida
+      const dadosLocais = await buscarDadosLocais();
+      const temDadosLocais = dadosLocais && dadosLocais.length > 0;
+      
+      // Se há dados locais, usá-los imediatamente e sincronizar em background
+      if (temDadosLocais) {
+        // Aplicar mapeamentos aos dados locais
+        const itensProcessadosLocais = await aplicarMapeamentos(dadosLocais);
+        
+        // Aplicar filtros nos dados locais
+        const itensFiltradosLocais = aplicarFiltrosLocais(itensProcessadosLocais);
+        
+        // Exibir dados locais imediatamente
+        setItens(itensFiltradosLocais);
+        calcularMetricas(itensFiltradosLocais);
+        setLoading(false);
+        
+        // Sincronizar em background (sem bloquear a UI)
+        sincronizarEmBackground();
+        return;
+      }
+      
+      // Se não há dados locais, tentar edge function com fallback robusto
+      await sincronizarComFallback();
+      
+    } catch (error) {
+      console.error('❌ Erro na busca de itens:', error);
+      setError(error instanceof Error ? error.message : 'Erro desconhecido');
     } finally {
       setLoading(false);
     }
@@ -252,52 +204,6 @@ export function useItensPedidos() {
         item.sku?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
         item.descricao?.toLowerCase().includes(filtros.busca.toLowerCase())
       );
-    }
-
-    // Filtros de data (DD/MM/AAAA ou YYYY-MM-DD)
-    const parseDate = (d?: string) => {
-      if (!d) return null as Date | null;
-      if (d.includes('/')) {
-        const [dd, mm, yyyy] = d.split('/');
-        return new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
-      }
-      return new Date(`${d}T00:00:00`);
-    };
-
-    if (filtros.dataInicio) {
-      const start = parseDate(filtros.dataInicio);
-      itensFiltrados = itensFiltrados.filter((item: any) => {
-        const dp = parseDate(item.pedidos?.data_pedido || item.data_pedido);
-        return !start || (dp && dp >= start);
-      });
-    }
-
-    if (filtros.dataFinal) {
-      const end = parseDate(filtros.dataFinal);
-      itensFiltrados = itensFiltrados.filter((item: any) => {
-        const dp = parseDate(item.pedidos?.data_pedido || item.data_pedido);
-        return !end || (dp && dp <= end);
-      });
-    }
-
-    // Filtro por situação (mapeando PT -> valores reais salvos)
-    if (filtros.situacoes && filtros.situacoes.length > 0) {
-      const mapeamentoSituacoes: { [key: string]: string } = {
-        'Em Aberto': 'Em aberto',
-        'Aprovado': 'Aprovado', 
-        'Preparando Envio': 'Preparando envio',
-        'Faturado': 'Faturado',
-        'Pronto para Envio': 'Pronto para envio',
-        'Enviado': 'Enviado',
-        'Entregue': 'Entregue',
-        'Nao Entregue': 'Não entregue',
-        'Cancelado': 'Cancelado'
-      };
-      const alvo = filtros.situacoes.map(s => (mapeamentoSituacoes[s] || s).toLowerCase());
-      itensFiltrados = itensFiltrados.filter((item: any) => {
-        const sit = (item.pedidos?.situacao || item.situacao || '').toLowerCase();
-        return alvo.includes(sit);
-      });
     }
 
     // Ordenar os dados 
@@ -324,7 +230,7 @@ export function useItensPedidos() {
         .from('itens_pedidos')
         .select(`
           *,
-          pedidos!itens_pedidos_pedido_id_fkey (
+          pedidos!inner (
             numero,
             numero_ecommerce,
             nome_cliente,
@@ -344,11 +250,50 @@ export function useItensPedidos() {
           )
         `);
 
-      // Evitar filtros no servidor que exigem alias de relação (ambiguidade 300)
-      // Todos os filtros (busca, datas e situação) serão aplicados localmente abaixo
+      // Aplicar filtros básicos
+      if (filtros.busca) {
+        query = query.or(`numero_pedido.ilike.%${filtros.busca}%,pedidos.nome_cliente.ilike.%${filtros.busca}%,sku.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
+      }
+
+      // Converter datas DD/MM/AAAA -> YYYY-MM-DD para PostgREST
+      const toISO = (d: string) => {
+        if (!d) return '' as any;
+        if (d.includes('/')) {
+          const [dd, mm, yyyy] = d.split('/');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+        return d;
+      };
+
+      if (filtros.dataInicio) {
+        query = query.filter('pedidos.data_pedido', 'gte', toISO(filtros.dataInicio));
+      }
+
+      if (filtros.dataFinal) {
+        query = query.filter('pedidos.data_pedido', 'lte', toISO(filtros.dataFinal));
+      }
+
+      if (filtros.situacoes.length > 0) {
+        const mapeamentoSituacoes: { [key: string]: string } = {
+          'Em Aberto': 'Em aberto',
+          'Aprovado': 'Aprovado', 
+          'Preparando Envio': 'Preparando envio',
+          'Faturado': 'Faturado',
+          'Pronto para Envio': 'Pronto para envio',
+          'Enviado': 'Enviado',
+          'Entregue': 'Entregue',
+          'Nao Entregue': 'Não entregue',
+          'Cancelado': 'Cancelado'
+        };
+        
+        const situacoesMapeadas = filtros.situacoes.map(s => mapeamentoSituacoes[s] || s);
+        query = query.filter('pedidos.situacao', 'in', `(${situacoesMapeadas.join(',')})`);
+      }
 
       const { data, error } = await query
-        .limit(5000);
+        .order('data_pedido', { ascending: false, referencedTable: 'pedidos' })
+        .order('valor_total', { ascending: false, referencedTable: 'pedidos' })
+        .limit(5000); // Limite menor para busca rápida inicial
 
       if (error) {
         return [];
@@ -772,10 +717,10 @@ if (!syncError && syncData?.itens && syncData?.pedidos) {
     buscarItens();
   };
 
-  const obterDetalhesPedido = async (numeroPedido: string, integrationAccountId?: string) => {
+  const obterDetalhesPedido = async (numeroPedido: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('obter-pedido-tiny', {
-        body: { numeroPedido, integration_account_id: integrationAccountId }
+        body: { numeroPedido }
       });
 
       if (error) {

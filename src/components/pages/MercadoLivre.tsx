@@ -132,8 +132,6 @@ export function MercadoLivre() {
       if (from) baseQs.set("from", from);
       if (to) baseQs.set("to", to);
       if (status) baseQs.set("status", status);
-      baseQs.set('limit', '100');
-      baseQs.set('offset', '0');
 
       const headers = {
         apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
@@ -147,11 +145,9 @@ export function MercadoLivre() {
           `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`,
           { headers }
         );
-        const text = await resp.text();
-        let json: any = null;
-        try { json = text ? JSON.parse(text) : null; } catch (_) { /* resposta não JSON */ }
-        if (!resp.ok) throw new Error((json && (json.error || json.message)) || text || "Erro ao consultar pedidos");
-        const results = (json?.results || json?.orders || []) as any[];
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error || "Erro ao consultar pedidos");
+        const results = json?.results || json?.orders || [];
         const empresaLabel = acc?.name || acc?.account_identifier || acc?.cnpj || 'Mercado Livre';
         return results.map((o: any) => ({ ...o, empresa: empresaLabel }));
       };
@@ -232,21 +228,7 @@ export function MercadoLivre() {
             <CardDescription>Consulta somente leitura direto na API do Mercado Livre.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div>
-                <Label>Conta</Label>
-                <Select value={contaId} onValueChange={setContaId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a conta" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as contas</SelectItem>
-                    {contas.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name || c.account_identifier || c.cnpj || c.id}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <Label>Data inicial (YYYY-MM-DD)</Label>
                 <Input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="2025-06-01" />
@@ -274,7 +256,6 @@ export function MercadoLivre() {
                       <th className="p-2">Status</th>
                       <th className="p-2">Total</th>
                       <th className="p-2">Comprador</th>
-                      <th className="p-2">Empresa</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -285,7 +266,6 @@ export function MercadoLivre() {
                         <td className="p-2">{o.status}</td>
                         <td className="p-2">{o.total_amount || o.order_amount || '-'}</td>
                         <td className="p-2">{o?.buyer?.nickname || o?.buyer?.id || '-'}</td>
-                        <td className="p-2">{o?.empresa || '-'}</td>
                       </tr>
                     ))}
                   </tbody>

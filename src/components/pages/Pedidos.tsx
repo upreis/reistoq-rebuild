@@ -14,13 +14,7 @@ import { PedidoDetalhesModal } from "@/components/pedidos/PedidoDetalhesModal";
 import { PedidoEditModal } from "@/components/pedidos/PedidoEditModal";
 import { PedidoProcessamentoModal } from "@/components/pedidos/PedidoProcessamentoModal";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingDown, Loader2, Package } from "lucide-react";
-import { usePedidosML } from "@/hooks/usePedidosML";
-import { usePedidosTiny } from "@/hooks/usePedidosTiny";
-import { usePedidosShopee } from "@/hooks/usePedidosShopee";
-import { FEATURE_ML, FEATURE_QA_TEST } from "@/config/features";
 
 // Force rebuild to clear cache
 export function Pedidos() {
@@ -48,10 +42,7 @@ export function Pedidos() {
     valorMinimo: 0,
     valorMaximo: 0,
     clienteVip: false,
-    fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre' | 'ambas') || 'interno',
-    mlPedidoId: localStorage.getItem('mlPedidoId') || '',
-    mlComprador: localStorage.getItem('mlComprador') || '',
-    mlFulfillmentOnly: localStorage.getItem('mlFulfillmentOnly') === 'true'
+    fonte: filtrosBase as any && (localStorage.getItem('pedidos-fonte') as 'interno' | 'mercadolivre') || 'interno'
   };
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosAvancados>) => {
@@ -65,20 +56,11 @@ export function Pedidos() {
     if (typeof novosFiltros.fonte !== 'undefined') {
       localStorage.setItem('pedidos-fonte', novosFiltros.fonte);
     }
-    if (typeof (novosFiltros as any).mlPedidoId !== 'undefined') {
-      localStorage.setItem('mlPedidoId', (novosFiltros as any).mlPedidoId || '');
-    }
-    if (typeof (novosFiltros as any).mlComprador !== 'undefined') {
-      localStorage.setItem('mlComprador', (novosFiltros as any).mlComprador || '');
-    }
-    if (typeof (novosFiltros as any).mlFulfillmentOnly !== 'undefined') {
-      localStorage.setItem('mlFulfillmentOnly', String((novosFiltros as any).mlFulfillmentOnly));
-    }
     atualizarFiltrosBase(filtrosOriginais);
   };
 
   const { enriquecerItensPedidos } = useDeParaIntegration();
-  const [fonte, setFonte] = useState<'interno' | 'mercadolivre' | 'ambas'>((localStorage.getItem('pedidos-fonte') as any) || 'interno');
+  const [fonte, setFonte] = useState<'interno' | 'mercadolivre'>((localStorage.getItem('pedidos-fonte') as any) || 'interno');
   
   // Estados dos modais
   const [modalDetalhes, setModalDetalhes] = useState(false);
@@ -89,76 +71,21 @@ export function Pedidos() {
   const [estoqueDisponivel, setEstoqueDisponivel] = useState<Record<string, number>>({});
   const [itensSelecionados, setItensSelecionados] = useState<ItemPedidoEnriquecido[]>([]);
 
-  // Contas Mercado Livre
-  const [contasML, setContasML] = useState<any[]>([]);
-  const [mlContaId, setMlContaId] = useState<string>('all');
-
-  // Dados vindos do Mercado Livre via hook
-  const ml = usePedidosML({
-    dataInicio: filtros.dataInicio,
-    dataFinal: filtros.dataFinal,
-    situacoes: filtros.situacoes,
-    busca: filtros.busca,
-    accountId: mlContaId,
-    fulfillmentOnly: filtros.mlFulfillmentOnly,
-    page: 1,
-    pageSize: 100,
+  // Dados vindos do Mercado Livre
+  const [mlItens, setMlItens] = useState<ItemPedido[]>([]);
+  const [mlLoading, setMlLoading] = useState(false);
+  const [mlMetricas, setMlMetricas] = useState({
+    totalItens: 0,
+    totalPedidos: 0,
+    pedidosPendentes: 0,
+    pedidosAprovados: 0,
+    pedidosEnviados: 0,
+    pedidosEntregues: 0,
+    valorTotal: 0,
   });
-  // Hook Tiny (adapter)
-  const tiny = usePedidosTiny({
-    dataInicio: filtros.dataInicio,
-    dataFinal: filtros.dataFinal,
-    situacoes: filtros.situacoes,
-    busca: filtros.busca,
-    page: 1,
-    pageSize: 500,
-  });
-  // Hook Shopee (stub)
-  const shopee = usePedidosShopee({
-    dataInicio: filtros.dataInicio,
-    dataFinal: filtros.dataFinal,
-    situacoes: filtros.situacoes,
-    busca: filtros.busca,
-    page: 1,
-    pageSize: 100,
-  });
-
-  const [qaResult, setQaResult] = useState<any>(null);
-  const handleTestSources = async () => {
-    const isQA = FEATURE_QA_TEST || import.meta.env.MODE !== 'production';
-    if (!isQA) return;
-    const results: any = {};
-    let t0 = performance.now();
-    await tiny.refetch();
-    results.tiny = { count: tiny.itens.length, ms: Math.round(performance.now() - t0) };
-    t0 = performance.now();
-    await ml.refetch();
-    results.ml = { count: ml.itens.length, ms: Math.round(performance.now() - t0), reqId: ml.lastRequestId };
-    t0 = performance.now();
-    await shopee.refetch();
-    results.shopee = { count: shopee.itens.length, ms: Math.round(performance.now() - t0) };
-    console.info('Tiny.fetch', { status: 200, requestId: 'n/a', ms: results.tiny.ms, count: results.tiny.count });
-    console.info('ML.fetch', { status: 200, requestId: results.ml.reqId || '', ms: results.ml.ms, count: results.ml.count });
-    console.info('Shopee.fetch', { status: 200, requestId: 'stub', ms: results.shopee.ms, count: results.shopee.count });
-    setQaResult(results);
-  };
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from('integration_accounts')
-        .select('*')
-        .eq('provider', 'mercadolivre')
-        .order('name', { ascending: true });
-      setContasML(data || []);
-    })();
-  }, []);
 
   // Escolher fonte de dados
-  const baseItens = filtros.fonte === 'mercadolivre'
-    ? ml.itens
-    : (filtros.fonte === 'ambas' ? [...tiny.itens, ...ml.itens]
-      : (filtros.fonte === 'shopee' ? shopee.itens : tiny.itens));
+  const baseItens = filtros.fonte === 'mercadolivre' ? mlItens : itens;
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(baseItens);
 
@@ -247,8 +174,69 @@ export function Pedidos() {
     return d;
   };
 
-  // Busca ML movida para hook usePedidosML
+  const buscarPedidosML = async () => {
+    try {
+      setMlLoading(true);
+      const from = parseToISO(filtros.dataInicio);
+      const to = parseToISO(filtros.dataFinal);
+      const qs = new URLSearchParams();
+      if (from) qs.set('from', from);
+      if (to) qs.set('to', to);
+      // opcional: mapear primeiras situações
+      const status = filtros.situacoes?.[0];
+      if (status) qs.set('status', status.toLowerCase());
 
+      const { data: session } = await supabase.auth.getSession();
+      const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, {
+        headers: {
+          'Authorization': session.session ? `Bearer ${session.session.access_token}` : '',
+          'apikey': (supabase as any).headers?.apikey || ''
+        }
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json?.error || 'Falha ao buscar pedidos do ML');
+      const results = json?.results || json?.orders || [];
+
+      const mapped: ItemPedido[] = results.flatMap((order: any) => {
+        const buyer = order.buyer || {};
+        const items = order.order_items || [];
+        return items.map((oi: any, idx: number) => ({
+          id: `${order.id}-${idx}`,
+          pedido_id: String(order.id),
+          numero_pedido: String(order.id),
+          sku: oi?.item?.seller_sku || oi?.item?.sku || oi?.item?.id || 'SKU',
+          descricao: oi?.item?.title || 'Item',
+          quantidade: oi?.quantity || 1,
+          valor_unitario: oi?.unit_price || order?.total_amount || 0,
+          valor_total: (oi?.unit_price || 0) * (oi?.quantity || 1),
+          numero_ecommerce: String(order.id),
+          nome_cliente: `${buyer?.first_name || ''} ${buyer?.last_name || ''}`.trim() || buyer?.nickname || 'Cliente ML',
+          cpf_cnpj: buyer?.billing_info?.doc_number || undefined,
+          cidade: order?.shipping?.receiver_address?.city?.name || undefined,
+          uf: order?.shipping?.receiver_address?.state?.id || undefined,
+          data_pedido: (order?.date_created || '').slice(0, 10),
+          data_prevista: undefined,
+          situacao: order?.status || 'Aprovado',
+          codigo_rastreamento: order?.shipping?.tracking_number || undefined,
+          url_rastreamento: order?.shipping?.tracking_url || undefined,
+          obs: undefined,
+          obs_interna: undefined,
+          valor_frete: order?.shipping_cost || 0,
+          valor_desconto: 0,
+          empresa: 'Mercado Livre',
+          numero_venda: String(order?.id),
+        }));
+      });
+
+      setMlItens(mapped);
+      toast({ title: 'Pedidos ML carregados', description: `${mapped.length} itens` });
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: 'Erro', description: e.message || 'Falha ao buscar ML', variant: 'destructive' });
+    } finally {
+      setMlLoading(false);
+    }
+  };
 
   const handleBuscarPedidos = async () => {
     try {
@@ -265,52 +253,28 @@ export function Pedidos() {
       });
 
       if (filtros.fonte === 'mercadolivre') {
-        await ml.refetch();
-      } else if (filtros.fonte === 'ambas') {
-        tiny.refetch();
-        await ml.refetch();
-      } else if (filtros.fonte === 'shopee') {
-        await shopee.refetch();
+        await buscarPedidosML();
       } else {
-        tiny.refetch();
+        buscarComFiltros();
       }
       toast({
         title: 'Buscando pedidos',
-        description: filtros.fonte === 'mercadolivre' 
-          ? 'Consultando API do Mercado Livre...'
-          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...'
-            : (filtros.fonte === 'shopee' ? 'Consultando Shopee...' : 'Carregando do banco interno...')),
+        description: filtros.fonte === 'mercadolivre' ? 'Consultando API do Mercado Livre...' : 'Carregando do banco interno...',
       });
     } catch (error) {
       console.error('Erro ao iniciar busca:', error);
-      if (filtros.fonte === 'mercadolivre') await ml.refetch(); else tiny.refetch();
+      if (filtros.fonte === 'mercadolivre') await buscarPedidosML(); else buscarComFiltros();
       toast({
         title: 'Buscando pedidos',
         description: 'Os pedidos estão sendo carregados com os filtros aplicados.',
       });
-    } finally {
-      // ✅ Finalizar status para não ficar preso em "Iniciando busca..."
-      try {
-        await supabase.functions.invoke('sync-control', {
-          body: {
-            action: 'stop',
-            process_name: 'sync-pedidos-rapido',
-            progress: {
-              finished_at: new Date().toISOString(),
-              current_step: 'Concluído'
-            }
-          }
-        });
-      } catch (e) {
-        console.warn('Falha ao atualizar status do sync-control:', e);
-      }
     }
   };
 
 
   const handleVerDetalhes = async (item: ItemPedido) => {
     try {
-      const detalhes = await obterDetalhesPedido(item.numero_pedido, item.integration_account_id);
+      const detalhes = await obterDetalhesPedido(item.numero_pedido);
       setItemSelecionado(item);
       setModalDetalhes(true);
       toast({
@@ -357,16 +321,33 @@ export function Pedidos() {
         description: "Processando itens...",
       });
 
-      // Preferir processar os itens selecionados quando houver seleção explícita
-      const baseParaProcessar = itensSelecionados.length > 0 ? itensSelecionados : itensEnriquecidos;
-
-      // Filtrar itens válidos apenas por mapeamento/sku e estoque suficiente
-      const itensComEstoque = baseParaProcessar.filter(item => {
-        const skuProduto = item.mapeamento_aplicado?.sku_simples || item.sku; // usa mapeamento quando existir
-        if (!skuProduto) return false;
-        const estoqueAtual = estoqueDisponivel[skuProduto] || 0;
-        const quantidadeNecessaria = (item.mapeamento_aplicado?.quantidade || item.qtd_kit || 1) * (item.quantidade || 1);
-        return estoqueAtual >= quantidadeNecessaria;
+      // ✅ CORRIGIDO: Filtrar itens com sku_kit válido
+      const itensComEstoque = itensEnriquecidos.filter(item => {
+        const temSkuKit = item.sku_kit || item.sku;
+        const temQuantidade = item.qtd_kit && item.qtd_kit > 0;
+        
+        // Verificar se está em situação de baixar estoque
+        const situacaoLower = item.situacao?.toLowerCase() || '';
+        const situacoesBaixarEstoque = [
+          'aprovado', 
+          'preparando envio', 
+          'faturado', 
+          'pronto para envio',
+          'em separacao',
+          'entregue'  // Adicionado para permitir teste com pedidos entregues
+        ];
+        
+        // Não processar se já foi baixado
+        const jaProcessado = item.ja_processado;
+        
+        // ✅ CORRIGIDO: Verificar estoque usando sku_kit
+        const skuProduto = item.sku_kit || item.sku;
+        const estoqueAtual = estoqueDisponivel[skuProduto || ''] || 0;
+        const quantidadeNecessaria = (item.qtd_kit || 1) * item.quantidade;
+        const temEstoque = estoqueAtual >= quantidadeNecessaria;
+        
+        return temSkuKit && (temQuantidade || item.quantidade > 0) && 
+               situacoesBaixarEstoque.includes(situacaoLower) && !jaProcessado && temEstoque;
       });
 
       if (itensComEstoque.length === 0) {
@@ -416,8 +397,7 @@ export function Pedidos() {
             obs: item.obs,
             obs_interna: item.obs_interna,
             url_rastreamento: item.url_rastreamento,
-            codigo_rastreamento: item.codigo_rastreamento,
-            integration_account_id: item.integration_account_id,
+            codigo_rastreamento: item.codigo_rastreamento
           }))
         }
       });
@@ -483,44 +463,13 @@ export function Pedidos() {
 
 
           {/* Filtros e Pesquisa */}
-          {FEATURE_ML && (filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas') && (
-            <div className="max-w-3xl mb-2">
-              <Label>Conta Mercado Livre</Label>
-              <Select value={mlContaId} onValueChange={setMlContaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a conta" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as contas</SelectItem>
-                  {contasML.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name || c.account_identifier || c.cnpj || c.id}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
           <FiltrosAvancadosPedidos
             filtros={filtros}
             onFiltroChange={atualizarFiltros}
             onLimparFiltros={limparFiltros}
             onBuscarPedidos={handleBuscarPedidos}
-            loading={loading || ml.loading}
+            loading={loading}
           />
-
-          {(FEATURE_QA_TEST || import.meta.env.MODE !== 'production') && (
-            <div className="max-w-3xl mb-2 p-2 border rounded-md">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleTestSources}>Testar fontes</Button>
-                {qaResult && (
-                  <div className="text-sm text-muted-foreground">
-                    Tiny: {qaResult.tiny?.count ?? 0}/{qaResult.tiny?.ms ?? 0}ms |
-                    {' '}ML: {qaResult.ml?.count ?? 0}/{qaResult.ml?.ms ?? 0}ms{qaResult.ml?.reqId ? ` (req ${qaResult.ml.reqId})` : ''} |
-                    {' '}Shopee: {qaResult.shopee?.count ?? 0}/{qaResult.shopee?.ms ?? 0}ms
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Barra de Status - Limitada em largura */}
           <div className="max-w-3xl">
@@ -565,8 +514,7 @@ export function Pedidos() {
                     obs: item.obs,
                     obs_interna: item.obs_interna,
                     url_rastreamento: item.url_rastreamento,
-                    codigo_rastreamento: item.codigo_rastreamento,
-                    integration_account_id: item.integration_account_id,
+                    codigo_rastreamento: item.codigo_rastreamento
                   }))},
                 });
                 await recarregarDados();
