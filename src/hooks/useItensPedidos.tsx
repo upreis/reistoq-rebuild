@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useDeParaIntegration, ItemPedidoEnriquecido } from '@/hooks/useDeParaIntegration';
-
+import { toTinyDate } from '@/lib/utils';
 // Interface para item de pedido (cada linha da tabela)
 export interface ItemPedido {
   id: string;
@@ -162,29 +162,22 @@ export function useItensPedidos() {
       setLoading(true);
       setError(null);
 
-      // Converter datas para YYYY-MM-DD (Tiny usa DATE no banco)
-      const toISO = (d?: string) => {
-        if (!d) return '';
-        if (d.includes('/')) {
-          const [dd, mm, yyyy] = d.split('/');
-          return `${yyyy}-${mm}-${dd}`;
-        }
-        return d;
-      };
-
-      const dateFrom = toISO(filtros.dataInicio);
-      const dateTo = toISO(filtros.dataFinal);
+      // Converter datas para DD/MM/AAAA (padrão Tiny)
+      const dateFrom = toTinyDate(filtros.dataInicio);
+      const dateTo = toTinyDate(filtros.dataFinal);
       const status = filtros.situacoes && filtros.situacoes.length > 0 ? filtros.situacoes[0] : undefined; // servidor aceita 1 status
       const numero = filtros.busca?.trim() || undefined;
+      const integrationAccountId = (localStorage.getItem('tinyContaId') || undefined) as string | undefined;
 
       const { data: resp, error } = await supabase.functions.invoke('tiny-orders', {
         body: {
           page: 1,
-          pageSize: 1000,
+          pageSize: 500,
           dateFrom,
           dateTo,
           status,
           numero,
+          integration_account_id: integrationAccountId,
           expand: 'items'
         }
       });

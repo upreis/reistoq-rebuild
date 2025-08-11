@@ -215,8 +215,11 @@ export function Pedidos() {
       if (to) baseQs.set('to', to);
       // Garantir retorno de campos detalhados (buyer, order_items.seller_sku, feedback, shipping, etc.)
       baseQs.set('expand', 'details');
+      // Paginação explícita para evitar truncar em 50
+      baseQs.set('limit', '100');
+      baseQs.set('offset', '0');
       // Apenas enviar status quando a fonte for Mercado Livre e o valor for suportado pela API ML
-      const allowedMLStatuses = new Set(['paid', 'cancelled', 'confirmed', 'payment_required', 'payment_in_process']);
+      const allowedMLStatuses = new Set(['paid', 'cancelled', 'confirmed', 'payment_required', 'payment_in_process', 'shipped', 'delivered']);
       const status = filtros.fonte === 'mercadolivre' ? filtros.situacoes?.[0] : undefined;
       if (status) {
         // O usuário pode selecionar status Tiny (português) ou ML (inglês). Normalizamos aqui.

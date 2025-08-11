@@ -17,6 +17,35 @@ function json(body: any, init: ResponseInit = {}) {
   });
 }
 
+// Parse dates in formats: DD/MM/YYYY, YYYY-MM-DD, YYYY/MM/DD => returns YYYY-MM-DD or null
+function parseDateFlexible(input: string): string | null {
+  const s = String(input).trim();
+  // DD/MM/YYYY
+  const ddmmyyyy = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const yyyymmddDash = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const yyyymmddSlash = /^(\d{4})\/(\d{2})\/(\d{2})$/;
+
+  let m;
+  if ((m = s.match(ddmmyyyy))) {
+    const [, dd, mm, yyyy] = m;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  if ((m = s.match(yyyymmddDash))) {
+    const [, yyyy, mm, dd] = m;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  if ((m = s.match(yyyymmddSlash))) {
+    const [, yyyy, mm, dd] = m;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return null;
+}
+
+function normalizeDateInput(input: string | null): string | null {
+  if (!input) return null;
+  return parseDateFlexible(input);
+}
+
 serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
@@ -71,15 +100,26 @@ serve(async (req) => {
       q = q.or(`numero.ilike.%${numero}%,numero_ecommerce.ilike.%${numero}%`);
     }
 
-    if (dateFrom) {
-      q = q.gte('data_pedido', dateFrom);
+    // Datas com validação e normalização (aceita DD/MM/YYYY, YYYY-MM-DD, YYYY/MM/DD)
+    const df = normalizeDateInput(dateFrom);
+    if (dateFrom && !df) {
+      return json({ error: 'Parâmetro inválido', field: 'dateFrom', expected: 'DD/MM/YYYY ou YYYY-MM-DD', value: dateFrom }, { status: 400 });
     }
-    if (dateTo) {
-      q = q.lte('data_pedido', dateTo);
+    const dt = normalizeDateInput(dateTo);
+    if (dateTo && !dt) {
+      return json({ error: 'Parâmetro inválido', field: 'dateTo', expected: 'DD/MM/YYYY ou YYYY-MM-DD', value: dateTo }, { status: 400 });
+    }
+
+    if (df) {
+      q = q.gte('data_pedido', df);
+    }
+    if (dt) {
+      q = q.lte('data_pedido', dt);
     }
 
     if (status && status !== 'todas') {
-      q = q.eq('situacao', status);
+      // Case-insensitive match (igualdade sem diferenciar maiúsculas/minúsculas)
+      q = q.ilike('situacao', status);
     }
 
     if (integrationAccountId) {
