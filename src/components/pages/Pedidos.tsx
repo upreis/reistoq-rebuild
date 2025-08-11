@@ -20,6 +20,7 @@ import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 import { usePedidosML } from "@/hooks/usePedidosML";
 import { usePedidosTiny } from "@/hooks/usePedidosTiny";
 import { usePedidosShopee } from "@/hooks/usePedidosShopee";
+import { FEATURE_ML } from "@/config/features";
 
 // Force rebuild to clear cache
 export function Pedidos() {
@@ -248,6 +249,8 @@ export function Pedidos() {
       } else if (filtros.fonte === 'ambas') {
         tiny.refetch();
         await ml.refetch();
+      } else if (filtros.fonte === 'shopee') {
+        await shopee.refetch();
       } else {
         tiny.refetch();
       }
@@ -255,7 +258,8 @@ export function Pedidos() {
         title: 'Buscando pedidos',
         description: filtros.fonte === 'mercadolivre' 
           ? 'Consultando API do Mercado Livre...'
-          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...' : 'Carregando do banco interno...'),
+          : (filtros.fonte === 'ambas' ? 'Consultando Interno e Mercado Livre...'
+            : (filtros.fonte === 'shopee' ? 'Consultando Shopee...' : 'Carregando do banco interno...')),
       });
     } catch (error) {
       console.error('Erro ao iniciar busca:', error);
@@ -459,7 +463,7 @@ export function Pedidos() {
 
 
           {/* Filtros e Pesquisa */}
-          {(filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas') && (
+          {FEATURE_ML && (filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas') && (
             <div className="max-w-3xl mb-2">
               <Label>Conta Mercado Livre</Label>
               <Select value={mlContaId} onValueChange={setMlContaId}>

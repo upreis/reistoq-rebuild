@@ -161,6 +161,7 @@ export function useItensPedidos() {
     try {
       setLoading(true);
       setError(null);
+      const t0 = performance.now();
 
       // Converter datas para DD/MM/AAAA (padrão Tiny)
       const dateFrom = toTinyDate(filtros.dataInicio);
@@ -226,6 +227,9 @@ export function useItensPedidos() {
       localStorage.setItem('pedidos-dados-cache', JSON.stringify(itensProcessados));
       setItens(itensProcessados);
       calcularMetricas(itensProcessados);
+
+      const t1 = performance.now();
+      console.info('Tiny.fetch', { status: 200, requestId: 'n/a', ms: Math.round(t1 - t0), count: itensProcessados.length });
 
       toast({ title: 'Pedidos carregados', description: `${itensProcessados.length} itens (Tiny)` });
     } catch (err: any) {
