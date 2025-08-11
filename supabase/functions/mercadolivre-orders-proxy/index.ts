@@ -132,7 +132,9 @@ serve(async (req) => {
         const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
           headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
         });
-        const body = await resp.json();
+const raw = await resp.text();
+let body: any = null;
+try { body = raw ? JSON.parse(raw) : null; } catch (_) { body = { raw }; }
         return { acc, ok: resp.ok, body };
       }));
 
@@ -171,7 +173,9 @@ serve(async (req) => {
               const r = await fetchWithBackoff(`https://api.mercadolibre.com/shipments/${shipId}`, {
                 headers: { Authorization: `Bearer ${entry.__token}` },
               });
-              const sd = await r.json();
+const rawSd = await r.text();
+let sd: any = null;
+try { sd = rawSd ? JSON.parse(rawSd) : null; } catch (_) { sd = { raw: rawSd }; }
               if (sd?.logistic_type && String(sd.logistic_type).toLowerCase() === String(logisticsType).toLowerCase()) {
                 entry.order = { ...ord, _shipping: sd };
                 filtered.push(entry);
@@ -193,7 +197,9 @@ serve(async (req) => {
             const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/${id}`, {
               headers: { Authorization: `Bearer ${sliced[i].__token}` },
             });
-            const det = await resp.json();
+const rawDet = await resp.text();
+let det: any = null;
+try { det = rawDet ? JSON.parse(rawDet) : null; } catch (_) { det = { raw: rawDet }; }
             sliced[i].order = { ...ord, _details: det };
           } catch (_) { /* ignore detail errors */ }
         }
@@ -211,8 +217,14 @@ serve(async (req) => {
     const mlResp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
       headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
     });
-    const jsonBody = await mlResp.json();
-    if (!mlResp.ok) return json({ error: 'Falha na API ML', details: jsonBody }, 400);
+const rawBody = await mlResp.text();
+let jsonBody: any = null;
+try { jsonBody = rawBody ? JSON.parse(rawBody) : null; } catch (_) { jsonBody = { raw: rawBody }; }
+if (!mlResp.ok) {
+  const status = mlResp.status;
+  const err = (jsonBody && (jsonBody.error || jsonBody.message || (jsonBody.cause && JSON.stringify(jsonBody.cause)))) || rawBody || 'Erro desconhecido';
+  return json({ error: 'Falha na API ML', status, details: err }, 400);
+}
 
     if (expandSet.has('details') && Array.isArray(jsonBody?.results)) {
       for (let i = 0; i < jsonBody.results.length; i++) {
@@ -223,7 +235,9 @@ serve(async (req) => {
           const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/${id}`, {
             headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
           });
-          const det = await resp.json();
+const rawDet2 = await resp.text();
+let det: any = null;
+try { det = rawDet2 ? JSON.parse(rawDet2) : null; } catch (_) { det = { raw: rawDet2 }; }
           jsonBody.results[i] = { ...ord, _details: det };
         } catch (_) { /* ignore detail errors */ }
       }
@@ -249,7 +263,9 @@ serve(async (req) => {
             const r = await fetchWithBackoff(`https://api.mercadolibre.com/shipments/${shipId}`, {
               headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
             });
-            const sd = await r.json();
+const rawSd2 = await r.text();
+let sd: any = null;
+try { sd = rawSd2 ? JSON.parse(rawSd2) : null; } catch (_) { sd = { raw: rawSd2 }; }
             if (sd?.logistic_type && String(sd.logistic_type).toLowerCase() === lt) {
               filtered.push({ ...ord, _shipping: sd });
             }
