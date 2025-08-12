@@ -169,7 +169,7 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <div data-nbar-root data-bg-index={colorIndex} className={`bg-gradient-to-r ${BG_COLORS[colorIndex]} px-4 py-3 relative overflow-hidden`}>
+        <div data-nbar-root data-bg-index={colorIndex} className={`bg-gradient-to-r ${BG_COLORS[colorIndex]} relative overflow-hidden min-h-[44px]`}>
           <Alert className="bg-transparent border-0 shadow-none">
             <div className="flex w-full items-center gap-2">
                 <Bell className="h-[14px] w-[14px] text-primary" />

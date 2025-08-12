@@ -32,7 +32,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             variant="plain"
             mode="continuous"
             speed={50}
-            className="!bg-transparent !border-0 !shadow-none"
+            className="bg-white border-b"
           />
         </section>
         <div className="flex w-full flex-1">
