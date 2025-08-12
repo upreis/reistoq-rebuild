@@ -771,6 +771,7 @@ export type Database = {
           integration_account_id: string | null
           localizacao: string | null
           nome: string
+          organization_id: string | null
           preco_custo: number | null
           preco_venda: number | null
           quantidade_atual: number
@@ -792,6 +793,7 @@ export type Database = {
           integration_account_id?: string | null
           localizacao?: string | null
           nome: string
+          organization_id?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
           quantidade_atual?: number
@@ -813,6 +815,7 @@ export type Database = {
           integration_account_id?: string | null
           localizacao?: string | null
           nome?: string
+          organization_id?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
           quantidade_atual?: number
