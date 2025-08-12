@@ -79,32 +79,24 @@ export function useHistoricoVendas() {
       setLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('historico_vendas')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Usar RPC mascarado para buscar dados com segurança
+      const params = {
+        _start: filtros.data_inicio || null,
+        _end: filtros.data_fim || null,
+        _search: filtros.termo_busca || null,
+        _limit: 1000,
+        _offset: 0,
+      } as const;
 
-      // Aplicar filtros
-      if (filtros.termo_busca) {
-        query = query.or(`numero_pedido.ilike.%${filtros.termo_busca}%,sku_produto.ilike.%${filtros.termo_busca}%,descricao.ilike.%${filtros.termo_busca}%,observacoes.ilike.%${filtros.termo_busca}%,cliente_nome.ilike.%${filtros.termo_busca}%,cliente_documento.ilike.%${filtros.termo_busca}%,cidade.ilike.%${filtros.termo_busca}%,uf.ilike.%${filtros.termo_busca}%,situacao.ilike.%${filtros.termo_busca}%,numero_venda.ilike.%${filtros.termo_busca}%,sku_estoque.ilike.%${filtros.termo_busca}%,sku_kit.ilike.%${filtros.termo_busca}%,id_unico.ilike.%${filtros.termo_busca}%`);
-      }
-
-      if (filtros.data_inicio) {
-        query = query.gte('data_pedido', filtros.data_inicio);
-      }
-
-      if (filtros.data_fim) {
-        query = query.lte('data_pedido', filtros.data_fim);
-      }
-
-      const { data, error } = await query.limit(1000);
+      const { data, error } = await supabase
+        .rpc('get_historico_vendas_masked', params);
 
       if (error) {
         throw error;
       }
 
-      setVendas(data || []);
-      calcularMetricas(data || []);
+      setVendas((data as any) || []);
+      calcularMetricas((data as any) || []);
     } catch (error: any) {
       setError(error.message);
       toast({
