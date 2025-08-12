@@ -4,24 +4,56 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ReistoqLogo } from '@/components/ui/reistoq-logo';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Package, BarChart3, ShoppingCart, Smartphone, Zap, Shield, Clock, TrendingUp, CheckCircle, ArrowRight, Play, Users, Star } from 'lucide-react';
 import { useEffect } from 'react';
 
 export function Index() {
   const { user, loading } = useAuth();
 
-  // Forçar modo dark para a landing page
+  const SEO_TITLE = 'Reistoq — Gestão de Estoque simples e poderosa';
+  const SEO_DESC = 'Automatize o estoque, integre com Tiny ERP e marketplaces e aumente a margem com analytics.';
+
+  // Tema claro por padrão na landing + SEO
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    return () => {
-      // Restaurar tema do usuário ao sair da página
-      const savedTheme = localStorage.getItem('reistoq-ui-theme');
-      if (savedTheme !== 'dark') {
-        document.documentElement.classList.remove('dark');
-        if (savedTheme === 'light') {
-          document.documentElement.classList.add('light');
-        }
+    const root = document.documentElement;
+    const prevTheme = root.classList.contains('dark')
+      ? 'dark'
+      : (root.classList.contains('light') ? 'light' : null);
+
+    // Força tema claro na landing
+    root.classList.remove('dark');
+    root.classList.add('light');
+
+    // SEO: título, meta description e canonical
+    document.title = SEO_TITLE;
+
+    const ensureTag = (selector: string, create: () => HTMLElement) => {
+      let el = document.querySelector(selector) as HTMLElement | null;
+      if (!el) {
+        el = create();
+        document.head.appendChild(el);
       }
+      return el;
+    };
+
+    const metaDesc = ensureTag('meta[name="description"]', () => {
+      const m = document.createElement('meta');
+      m.setAttribute('name', 'description');
+      return m;
+    }) as HTMLMetaElement;
+    metaDesc.setAttribute('content', SEO_DESC);
+
+    const linkCanonical = ensureTag('link[rel="canonical"]', () => {
+      const l = document.createElement('link');
+      l.setAttribute('rel', 'canonical');
+      return l;
+    }) as HTMLLinkElement;
+    linkCanonical.setAttribute('href', window.location.origin + '/');
+
+    return () => {
+      root.classList.remove('light');
+      if (prevTheme) root.classList.add(prevTheme);
     };
   }, []);
 
@@ -105,7 +137,7 @@ export function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -124,77 +156,43 @@ export function Index() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/10"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"></div>
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-5xl mx-auto text-center">
-            {/* Logo Hero */}
-            <div className="mb-8 animate-float">
-              <ReistoqLogo className="h-16 w-auto mx-auto mb-4" />
-            </div>
-            
-            <Badge variant="secondary" className="mb-6 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
-              🚀 Usado por 1000+ empresas brasileiras
-            </Badge>
-            <h1 className="text-4xl lg:text-7xl font-bold mb-8 leading-tight text-foreground">
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
-                Revolucione
-              </span>{" "}
-              <br className="hidden sm:block" />
-              sua gestão de estoque
-            </h1>
-            <p className="text-xl lg:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-              Sistema inteligente que <strong className="text-primary">automatiza 100%</strong> do seu controle de estoque, 
-              integra com Tiny ERP e <strong className="text-accent">aumenta sua lucratividade em até 25%</strong>
-            </p>
-            
-            {/* Stats Preview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 max-w-2xl mx-auto">
-              <div className="text-center">
-                <div className="text-2xl lg:text-3xl font-bold text-primary mb-1">99%</div>
-                <div className="text-sm text-muted-foreground">Precisão</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl lg:text-3xl font-bold text-accent mb-1">80%</div>
-                <div className="text-sm text-muted-foreground">Menos Tempo</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl lg:text-3xl font-bold text-success mb-1">25%</div>
-                <div className="text-sm text-muted-foreground">Mais Lucro</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl lg:text-3xl font-bold text-primary mb-1">1000+</div>
-                <div className="text-sm text-muted-foreground">Empresas</div>
+      <section className="bg-white py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Coluna Esquerda */}
+            <div>
+              <Badge variant="secondary" className="mb-4">Usado por 1000+ empresas</Badge>
+              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
+                <span className="bg-gradient-primary bg-clip-text text-transparent">Revolucione</span> sua gestão de estoque
+              </h1>
+              <p className="text-base md:text-lg text-muted-foreground mb-6 max-w-xl">
+                Sistema simples e poderoso que automatiza o controle de estoque, integra com Tiny ERP e marketplaces e aumenta sua margem com decisões guiadas por dados.
+              </p>
+              <ul className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8">
+                <li>99% de precisão</li>
+                <li>• 80% menos tempo</li>
+                <li>• 25% mais lucro</li>
+              </ul>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="px-8" asChild>
+                  <Link to="/auth" className="flex items-center gap-2">Começar gratuitamente <ArrowRight className="h-5 w-5" /></Link>
+                </Button>
+                <Button size="lg" variant="outline" className="px-8" asChild>
+                  <a href="#contato">Falar com especialista</a>
+                </Button>
               </div>
             </div>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
-              <Button size="lg" className="bg-primary hover:bg-primary-hover shadow-elegant text-lg px-8 py-4 animate-glow" asChild>
-                <Link to="/auth" className="flex items-center gap-2">
-                  Começar Gratuitamente <ArrowRight className="h-5 w-5" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/10 text-lg px-8 py-4" asChild>
-                <a href="#demo" className="flex items-center gap-2">
-                  <Play className="h-5 w-5" /> Ver Demonstração
-                </a>
-              </Button>
-            </div>
-            
-            {/* Social Proof */}
-            <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                1000+ empresas
+
+            {/* Coluna Direita - Ilustração */}
+            <div>
+              <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
+                <div className="aspect-[4/3] rounded-xl bg-background border border-border flex items-center justify-center">
+                  <ReistoqLogo className="h-12 w-auto opacity-60" />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                4.9 de avaliação
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                LGPD Compliant
+              <div className="mt-4 flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2"><Users className="h-4 w-4" /> 1000+ empresas</div>
+                <div className="flex items-center gap-2"><Shield className="h-4 w-4" /> LGPD compliant</div>
               </div>
             </div>
           </div>
@@ -205,13 +203,9 @@ export function Index() {
       <section id="features" className="py-20 bg-accent/5">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">Funcionalidades</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Tudo que você precisa em <span className="text-primary">uma só plataforma</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Desenvolvido especialmente para pequenas e médias empresas que querem crescer
-            </p>
+            <Badge variant="outline" className="mb-4">Benefícios</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Solução completa para seu controle de estoque</h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">Para PMEs que querem velocidade, precisão e crescimento</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -233,83 +227,30 @@ export function Index() {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Métricas (Provas) */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">Resultados</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Resultados <span className="text-primary">comprovados</span>
-            </h2>
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4">Resultados comprovados</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold">Números que impactam seu negócio</h2>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="text-center group">
-                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <benefit.icon className="h-10 w-10 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-foreground">{benefit.title}</h3>
-                <p className="text-muted-foreground mb-4">{benefit.description}</p>
-                <div className="text-2xl font-bold text-primary">{benefit.highlight}</div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto text-center">
+            <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+              <div className="text-5xl font-extrabold text-primary mb-2">80%</div>
+              <p className="text-muted-foreground">menos tempo na operação</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+              <div className="text-5xl font-extrabold text-primary mb-2">25%</div>
+              <p className="text-muted-foreground">mais lucro com decisões guiadas por dados</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+              <div className="text-5xl font-extrabold text-primary mb-2">99%</div>
+              <p className="text-muted-foreground">precisão no estoque</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Live Demo Section */}
-      <section id="demo" className="py-20 bg-gradient-to-br from-accent/5 to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <Badge variant="outline" className="mb-4 border-primary/30">Sistema em Ação</Badge>
-              <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-                Veja o <span className="text-primary">REISTOQ</span> funcionando
-              </h2>
-              <p className="text-lg text-muted-foreground mb-8">
-                Interface real do sistema - sem simulação
-              </p>
-            </div>
-            
-            <div className="bg-card border border-border rounded-2xl p-2 shadow-elegant">
-              <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl p-8">
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border">
-                      <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                      <span className="text-sm">Sistema conectado ao Tiny ERP</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border">
-                      <Package className="h-5 w-5 text-primary" />
-                      <span className="text-sm">1.247 produtos sincronizados</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border">
-                      <BarChart3 className="h-5 w-5 text-accent" />
-                      <span className="text-sm">Relatórios em tempo real</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border border-border">
-                      <Smartphone className="h-5 w-5 text-success" />
-                      <span className="text-sm">Scanner móvel ativo</span>
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <div className="aspect-[4/3] bg-background border border-border rounded-xl p-6 shadow-lg">
-                      <div className="text-center h-full flex flex-col justify-center">
-                        <ReistoqLogo className="h-12 w-auto mx-auto mb-4 opacity-50" />
-                        <Play className="h-20 w-20 text-primary mx-auto mb-4 cursor-pointer hover:scale-110 transition-transform" />
-                        <p className="text-lg font-semibold text-foreground">Interface Real do Sistema</p>
-                        <p className="text-muted-foreground text-sm">Clique para iniciar demonstração</p>
-                      </div>
-                    </div>
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-success rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Testimonials */}
       <section className="py-20">
@@ -342,127 +283,104 @@ export function Index() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/10 via-background to-accent/10">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-              Pronto para <span className="text-primary">revolucionar</span> sua gestão?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Junte-se a mais de 1000 empresas que já transformaram sua gestão de estoque
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25" asChild>
-                <Link to="/auth" className="flex items-center gap-2">
-                  Começar Gratuitamente <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="text-sm text-muted-foreground">
-                ✓ 30 dias grátis • ✓ Sem cartão de crédito • ✓ Suporte incluído
+      {/* Como funciona */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4">Como funciona</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold">3 passos para começar</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                <ShoppingCart className="h-6 w-6" />
               </div>
+              <h3 className="font-semibold mb-2">Conectar integrações</h3>
+              <p className="text-muted-foreground text-sm">Tiny ERP, Mercado Livre, Shopee e outros canais em poucos cliques.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                <Clock className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">Sincronizar itens</h3>
+              <p className="text-muted-foreground text-sm">Produtos, saldos e movimentações sempre atualizados automaticamente.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                <BarChart3 className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">Acompanhar KPIs</h3>
+              <p className="text-muted-foreground text-sm">Dashboards em tempo real e alertas inteligentes para decidir melhor.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Preview Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 to-background">
+      {/* Integrações */}
+      <section id="integrations" className="py-16 bg-accent/5">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 border-accent/30">Planos</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Escolha o plano <span className="text-primary">ideal</span> para seu negócio
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comece grátis e escale conforme sua empresa cresce
-            </p>
+          <div className="text-center mb-8">
+            <Badge variant="outline" className="mb-4">Integrações</Badge>
+            <h2 className="text-2xl md:text-3xl font-bold">Conecte seus principais canais</h2>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-border hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-xl font-bold mb-4 text-foreground">Starter</h3>
-                <div className="text-3xl font-bold mb-6">Grátis</div>
-                <ul className="space-y-3 text-sm text-muted-foreground mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Até 100 produtos
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Scanner básico
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Relatórios simples
-                  </li>
-                </ul>
-                <Button className="w-full" variant="outline" asChild>
-                  <Link to="/auth">Começar Grátis</Link>
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-primary shadow-lg scale-105 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
-              </div>
-              <CardContent className="p-8 text-center">
-                <h3 className="text-xl font-bold mb-4">Professional</h3>
-                <div className="text-3xl font-bold mb-6">
-                  R$ 97<span className="text-sm text-muted-foreground">/mês</span>
-                </div>
-                <ul className="space-y-3 text-sm text-muted-foreground mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Produtos ilimitados
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Integração Tiny ERP
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Analytics avançado
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Suporte prioritário
-                  </li>
-                </ul>
-                <Button className="w-full bg-primary hover:bg-primary-hover" asChild>
-                  <Link to="/auth">Iniciar Teste Grátis</Link>
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-border hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-xl font-bold mb-4">Enterprise</h3>
-                <div className="text-3xl font-bold mb-6">Customizado</div>
-                <ul className="space-y-3 text-sm text-muted-foreground mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Múltiplas filiais
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    API personalizada
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    Treinamento incluso
-                  </li>
-                </ul>
-                <Button className="w-full" variant="outline">
-                  <a href="mailto:contato@reistoq.com">Falar com Vendas</a>
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <span className="rounded-xl border border-border bg-card px-4 py-2 text-sm" aria-label="Logo Tiny ERP">Tiny ERP</span>
+            <span className="rounded-xl border border-border bg-card px-4 py-2 text-sm" aria-label="Logo Mercado Livre">Mercado Livre</span>
+            <span className="rounded-xl border border-border bg-card px-4 py-2 text-sm" aria-label="Logo Shopee">Shopee</span>
           </div>
         </div>
       </section>
+
+      {/* FAQ */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <Badge variant="outline" className="mb-4">FAQ</Badge>
+            <h2 className="text-2xl md:text-3xl font-bold">Perguntas frequentes</h2>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="q1">
+                <AccordionTrigger>Preciso do Tiny para usar?</AccordionTrigger>
+                <AccordionContent>
+                  Não, mas a integração com o Tiny potencializa a automação.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="q2">
+                <AccordionTrigger>Tem plano gratuito?</AccordionTrigger>
+                <AccordionContent>
+                  Sim, comece agora e evolua quando precisar.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Pronto para começar?</h2>
+          <p className="text-base md:text-lg text-muted-foreground mb-6">Comece gratuitamente em minutos — sem cartão de crédito.</p>
+          <Button size="lg" className="px-8" asChild>
+            <Link to="/auth" className="flex items-center gap-2">Começar gratuitamente <ArrowRight className="h-5 w-5" /></Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: 'REISTOQ',
+          applicationCategory: 'BusinessApplication',
+          operatingSystem: 'Web',
+          url: typeof window !== 'undefined' ? window.location.origin + '/' : 'https://reistoq.com.br/',
+          description: SEO_DESC
+        })
+      }} />
+
 
       {/* Footer */}
       <footer className="border-t border-border py-16 bg-gradient-subtle">
