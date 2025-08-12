@@ -76,43 +76,48 @@ serve(async (req) => {
       throw new Error('Token do Tiny ERP não configurado');
     }
 
-    // Obter número do pedido da requisição
-    const { numeroPedido } = await req.json();
-    
-    if (!numeroPedido) {
-      throw new Error('Número do pedido é obrigatório');
-    }
+// Obter número do pedido e situacao/status da requisição
+const { numeroPedido, situacao, status } = await req.json();
 
-    console.log('Buscando detalhes do pedido:', numeroPedido);
+if (!numeroPedido) {
+  throw new Error('Número do pedido é obrigatório');
+}
 
-    // Parâmetros para a API do Tiny
-    const params = new URLSearchParams({
-      token: tinyToken,
-      formato: 'json',
-      id: numeroPedido
-    });
+console.log('Buscando detalhes do pedido:', numeroPedido);
 
-    // Fazer requisição para a API do Tiny
-    const tinyResponse = await fetch(`https://api.tiny.com.br/api2/pedido.obter.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString()
-    });
+// Parâmetros para a API do Tiny
+const params = new URLSearchParams({
+  token: tinyToken,
+  formato: 'json',
+  id: numeroPedido,
+  com_itens: 'S',
+});
+
+// incluir situacao/status se fornecido
+if (situacao) params.append('situacao', String(situacao));
+else if (status) params.append('status', String(status));
+
+// Fazer requisição para a API do Tiny
+const tinyResponse = await fetch(`https://api.tiny.com.br/api2/pedido.obter.php`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  },
+  body: params.toString()
+});
 
     if (!tinyResponse.ok) {
       throw new Error(`Erro na API do Tiny: ${tinyResponse.status}`);
     }
 
-    const tinyData: TinyApiResponse = await tinyResponse.json();
-    console.log('Resposta da API Tiny:', tinyData.retorno.status);
+const tinyData: TinyApiResponse = await tinyResponse.json();
+console.log('Resposta da API Tiny:', tinyData.retorno.status);
 
-    // Verificar se houve erro na resposta
-    if (tinyData.retorno.status === 'Erro') {
-      const erros = tinyData.retorno.erros?.map(e => e.erro).join(', ') || 'Erro desconhecido';
-      throw new Error(`Erro da API Tiny: ${erros}`);
-    }
+// Verificar se houve erro na resposta
+if (tinyData.retorno.status === 'Erro') {
+  const erros = tinyData.retorno.erros?.map(e => e.erro).join(', ') || 'Erro desconhecido';
+  throw new Error(`Erro da API Tiny: ${erros}`);
+}
 
     // Verificar se o pedido foi encontrado
     if (!tinyData.retorno.pedido) {
