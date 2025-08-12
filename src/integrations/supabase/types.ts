@@ -1191,7 +1191,120 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      historico_vendas_public: {
+        Row: {
+          cidade: string | null
+          cliente_documento: string | null
+          cliente_nome: string | null
+          codigo_barras: string | null
+          codigo_rastreamento: string | null
+          cpf_cnpj: string | null
+          created_at: string | null
+          data_pedido: string | null
+          data_prevista: string | null
+          descricao: string | null
+          id: string | null
+          id_unico: string | null
+          ncm: string | null
+          numero_ecommerce: string | null
+          numero_pedido: string | null
+          numero_venda: string | null
+          obs: string | null
+          obs_interna: string | null
+          observacoes: string | null
+          pedido_id: string | null
+          qtd_kit: number | null
+          quantidade: number | null
+          situacao: string | null
+          sku_estoque: string | null
+          sku_kit: string | null
+          sku_produto: string | null
+          status: string | null
+          total_itens: number | null
+          uf: string | null
+          updated_at: string | null
+          url_rastreamento: string | null
+          valor_desconto: number | null
+          valor_frete: number | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          cidade?: string | null
+          cliente_documento?: never
+          cliente_nome?: never
+          codigo_barras?: string | null
+          codigo_rastreamento?: string | null
+          cpf_cnpj?: never
+          created_at?: string | null
+          data_pedido?: string | null
+          data_prevista?: string | null
+          descricao?: string | null
+          id?: string | null
+          id_unico?: string | null
+          ncm?: string | null
+          numero_ecommerce?: string | null
+          numero_pedido?: string | null
+          numero_venda?: string | null
+          obs?: string | null
+          obs_interna?: string | null
+          observacoes?: string | null
+          pedido_id?: string | null
+          qtd_kit?: number | null
+          quantidade?: number | null
+          situacao?: string | null
+          sku_estoque?: string | null
+          sku_kit?: string | null
+          sku_produto?: string | null
+          status?: string | null
+          total_itens?: number | null
+          uf?: string | null
+          updated_at?: string | null
+          url_rastreamento?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          cidade?: string | null
+          cliente_documento?: never
+          cliente_nome?: never
+          codigo_barras?: string | null
+          codigo_rastreamento?: string | null
+          cpf_cnpj?: never
+          created_at?: string | null
+          data_pedido?: string | null
+          data_prevista?: string | null
+          descricao?: string | null
+          id?: string | null
+          id_unico?: string | null
+          ncm?: string | null
+          numero_ecommerce?: string | null
+          numero_pedido?: string | null
+          numero_venda?: string | null
+          obs?: string | null
+          obs_interna?: string | null
+          observacoes?: string | null
+          pedido_id?: string | null
+          qtd_kit?: number | null
+          quantidade?: number | null
+          situacao?: string | null
+          sku_estoque?: string | null
+          sku_kit?: string | null
+          sku_produto?: string | null
+          status?: string | null
+          total_itens?: number | null
+          uf?: string | null
+          updated_at?: string | null
+          url_rastreamento?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invite: {
@@ -1227,6 +1340,52 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_historico_vendas_masked: {
+        Args: {
+          _start?: string
+          _end?: string
+          _search?: string
+          _limit?: number
+          _offset?: number
+        }
+        Returns: {
+          id: string
+          id_unico: string
+          numero_pedido: string
+          sku_produto: string
+          descricao: string
+          quantidade: number
+          valor_unitario: number
+          valor_total: number
+          cliente_nome: string
+          cliente_documento: string
+          status: string
+          observacoes: string
+          data_pedido: string
+          created_at: string
+          updated_at: string
+          ncm: string
+          codigo_barras: string
+          pedido_id: string
+          cpf_cnpj: string
+          valor_frete: number
+          data_prevista: string
+          obs: string
+          obs_interna: string
+          cidade: string
+          uf: string
+          url_rastreamento: string
+          situacao: string
+          codigo_rastreamento: string
+          numero_ecommerce: string
+          valor_desconto: number
+          numero_venda: string
+          sku_estoque: string
+          sku_kit: string
+          qtd_kit: number
+          total_itens: number
+        }[]
+      }
       get_user_permissions: {
         Args: Record<PropertyKey, never>
         Returns: string[]
@@ -1234,6 +1393,14 @@ export type Database = {
       has_permission: {
         Args: { permission_key: string }
         Returns: boolean
+      }
+      mask_document: {
+        Args: { doc: string }
+        Returns: string
+      }
+      mask_name: {
+        Args: { full_name: string }
+        Returns: string
       }
       revoke_invitation: {
         Args: { _id: string }
