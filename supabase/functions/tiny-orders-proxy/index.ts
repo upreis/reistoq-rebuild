@@ -31,57 +31,6 @@ function normalizeSituacao(s?: string | null): string {
   return String(s).trim();
 }
 
-// Normalização básica para status (remove acentos, caixa baixa)
-function normalizeText(s: string) {
-  return String(s || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-const TINY_CODES = new Set([
-  "aberto",
-  "aprovado",
-  "preparando_envio",
-  "faturado",
-  "pronto_envio",
-  "enviado",
-  "entregue",
-  "nao_entregue",
-  "cancelado",
-]);
-
-const UI_TO_TINY: Record<string, string> = {
-  // UI label -> Tiny code (normalizados)
-  "em aberto": "aberto",
-  "aberto": "aberto",
-  "aprovado": "aprovado",
-  "preparando envio": "preparando_envio",
-  "preparando_envio": "preparando_envio",
-  "faturado": "faturado",
-  "pronto para envio": "pronto_envio",
-  "pronto_envio": "pronto_envio",
-  "enviado": "enviado",
-  "entregue": "entregue",
-  "nao entregue": "nao_entregue",
-  "nao_entregue": "nao_entregue",
-  "não entregue": "nao_entregue",
-  "cancelado": "cancelado",
-};
-
-function mapUiSituacaoToTiny(s?: string | null): string {
-  if (!s) return "";
-  const n = normalizeText(String(s));
-  // tenta por label
-  if (UI_TO_TINY[n]) return UI_TO_TINY[n];
-  // tenta por código tiny já normalizado
-  if (TINY_CODES.has(n)) return n;
-  // tenta trocar espaços por underscore e validar
-  const maybe = n.replace(/\s+/g, "_");
-  return TINY_CODES.has(maybe) ? maybe : ""; // desconhecido -> ignorar
-}
-
 function toFormBody(params: Record<string, string | number | undefined>) {
   const usp = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
@@ -162,20 +111,10 @@ const page = Math.max(1, Number(body.page || 1));
 const pageSize = Math.max(1, Math.min(500, Number(body.pageSize || 50)));
 const dateFrom = body.dateFrom as string | undefined;
 const dateTo = body.dateTo as string | undefined;
+const statusRaw = normalizeSituacao(body.status as string | undefined);
+const situacao = normalizeSituacao(body.situacao as string | undefined) || statusRaw;
 const numero = body.numero as string | undefined;
 const expand = String(body.expand || "").toLowerCase();
-
-// Suporte a múltiplos status da UI
-const rawSituacoes: string[] | undefined = Array.isArray(body.situacoes)
-  ? body.situacoes
-  : (Array.isArray(body.statuses) ? body.statuses : undefined);
-const statusRaw = normalizeSituacao(body.status as string | undefined);
-const situacaoSingleRaw = normalizeSituacao(body.situacao as string | undefined) || statusRaw;
-const statusesTiny: string[] = (rawSituacoes && rawSituacoes.length
-  ? rawSituacoes
-  : (situacaoSingleRaw ? [situacaoSingleRaw] : []))
-  .map((s: string) => mapUiSituacaoToTiny(s))
-  .filter((s: string) => !!s);
 
     // Validate required dates in DD/MM/AAAA
     if (!isDDMMYYYY(dateFrom)) {
@@ -200,111 +139,47 @@ if (cfgErr || !cfg?.valor) {
 }
 const token = cfg.valor as string;
 
-// Fluxo: múltiplos status -> agregar; caso contrário -> consulta única
-if (Array.isArray(statusesTiny) && statusesTiny.length > 1) {
-  console.log("tiny-proxy.call.pesquisa.multi", { requestId, statuses: statusesTiny, page, pageSize, hasNumero: !!numero });
-  const resultsArrays: any[][] = [];
-  let totalSum = 0;
-  const perStatusCounts: Record<string, number> = {};
-  for (const st of statusesTiny) {
-    const pesquisaParams: Record<string, string | number | undefined> = {
-      pagina: page,
-      limite: pageSize,
-      dataInicial: dateFrom,
-      dataFinal: dateTo,
-      situacao: st,
-      numero: numero || undefined,
-    };
-    try {
-      const resp = await fetchTiny("pedidos.pesquisa.php", pesquisaParams, token, requestId);
-      const parsed = await safeParseJson(resp);
-      const tinyStatus = parsed?.retorno?.status;
-      if (tinyStatus && String(tinyStatus).toUpperCase() !== "OK") {
-        console.log("tiny-proxy.call.pesquisa.fail", { requestId, situacao: st, details: parsed?.retorno?.erros || parsed });
-        continue; // ignora este status, segue com os demais
-      }
-      let { pedidos, total } = extractPedidosAndTotal(parsed);
-      if (numero) pedidos = pedidos.filter((p: any) => pedidoMatchesNumero(p, numero));
-      resultsArrays.push(pedidos);
-      totalSum += Number(total || 0);
-    } catch (err) {
-      console.log("tiny-proxy.call.pesquisa.error", { requestId, situacao: st, err: String(err) });
-    }
-  }
+// Build pesquisa payload
+const pesquisaParams: Record<string, string | number | undefined> = {
+  pagina: page,
+  limite: pageSize,
+  dataInicial: dateFrom,
+  dataFinal: dateTo,
+  situacao: situacao || undefined,
+  numero: numero || undefined,
+};
 
-  // Deduplicar por id/numero
-  const map = new Map<string, any>();
-  const combined = ([] as any[]).concat(...resultsArrays);
-  for (const p of combined) {
-    const key = String(p?.id || p?.numero || p?.numeroPedido || p?.numero_ecommerce || crypto.randomUUID());
-    if (!map.has(key)) map.set(key, p);
-  }
-  let combinedUnique = Array.from(map.values());
-
-  // Paginação global simples sobre o combinado
-  const offset = (page - 1) * pageSize;
-  combinedUnique = combinedUnique.slice(offset, offset + pageSize);
-
-  if (expand === "items" && Array.isArray(combinedUnique)) {
-    const expanded: any[] = [];
-    for (const p of combinedUnique) {
-      try {
-        console.log("tiny-proxy.call.obter", { requestId, id: p?.id || p?.numero });
-        const full = await expandPedidoItens(p, token, requestId);
-        expanded.push(full);
-      } catch (_) {
-        expanded.push(p);
-      }
-    }
-    return json({ results: expanded, paging: { total: totalSum, page, pageSize }, page, pageSize, total: totalSum, requestId }, 200, requestId);
-  }
-
-  console.log("tiny-proxy.multi.summary", { requestId, page, pageSize, totalFromAPIs: totalSum, totalAfterDedup: combinedUnique.length });
-  return json({ results: combinedUnique, paging: { total: totalSum, page, pageSize }, page, pageSize, total: totalSum, requestId }, 200, requestId);
-} else {
-  // Consulta única (sem status ou um único status)
-  const situacaoToUse = statusesTiny[0];
-  const pesquisaParams: Record<string, string | number | undefined> = {
-    pagina: page,
-    limite: pageSize,
-    dataInicial: dateFrom,
-    dataFinal: dateTo,
-    situacao: situacaoToUse || undefined,
-    numero: numero || undefined,
-  };
-
-  console.log("tiny-proxy.call.pesquisa", { requestId, page, pageSize, situacao: situacaoToUse || null, hasNumero: !!numero });
-  const resp = await fetchTiny("pedidos.pesquisa.php", pesquisaParams, token, requestId);
-  const parsed = await safeParseJson(resp);
-  const tinyStatus = parsed?.retorno?.status;
-  if (tinyStatus && String(tinyStatus).toUpperCase() !== "OK") {
-    return json({ error: "tiny_api_error", details: parsed?.retorno?.erros || parsed, requestId }, 400, requestId);
-  }
-  // Extract pedidos and total
-  let { pedidos, total } = extractPedidosAndTotal(parsed);
-
-  // If Tiny doesn't support numero param, ensure filter client-side
-  if (numero) {
-    pedidos = pedidos.filter((p: any) => pedidoMatchesNumero(p, numero));
-  }
-
-  // Expand items if requested
-  if (expand === "items" && Array.isArray(pedidos)) {
-    const expanded: any[] = [];
-    for (const p of pedidos) {
-      try {
-        console.log("tiny-proxy.call.obter", { requestId, id: p?.id || p?.numero });
-        const full = await expandPedidoItens(p, token, requestId);
-        expanded.push(full);
-      } catch (_) {
-        expanded.push(p);
-      }
-    }
-    pedidos = expanded;
-  }
-
-  return json({ results: pedidos, paging: { total, page, pageSize }, page, pageSize, total, requestId }, 200, requestId);
+console.log("tiny-proxy.call.pesquisa", { requestId, page, pageSize, hasNumero: !!numero });
+const resp = await fetchTiny("pedidos.pesquisa.php", pesquisaParams, token, requestId);
+const parsed = await safeParseJson(resp);
+const tinyStatus = parsed?.retorno?.status;
+if (tinyStatus && String(tinyStatus).toUpperCase() !== "OK") {
+  return json({ error: "tiny_api_error", details: parsed?.retorno?.erros || parsed, requestId }, 400, requestId);
 }
+// Extract pedidos and total
+let { pedidos, total } = extractPedidosAndTotal(parsed);
+
+    // If Tiny doesn't support numero param, ensure filter client-side
+    if (numero) {
+      pedidos = pedidos.filter((p: any) => pedidoMatchesNumero(p, numero));
+    }
+
+    // Expand items if requested
+if (expand === "items" && Array.isArray(pedidos)) {
+  const expanded: any[] = [];
+  for (const p of pedidos) {
+    try {
+      console.log("tiny-proxy.call.obter", { requestId, id: p?.id || p?.numero });
+      const full = await expandPedidoItens(p, token, requestId);
+      expanded.push(full);
+    } catch (_) {
+      expanded.push(p);
+    }
+  }
+  pedidos = expanded;
+}
+
+    return json({ results: pedidos, paging: { total, page, pageSize }, page, pageSize, total, requestId }, 200, requestId);
   } catch (e) {
     return json({ error: String(e), requestId }, 500, requestId);
   }

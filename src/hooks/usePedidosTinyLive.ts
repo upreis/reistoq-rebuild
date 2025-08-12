@@ -9,38 +9,6 @@ function ddmmyyyyToISO(d: string) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// Normalização e mapeamento de status da UI -> códigos Tiny (frontend)
-function normalizeText(s: string) {
-  return String(s || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-const UI_TO_TINY: Record<string, string> = {
-  "em aberto": "aberto",
-  "aberto": "aberto",
-  "aprovado": "aprovado",
-  "preparando envio": "preparando_envio",
-  "preparando_envio": "preparando_envio",
-  "faturado": "faturado",
-  "pronto para envio": "pronto_envio",
-  "pronto_envio": "pronto_envio",
-  "enviado": "enviado",
-  "entregue": "entregue",
-  "nao entregue": "nao_entregue",
-  "nao_entregue": "nao_entregue",
-  "não entregue": "nao_entregue",
-  "cancelado": "cancelado",
-};
-function mapUiSituacaoToTiny(s?: string | null): string {
-  if (!s) return "";
-  const n = normalizeText(String(s));
-  if (UI_TO_TINY[n]) return UI_TO_TINY[n];
-  const maybe = n.replace(/\s+/g, "_");
-  return UI_TO_TINY[maybe] || "";
-}
-
 export function usePedidosTinyLive(initialFiltros?: Partial<Filtros>): UsePedidosReturn {
   const [itens, setItens] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,14 +39,13 @@ export function usePedidosTinyLive(initialFiltros?: Partial<Filtros>): UsePedido
       const dateTo = toTinyDate(filtros.dataFinal);
       const situacao = (filtros.situacoes?.[0] || "").trim();
       const numero = (filtros.busca || "").trim();
-      const mappedSituacoes = (filtros.situacoes || []).map((s) => mapUiSituacaoToTiny(s)).filter(Boolean);
+
       const body = {
         page,
         pageSize,
         dateFrom,
         dateTo,
         situacao,
-        situacoes: mappedSituacoes,
         numero,
         expand: "items",
       };
