@@ -209,7 +209,7 @@ export function AnnouncementTicker({
     >
       <div
         className={`absolute inset-0 -z-10 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`}
-        aria-hidden
+        aria-hidden style={{ opacity: collapsed ? 0 : 1 }}
       />
       {collapsed ? (
         <div className={cn(innerBaseCls, "h-0")} />
