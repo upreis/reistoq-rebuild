@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backfill_report_org_nulls: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          reason: string
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           active: boolean | null
@@ -172,6 +193,13 @@ export type Database = {
           valores_novos?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "historico_depara_org_fk"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "historico_depara_organization_id_fkey"
             columns: ["organization_id"]
@@ -530,6 +558,13 @@ export type Database = {
           usuario_mapeamento?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "mapeamentos_depara_org_fk"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mapeamentos_depara_organization_id_fkey"
             columns: ["organization_id"]
@@ -915,6 +950,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sync_control_org_fk"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sync_control_organization_id_fkey"
             columns: ["organization_id"]
