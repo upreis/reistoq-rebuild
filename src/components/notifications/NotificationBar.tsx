@@ -169,10 +169,10 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <div data-nbar-root data-bg-index={colorIndex} className="relative overflow-hidden min-h-[44px]">
+        <div data-nbar-root data-bg-index={colorIndex} className="relative isolate overflow-hidden min-h-[44px]">
           {/* camada do gradiente (só a faixa) */}
           <div
-            className={`absolute inset-0 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`}
+            className={`absolute inset-0 -z-10 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`}
             aria-hidden
           />
           {/* conteúdo por cima, intacto */}
