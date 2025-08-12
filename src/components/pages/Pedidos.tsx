@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 import { usePedidosML } from "@/hooks/usePedidosML";
-import { usePedidosTiny } from "@/hooks/usePedidosTiny";
+// import { usePedidosTiny } from "@/hooks/usePedidosTiny"; // removido: Tiny live via proxy
 import { usePedidosShopee } from "@/hooks/usePedidosShopee";
 import { MLAccountMultiSelect } from "@/components/pedidos/MLAccountMultiSelect";
 import { FEATURE_QA_TEST, IS_NON_PRODUCTION, FEATURE_TINY_LIVE } from "@/config/features";
@@ -280,17 +280,19 @@ setQaRunning(true);
 
   const handleBuscarPedidos = async () => {
     try {
-      // ✅ NOVO: Marcar processo como iniciado
-      await supabase.functions.invoke('sync-control', {
-        body: { 
-          action: 'start',
-          process_name: 'sync-pedidos-rapido',
-          progress: {
-            started_at: new Date().toISOString(),
-            current_step: 'Iniciando busca...'
+      // Evitar side-effects quando fonte = Interno (Tiny Live)
+      if (!(FEATURE_TINY_LIVE && fonte === 'interno')) {
+        await supabase.functions.invoke('sync-control', {
+          body: { 
+            action: 'start',
+            process_name: 'sync-pedidos-rapido',
+            progress: {
+              started_at: new Date().toISOString(),
+              current_step: 'Iniciando busca...'
+            }
           }
-        }
-      });
+        });
+      }
 
 if (filtros.fonte === 'mercadolivre') {
         await buscarPedidosML();
@@ -320,13 +322,15 @@ toast({
       });
     } finally {
       try {
-        await supabase.functions.invoke('sync-control', {
-          body: {
-            action: 'stop',
-            process_name: 'sync-pedidos-rapido',
-            progress: { finished_at: new Date().toISOString(), current_step: 'Concluído' }
-          }
-        });
+        if (!(FEATURE_TINY_LIVE && fonte === 'interno')) {
+          await supabase.functions.invoke('sync-control', {
+            body: {
+              action: 'stop',
+              process_name: 'sync-pedidos-rapido',
+              progress: { finished_at: new Date().toISOString(), current_step: 'Concluído' }
+            }
+          });
+        }
       } catch {}
     }
   };

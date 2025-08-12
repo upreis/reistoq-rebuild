@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toTinyDate } from "@/lib/date-providers";
-import { FEATURE_TINY_LIVE, type Filtros, type UsePedidosReturn } from "@/config/features";
+import { FEATURE_TINY_LIVE, FEATURE_QA_TEST, type Filtros, type UsePedidosReturn } from "@/config/features";
 
 // Helper local para converter DD/MM/AAAA -> YYYY-MM-DD (ISO curto)
 function ddmmyyyyToISO(d: string) {
@@ -69,20 +69,18 @@ export function usePedidosTinyLive(initialFiltros?: Partial<Filtros>): UsePedido
     try {
       const dateFrom = toTinyDate(filtros.dataInicio);
       const dateTo = toTinyDate(filtros.dataFinal);
-      const situacao = (filtros.situacoes?.[0] || "").trim();
       const numero = (filtros.busca || "").trim();
-      const mappedSituacoes = (filtros.situacoes || []).map((s) => mapUiSituacaoToTiny(s)).filter(Boolean);
+      const statuses = (filtros.situacoes || []).slice();
       const body = {
         page,
         pageSize,
         dateFrom,
         dateTo,
-        situacao,
-        situacoes: mappedSituacoes,
         numero,
+        statuses,
         expand: "items",
-      };
-      console.info('[tiny-live] chamando tiny-orders-proxy', body);
+      } as const;
+      if (FEATURE_QA_TEST) console.info('[tiny-live] body', body);
       const { data, error } = await supabase.functions.invoke("tiny-orders-proxy", {
         body,
       });
