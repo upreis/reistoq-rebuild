@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import { Bell, ChevronUp, ChevronDown, Settings2, Sparkles, CheckCircle, Clock, Megaphone, AlertTriangle } from "lucide-react";
+import { Bell, ChevronUp, ChevronDown, Settings2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,8 +55,13 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   const [collapsed, setCollapsed] = usePersistentState<boolean>(COLLAPSE_KEY, false);
   const [notifications, setNotifications] = React.useState<NotificationItem[]>([]);
   const [currentIndex, setCurrentIndex] = React.useState(0);
-  const [progress, setProgress] = React.useState(0);
-  const ROTATION_MS = 5000; // 5s por especificação
+  const [colorIndex, setColorIndex] = React.useState(0);
+  const BG_COLORS = [
+    'from-blue-500 to-blue-600',
+    'from-green-500 to-green-600',
+    'from-orange-500 to-orange-600',
+    'from-purple-500 to-purple-600',
+  ] as const;
   const { fetchNotifications, saveAnnouncement, removeAnnouncement, dismissNotification } = useNotifications();
   const containerCls = placement === 'sticky' ? 'sticky top-0 z-40 flex w-full justify-center' : 'w-full flex justify-center';
   const innerWrapCls = placement === 'sticky' ? 'mx-3 mt-3 w-full max-w-4xl animate-fade-in' : 'mx-1 mt-1 w-full max-w-3xl animate-fade-in';
@@ -82,26 +87,19 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
     loadNotifications();
   }, [location.pathname]);
 
-  // Rotação automática de notificações a cada 5 segundos
+  // Rotação de cor de fundo a cada 5s (sem alterar a mensagem)
   React.useEffect(() => {
-    if (notifications.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % notifications.length);
-      setProgress(0);
-    }, ROTATION_MS);
-    return () => clearInterval(interval);
-  }, [notifications.length]);
+    if (collapsed) return;
+    const id = setInterval(() => {
+      setColorIndex((i) => (i + 1) % BG_COLORS.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [collapsed]);
 
   const activeItem: NotificationItem | null = notifications[currentIndex] ?? null;
 
-  // Barra de progresso sincronizada com a rotação (incrementa 2% a cada 100ms)
-  React.useEffect(() => {
-    if (!activeItem) return;
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 100 ? 0 : prev + 2));
-    }, 100);
-    return () => clearInterval(interval);
-  }, [currentIndex, activeItem]);
+  // (sem progress bar)
+
 
   const onDismiss = () => {
     if (activeItem) {
@@ -137,93 +135,67 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
     return null;
   }
 
-  const STYLE: Record<NotificationKind, { bg: string; text: string }> = {
-    info: {
-      bg: "bg-gradient-to-r from-[hsl(var(--accent))] to-[hsl(var(--primary))]",
-      text: "text-primary-foreground",
-    },
-    success: {
-      bg: "bg-gradient-to-r from-[hsl(var(--success))] to-[hsl(var(--success))]",
-      text: "text-success-foreground",
-    },
-    warning: {
-      bg: "bg-gradient-to-r from-[hsl(var(--warning))] to-[hsl(var(--warning))]",
-      text: "text-warning-foreground",
-    },
-    destructive: {
-      bg: "bg-gradient-to-r from-[hsl(var(--destructive))] to-[hsl(var(--destructive))]",
-      text: "text-destructive-foreground",
-    },
+  const variantCls: Record<NotificationKind, string> = {
+    info: "border-primary/30",
+    success: "border-success/40",
+    warning: "border-warning/40",
+    destructive: "border-destructive/50",
   } as const;
 
-  const ICON_BY_KIND: Record<NotificationKind, React.ComponentType<{ className?: string }>> = {
-    info: Megaphone,
-    success: CheckCircle,
-    warning: Clock,
-    destructive: AlertTriangle,
-  };
-
-  const style = STYLE[activeItem.kind];
-  const Icon = ICON_BY_KIND[activeItem.kind];
+  const bg = BG_COLORS[colorIndex];
 
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <Alert className={`${style.bg} ${style.text} border-transparent shadow-sm p-2 px-3 relative overflow-hidden`}> 
-          <div className="flex w-full items-center gap-2">
-              <Icon className="h-[14px] w-[14px]" />
-            <div className="flex-1">
-              <AlertDescription className="text-[13px]">
-                {activeItem.message}
-                {activeItem.href && (
-                  <a
-                    href={activeItem.href}
-                    className="ml-2 text-[13px] underline underline-offset-4 hover-scale opacity-90 hover:opacity-100"
-                  >
-                    {activeItem.linkLabel ?? "Ver mais"}
-                  </a>
-                )}
-              </AlertDescription>
+        <div className={`bg-gradient-to-r ${bg} px-4 py-3 relative overflow-hidden`}>
+          <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm p-2 px-3`}>
+            <div className="flex w-full items-center gap-2">
+                <Bell className="h-[14px] w-[14px] text-primary" />
+              <div className="flex-1">
+                <AlertDescription className="text-[13px] text-foreground">
+                  {activeItem.message}
+                  {activeItem.href && (
+                    <a
+                      href={activeItem.href}
+                      className="ml-2 text-[13px] text-primary underline underline-offset-4 hover-scale"
+                    >
+                      {activeItem.linkLabel ?? "Ver mais"}
+                    </a>
+                  )}
+                </AlertDescription>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <PermissionGate required="system:announce">
+                  <NotificationManager
+                    onSave={async (item) => {
+                      await saveAnnouncement(item as any);
+                      // Recarregar notificações filtrando pela rota atual
+                      const fetchedNotifications = await fetchNotifications();
+                      const currentPath = location.pathname;
+                      const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
+                      const mapped = fetchedNotifications.map(n => ({
+                        id: n.id,
+                        kind: n.kind,
+                        message: n.message,
+                        href: n.href,
+                        linkLabel: n.link_label,
+                        type: n.type,
+                        target_routes: (n as any).target_routes || undefined,
+                      }));
+                      setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
+                    }}
+                  />
+                </PermissionGate
+                >
+
+                <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
+                  <ChevronUp className="h-[14px] w-[14px]" />
+                </Button>
+              </div>
             </div>
-
-            <div className="flex items-center gap-1">
-              <PermissionGate required="system:announce">
-                <NotificationManager
-                  onSave={async (item) => {
-                    await saveAnnouncement(item as any);
-                    // Recarregar notificações filtrando pela rota atual
-                    const fetchedNotifications = await fetchNotifications();
-                    const currentPath = location.pathname;
-                    const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
-                    const mapped = fetchedNotifications.map(n => ({
-                      id: n.id,
-                      kind: n.kind,
-                      message: n.message,
-                      href: n.href,
-                      linkLabel: n.link_label,
-                      type: n.type,
-                      target_routes: (n as any).target_routes || undefined,
-                    }));
-                    setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
-                  }}
-                />
-              </PermissionGate
-              >
-
-              <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
-                <ChevronUp className="h-[14px] w-[14px]" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Barra de progresso */}
-          <div className="absolute bottom-0 left-0 h-1 w-full bg-primary-foreground/20">
-            <div
-              className="h-full bg-primary-foreground/60 transition-all duration-100 ease-linear"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </Alert>
+          </Alert>
+        </div>
       </div>
     </div>
   );
