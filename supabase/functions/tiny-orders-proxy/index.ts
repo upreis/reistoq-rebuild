@@ -201,12 +201,12 @@ if (cfgErr || !cfg?.valor) {
 }
 const token = cfg.valor as string;
 
-// Consulta única seguindo regra: pedidos.pesquisa.php usa apenas token, formato=json, dataInicial, dataFinal e pagina
+// Consulta única seguindo regra: pedidos.pesquisa.php usa apenas token, formato=json, dataInicio, dataFinal e pagina
 const situacaoToUse = statusesTiny[0] || mapUiSituacaoToTiny((body.situacao || body.status) as string | undefined);
 
 const pesquisaParams: Record<string, string | number | undefined> = {
   pagina: page,
-  dataInicial: dateFrom,
+  dataInicio: dateFrom,
   dataFinal: dateTo,
   // NÃO enviar: numero, situacao/status, limite
 };
