@@ -144,6 +144,7 @@ export type Database = {
           id: string
           mapeamento_id: string
           motivo: string | null
+          organization_id: string | null
           usuario_id: string | null
           valores_anteriores: Json | null
           valores_novos: Json | null
@@ -154,6 +155,7 @@ export type Database = {
           id?: string
           mapeamento_id: string
           motivo?: string | null
+          organization_id?: string | null
           usuario_id?: string | null
           valores_anteriores?: Json | null
           valores_novos?: Json | null
@@ -164,11 +166,20 @@ export type Database = {
           id?: string
           mapeamento_id?: string
           motivo?: string | null
+          organization_id?: string | null
           usuario_id?: string | null
           valores_anteriores?: Json | null
           valores_novos?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "historico_depara_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       historico_vendas: {
         Row: {
@@ -447,6 +458,20 @@ export type Database = {
             referencedRelation: "integration_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "itens_pedidos_pedido_fk"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itens_pedidos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
         ]
       }
       mapeamentos_depara: {
@@ -457,6 +482,7 @@ export type Database = {
           id: string
           motivo_criacao: string | null
           observacoes: string | null
+          organization_id: string | null
           pedidos_aguardando: number | null
           prioridade: string | null
           quantidade: number
@@ -474,6 +500,7 @@ export type Database = {
           id?: string
           motivo_criacao?: string | null
           observacoes?: string | null
+          organization_id?: string | null
           pedidos_aguardando?: number | null
           prioridade?: string | null
           quantidade?: number
@@ -491,6 +518,7 @@ export type Database = {
           id?: string
           motivo_criacao?: string | null
           observacoes?: string | null
+          organization_id?: string | null
           pedidos_aguardando?: number | null
           prioridade?: string | null
           quantidade?: number
@@ -501,7 +529,15 @@ export type Database = {
           updated_at?: string
           usuario_mapeamento?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mapeamentos_depara_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movimentacoes_estoque: {
         Row: {
@@ -854,6 +890,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          organization_id: string | null
           process_name: string
           progress: Json | null
           status: string
@@ -862,6 +899,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          organization_id?: string | null
           process_name: string
           progress?: Json | null
           status?: string
@@ -870,12 +908,21 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          organization_id?: string | null
           process_name?: string
           progress?: Json | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sync_control_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_alerts: {
         Row: {
