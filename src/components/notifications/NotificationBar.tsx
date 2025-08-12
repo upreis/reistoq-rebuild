@@ -169,62 +169,57 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <div data-nbar-root data-bg-index={colorIndex} className="relative isolate overflow-hidden min-h-[44px]">
+        <div data-nbar-root data-bg-index={colorIndex} className="relative isolate overflow-hidden min-h-[44px] px-4 py-3">
           {/* camada do gradiente (só a faixa) */}
-          <div
-            className={`absolute inset-0 -z-10 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`}
-            aria-hidden
-          />
+          <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`} aria-hidden />
           {/* conteúdo por cima, intacto */}
-          <div className="relative z-10 px-4 py-3">
-            <Alert className="relative z-10 bg-transparent border-0 shadow-none px-0">
-              <div className="flex w-full items-center gap-2">
-                  <Bell className="h-[14px] w-[14px] text-primary" />
-                <div className="flex-1">
-                  <AlertDescription className="text-[13px] text-foreground">
-                    {activeItem.message}
-                    {activeItem.href && (
-                      <a
-                        href={activeItem.href}
-                        className="ml-2 text-[13px] text-primary underline underline-offset-4 hover-scale"
-                      >
-                        {activeItem.linkLabel ?? "Ver mais"}
-                      </a>
-                    )}
-                  </AlertDescription>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <PermissionGate required="system:announce">
-                    <NotificationManager
-                      onSave={async (item) => {
-                        await saveAnnouncement(item as any);
-                        // Recarregar notificações filtrando pela rota atual
-                        const fetchedNotifications = await fetchNotifications();
-                        const currentPath = location.pathname;
-                        const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
-                        const mapped = fetchedNotifications.map(n => ({
-                          id: n.id,
-                          kind: n.kind,
-                          message: n.message,
-                          href: n.href,
-                          linkLabel: n.link_label,
-                          type: n.type,
-                          target_routes: (n as any).target_routes || undefined,
-                        }));
-                        setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
-                      }}
-                    />
-                  </PermissionGate
-                  >
-
-                  <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
-                    <ChevronUp className="h-[14px] w-[14px]" />
-                  </Button>
-                </div>
+          <Alert className="relative z-10 bg-transparent border-0 shadow-none px-0">
+            <div className="flex w-full items-center gap-2">
+                <Bell className="h-[14px] w-[14px] text-primary" />
+              <div className="flex-1">
+                <AlertDescription className="text-[13px] text-foreground">
+                  {activeItem.message}
+                  {activeItem.href && (
+                    <a
+                      href={activeItem.href}
+                      className="ml-2 text-[13px] text-primary underline underline-offset-4 hover-scale"
+                    >
+                      {activeItem.linkLabel ?? "Ver mais"}
+                    </a>
+                  )}
+                </AlertDescription>
               </div>
-            </Alert>
-          </div>
+
+              <div className="flex items-center gap-1">
+                <PermissionGate required="system:announce">
+                  <NotificationManager
+                    onSave={async (item) => {
+                      await saveAnnouncement(item as any);
+                      // Recarregar notificações filtrando pela rota atual
+                      const fetchedNotifications = await fetchNotifications();
+                      const currentPath = location.pathname;
+                      const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
+                      const mapped = fetchedNotifications.map(n => ({
+                        id: n.id,
+                        kind: n.kind,
+                        message: n.message,
+                        href: n.href,
+                        linkLabel: n.link_label,
+                        type: n.type,
+                        target_routes: (n as any).target_routes || undefined,
+                      }));
+                      setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
+                    }}
+                  />
+                </PermissionGate
+                >
+
+                <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
+                  <ChevronUp className="h-[14px] w-[14px]" />
+                </Button>
+              </div>
+            </div>
+          </Alert>
         </div>
       </div>
     </div>
