@@ -57,3 +57,6 @@ verify_jwt = true
 
 [functions.tiny-v3-orders-proxy]
 verify_jwt = true
+
+[functions.tiny-v3-disconnect]
+verify_jwt = true

@@ -16,6 +16,7 @@ import { RolePermissionManager } from "@/components/auth/RolePermissionManager";
 import { AnnouncementsManager } from "@/components/notifications/AnnouncementsManager";
 import type { TickerItem, UrgencyLevel } from "@/components/notifications/AnnouncementTicker";
 import { FEATURE_TINY_V3_CONNECT } from "@/config/features";
+import { useLocation } from "react-router-dom";
 export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
   const [telegramToken, setTelegramToken] = useState("");
@@ -33,11 +34,13 @@ export function Configuracoes() {
   const [alertasSyncFalhas, setAlertasSyncFalhas] = useState(false);
   
   const [loading, setLoading] = useState(false);
-const { toast } = useToast();
+  const [disconnecting, setDisconnecting] = useState(false);
+  const { toast } = useToast();
 
   // Tiny v3 OAuth status
   const [tinyV3Connected, setTinyV3Connected] = useState<boolean>(false);
   const [tinyV3ExpiresAt, setTinyV3ExpiresAt] = useState<string | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     let mounted = true;
@@ -70,6 +73,48 @@ const { toast } = useToast();
       window.location.href = authUrl;
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Erro', description: e?.message || 'Falha ao iniciar OAuth do Tiny v3' });
+    }
+  };
+
+  // Atualiza status pós-callback (?tinyv3=...)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const status = params.get('tinyv3') || params.get('tiny_v3');
+    if (!status) return;
+    supabase
+      .from('tiny_v3_tokens')
+      .select('expires_at')
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length) {
+          setTinyV3Connected(true);
+          setTinyV3ExpiresAt(data[0].expires_at);
+          if (status === 'connected') {
+            toast({ title: 'Tiny v3 conectado', description: 'Conexão ativa.' });
+          }
+        } else {
+          setTinyV3Connected(false);
+          setTinyV3ExpiresAt(null);
+          if (status === 'error') {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Falha ao conectar Tiny v3' });
+          }
+        }
+      });
+  }, [location.search]);
+
+  const handleTinyV3Disconnect = async () => {
+    if (!confirm('Deseja desconectar o Tiny v3 desta organização?')) return;
+    setDisconnecting(true);
+    try {
+      const { error } = await supabase.functions.invoke('tiny-v3-disconnect');
+      if (error) throw error;
+      setTinyV3Connected(false);
+      setTinyV3ExpiresAt(null);
+      toast({ title: 'Desconectado', description: 'Conexão Tiny v3 removida.' });
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Erro', description: e?.message || 'Falha ao desconectar Tiny v3' });
+    } finally {
+      setDisconnecting(false);
     }
   };
 
@@ -506,7 +551,14 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
             </div>
             <div className="flex gap-2">
               <Button onClick={handleTinyV3Connect} variant="secondary">Conectar Tiny v3</Button>
-              {tinyV3Connected && <Button onClick={handleTinyV3Connect} variant="outline">Reconectar</Button>}
+              {tinyV3Connected && (
+                <>
+                  <Button onClick={handleTinyV3Connect} variant="outline">Reconectar</Button>
+                  <Button onClick={handleTinyV3Disconnect} variant="destructive" disabled={disconnecting}>
+                    {disconnecting ? 'Desconectando...' : 'Desconectar'}
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
