@@ -91,7 +91,11 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   React.useEffect(() => {
     if (collapsed) return;
     const id = setInterval(() => {
-      setColorIndex((i) => (i + 1) % BG_COLORS.length);
+      setColorIndex((i) => {
+        const next = (i + 1) % BG_COLORS.length;
+        console.info('[nbg]', new Date().toISOString(), 'colorIndex ->', next);
+        return next;
+      });
     }, 5000);
     return () => clearInterval(id);
   }, [collapsed]);
@@ -147,7 +151,7 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <div className={`bg-gradient-to-r ${bg} px-4 py-3 relative overflow-hidden`}>
+        <div data-bg-index={colorIndex} className={`bg-gradient-to-r ${bg} px-4 py-3 relative overflow-hidden`}>
           <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm p-2 px-3`}>
             <div className="flex w-full items-center gap-2">
                 <Bell className="h-[14px] w-[14px] text-primary" />
