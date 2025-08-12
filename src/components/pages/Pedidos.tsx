@@ -20,6 +20,7 @@ import { Download, TrendingDown, Loader2, Package } from "lucide-react";
 import { usePedidosML } from "@/hooks/usePedidosML";
 import { usePedidosTiny } from "@/hooks/usePedidosTiny";
 import { usePedidosShopee } from "@/hooks/usePedidosShopee";
+import { MLAccountMultiSelect } from "@/components/pedidos/MLAccountMultiSelect";
 import { FEATURE_QA_TEST, IS_NON_PRODUCTION, FEATURE_TINY_LIVE } from "@/config/features";
 import { usePedidosTinyLive } from "@/hooks/usePedidosTinyLive";
 
@@ -524,18 +525,8 @@ toast({
           {/* Filtros e Pesquisa */}
           {(filtros.fonte === 'mercadolivre' || filtros.fonte === 'ambas') && (
             <div className="max-w-3xl mb-2">
-              <Label>Conta Mercado Livre</Label>
-              <Select value={mlContaId} onValueChange={setMlContaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a conta" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as contas</SelectItem>
-                  {contasML.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name || c.account_identifier || c.cnpj || c.id}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Contas Mercado Livre</Label>
+              <MLAccountMultiSelect contas={contasML} selecionadas={mlAccountIds} onChange={setMlAccountIds} />
             </div>
           )}
           <FiltrosAvancadosPedidos
