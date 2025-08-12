@@ -21,9 +21,9 @@ import { usePedidosML } from "@/hooks/usePedidosML";
 // import { usePedidosTiny } from "@/hooks/usePedidosTiny"; // removido: Tiny live via proxy
 import { usePedidosShopee } from "@/hooks/usePedidosShopee";
 import { MLAccountMultiSelect } from "@/components/pedidos/MLAccountMultiSelect";
-import { FEATURE_QA_TEST, IS_NON_PRODUCTION, FEATURE_TINY_LIVE } from "@/config/features";
+import { FEATURE_QA_TEST, IS_NON_PRODUCTION, FEATURE_TINY_LIVE, FEATURE_TINY_V3_LIVE } from "@/config/features";
 import { usePedidosTinyLive } from "@/hooks/usePedidosTinyLive";
-
+import { usePedidosTinyV3 } from "@/hooks/usePedidosTinyV3";
 // Force rebuild to clear cache
 export function Pedidos() {
   const {
@@ -124,7 +124,7 @@ export function Pedidos() {
     pageSize: 50,
   });
 
-  // Tiny Live (sempre inicializa o hook; ele só atua quando a flag estiver ON)
+  // Tiny Live e Tiny v3 (os hooks só atuam quando suas flags estiverem ON)
   const tinyLiveHook = usePedidosTinyLive({
     dataInicio: filtros.dataInicio,
     dataFinal: filtros.dataFinal,
@@ -133,15 +133,25 @@ export function Pedidos() {
     pageSize: 50,
     busca: filtros.busca,
   });
-
+  const tinyV3Hook = usePedidosTinyV3({
+    dataInicio: filtros.dataInicio,
+    dataFinal: filtros.dataFinal,
+    situacoes: filtros.situacoes,
+    page: 1,
+    pageSize: 50,
+    busca: filtros.busca,
+  });
 // Escolher fonte de dados
-  const tinyItens = (FEATURE_TINY_LIVE && fonte === 'interno') ? (tinyLiveHook.itens as any) : itens;
+  const tinyItens = (fonte === 'interno')
+    ? (FEATURE_TINY_V3_LIVE
+        ? (tinyV3Hook.itens as any)
+        : (FEATURE_TINY_LIVE ? (tinyLiveHook.itens as any) : itens))
+    : itens;
   const baseItens = filtros.fonte === 'mercadolivre' 
     ? mlItens 
     : (filtros.fonte === 'ambas' ? [...itens, ...mlItens] : tinyItens);
   // Enriquecer itens com dados do DE/PARA
   const itensEnriquecidos = enriquecerItensPedidos(baseItens);
-
   // QA: Testar fontes
   const showQA = FEATURE_QA_TEST || IS_NON_PRODUCTION;
   const [qaSummary, setQaSummary] = useState('');
@@ -151,14 +161,20 @@ export function Pedidos() {
 setQaRunning(true);
     try {
       const t0 = performance.now();
-      if (FEATURE_TINY_LIVE && fonte === 'interno') {
-        await tinyLiveHook.refetch();
-      } else {
-        await buscarComFiltros();
+      if (fonte === 'interno') {
+        if (FEATURE_TINY_V3_LIVE) {
+          await tinyV3Hook.refetch();
+        } else if (FEATURE_TINY_LIVE) {
+          await tinyLiveHook.refetch();
+        } else {
+          await buscarComFiltros();
+        }
+      } else if (filtros.fonte === 'ambas') {
+        buscarComFiltros();
       }
       const tinyMsMeasured = Math.round(performance.now() - t0);
-      const tinyMs = tinyLiveHook.ms ?? tinyMsMeasured;
-      const tinyId = tinyLiveHook.reqId;
+      const tinyMs = (FEATURE_TINY_V3_LIVE ? tinyV3Hook.ms : tinyLiveHook.ms) ?? tinyMsMeasured;
+      const tinyId = FEATURE_TINY_V3_LIVE ? tinyV3Hook.reqId : tinyLiveHook.reqId;
 
       const mlT0 = performance.now();
       await mlHook.refetch();
@@ -170,8 +186,11 @@ setQaRunning(true);
       const shMs = shopeeHook.ms ?? Math.round(performance.now() - shT0);
 
       setQaReqId(tinyId || mlId);
-      const tinyCount = FEATURE_TINY_LIVE && fonte === 'interno' ? (tinyLiveHook.itens || []).length : (itens || []).length;
-      setQaSummary(`Tiny: ${tinyCount} / ${tinyMs}ms (req ${tinyId || '-'}) | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
+      const tinyCount = fonte === 'interno'
+        ? (FEATURE_TINY_V3_LIVE ? (tinyV3Hook.itens || []).length : (FEATURE_TINY_LIVE ? (tinyLiveHook.itens || []).length : (itens || []).length))
+        : (itens || []).length;
+      const tinyLabel = FEATURE_TINY_V3_LIVE ? 'Tiny v3' : (FEATURE_TINY_LIVE ? 'Tiny live' : 'Tiny');
+      setQaSummary(`${tinyLabel}: ${tinyCount} / ${tinyMs}ms (req ${tinyId || '-'}) | ML: ${(mlHook.itens || []).length} / ${mlMs}ms (req ${mlId || '-'}) | Shopee: ${(shopeeHook.itens || []).length} / ${shMs}ms`);
     } catch (e: any) {
       toast({ title: 'QA falhou', description: e?.message || String(e), variant: 'destructive' });
     } finally {
