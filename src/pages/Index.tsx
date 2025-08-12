@@ -184,10 +184,23 @@ export function Index() {
             </div>
 
             {/* Coluna Direita - Ilustração */}
-            <div>
-              <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
-                <div className="aspect-[4/3] rounded-xl bg-background border border-border flex items-center justify-center">
-                  <ReistoqLogo className="h-12 w-auto opacity-60" />
+            <div className="max-w-md w-full ml-auto" aria-hidden>
+              <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+                {/* Barra do navegador */}
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+                  <span className="w-2.5 h-2.5 rounded-full bg-border"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-border"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-border"></span>
+                </div>
+                {/* Corpo mock */}
+                <div className="p-4">
+                  <div className="h-40 rounded-lg bg-gradient-subtle border border-border"></div>
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="h-16 rounded-md bg-background border border-border"></div>
+                    <div className="h-16 rounded-md bg-background border border-border"></div>
+                    <div className="h-16 rounded-md bg-background border border-border"></div>
+                  </div>
+                  <div className="mt-4 h-20 rounded-md bg-background border border-border"></div>
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-6 text-sm text-muted-foreground">
