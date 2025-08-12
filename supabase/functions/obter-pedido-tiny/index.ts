@@ -52,6 +52,44 @@ interface TinyApiResponse {
   };
 }
 
+// Helpers para mapear status da UI -> códigos Tiny
+function normalizeText(s: string) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+const UI_TO_TINY: Record<string, string> = {
+  'em aberto': 'aberto',
+  'aberto': 'aberto',
+  'aprovado': 'aprovado',
+  'preparando envio': 'preparando_envio',
+  'preparando_envio': 'preparando_envio',
+  'faturado': 'faturado',
+  'pronto para envio': 'pronto_envio',
+  'pronto_envio': 'pronto_envio',
+  'enviado': 'enviado',
+  'entregue': 'entregue',
+  'nao entregue': 'nao_entregue',
+  'nao_entregue': 'nao_entregue',
+  'não entregue': 'nao_entregue',
+  'cancelado': 'cancelado',
+  // mapeamentos comuns vindos de outros canais
+  'delivered': 'entregue',
+  'ready_to_ship': 'pronto_envio',
+  'shipped': 'enviado',
+  'paid': 'aprovado',
+  'cancelled': 'cancelado',
+};
+function mapUiSituacaoToTiny(s?: string | null): string {
+  if (!s) return '';
+  const n = normalizeText(String(s));
+  if (UI_TO_TINY[n]) return UI_TO_TINY[n];
+  const maybe = n.replace(/\s+/g, '_');
+  return UI_TO_TINY[maybe] || '';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -93,9 +131,9 @@ const params = new URLSearchParams({
   com_itens: 'S',
 });
 
-// incluir situacao/status se fornecido
-if (situacao) params.append('situacao', String(situacao));
-else if (status) params.append('status', String(status));
+// incluir situacao/status mapeado (prioriza situacao)
+const sMapped = mapUiSituacaoToTiny(situacao) || mapUiSituacaoToTiny(status);
+if (sMapped) params.append('situacao', String(sMapped));
 
 // Fazer requisição para a API do Tiny
 const tinyResponse = await fetch(`https://api.tiny.com.br/api2/pedido.obter.php`, {

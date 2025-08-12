@@ -174,10 +174,10 @@ const rawSituacoes: string[] | undefined = Array.isArray(body.situacoes)
   : (Array.isArray(body.statuses) ? body.statuses : undefined);
 const statusRaw = normalizeSituacao(body.status as string | undefined);
 const situacaoSingleRaw = normalizeSituacao(body.situacao as string | undefined) || statusRaw;
-const statusesTiny: string[] = (rawSituacoes && rawSituacoes.length
+const collected = (rawSituacoes && rawSituacoes.length)
   ? rawSituacoes
-  : (situacaoSingleRaw ? [situacaoSingleRaw] : []));
-
+  : (situacaoSingleRaw ? [situacaoSingleRaw] : []);
+const statusesTiny: string[] = (collected || []).map(mapUiSituacaoToTiny).filter(Boolean);
     // Validate required dates in DD/MM/AAAA
     if (!isDDMMYYYY(dateFrom)) {
       return json({ error: "invalid_date_format", field: "dateFrom", expected: "DD/MM/AAAA", requestId }, 400, requestId);
@@ -201,16 +201,15 @@ if (cfgErr || !cfg?.valor) {
 }
 const token = cfg.valor as string;
 
-// Consulta única seguindo regra: pedidos.pesquisa.php usa apenas token, formato=json, dataInicio, dataFinal e pagina
-const situacaoToUse = statusesTiny[0] || normalizeSituacao(body.situacao || body.status);
+// Consulta única seguindo regra: pedidos.pesquisa.php usa apenas token, formato=json, dataInicial, dataFinal e pagina
+const situacaoToUse = statusesTiny[0] || mapUiSituacaoToTiny((body.situacao || body.status) as string | undefined);
 
 const pesquisaParams: Record<string, string | number | undefined> = {
   pagina: page,
-  dataInicio: dateFrom,
+  dataInicial: dateFrom,
   dataFinal: dateTo,
   // NÃO enviar: numero, situacao/status, limite
 };
-
 console.log("tiny-proxy.call.pesquisa", { requestId, page, pageSize, hasNumero: !!numero });
 const resp = await fetchTiny("pedidos.pesquisa.php", pesquisaParams, token, requestId);
 const parsed = await safeParseJson(resp);
