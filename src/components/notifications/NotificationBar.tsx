@@ -146,13 +146,13 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
     destructive: "border-destructive/50",
   } as const;
 
-  const bg = BG_COLORS[colorIndex];
+  
 
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <div data-bg-index={colorIndex} className={`bg-gradient-to-r ${bg} px-4 py-3 relative overflow-hidden`}>
-          <Alert className={`bg-transparent ${variantCls[activeItem.kind]} shadow-sm p-2 px-3`}>
+        <div data-bg-index={colorIndex} className={`bg-gradient-to-r ${BG_COLORS[colorIndex]} px-4 py-3 relative overflow-hidden`}>
+          <Alert className="bg-transparent border-0 shadow-none">
             <div className="flex w-full items-center gap-2">
                 <Bell className="h-[14px] w-[14px] text-primary" />
               <div className="flex-1">
