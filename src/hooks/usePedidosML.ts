@@ -111,14 +111,14 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
     return p;
   }, [page, pageSize]);
 
-  // Tenta atualizar o token do ML e retorna sucesso/fracasso
-  const refreshMLTokens = useCallback(async (accountId?: string) => {
+  // Atualiza tokens do ML (proativo ou forçado)
+  const refreshMLTokens = useCallback(async (accountId?: string, force = false) => {
     try {
       const { data, error } = await supabase.functions.invoke('mercadolivre-refresh-token', {
-        body: { account_id: accountId, force: true },
+        body: { account_id: accountId, force },
       });
       if (error) throw error;
-      console.info('[ML] Tokens atualizados:', data);
+      console.info('[ML] Refresh tokens OK', { accountId, force, data });
       return true;
     } catch (err) {
       console.error('[ML] Falha ao atualizar tokens', err);
@@ -130,6 +130,10 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
     const t0 = performance.now();
     setLoading(true);
     setError(null);
+
+    // Refresh proativo antes de buscar
+    const proactiveAccId = filtrosRef.current?.accountId && filtrosRef.current?.accountId !== 'all' ? filtrosRef.current.accountId : undefined;
+    await refreshMLTokens(proactiveAccId, false);
 
     const run = async (attempt = 0): Promise<void> => {
       const qs = buildQuery(filtrosRef.current);
@@ -147,7 +151,7 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
         const tokenProblem = resp.status === 401 || /invalid|expired|token|Unexpected end of JSON input/i.test(msg);
         if (attempt === 0 && tokenProblem) {
           const accId = filtrosRef.current?.accountId && filtrosRef.current?.accountId !== 'all' ? filtrosRef.current.accountId : undefined;
-          await refreshMLTokens(accId);
+          await refreshMLTokens(accId, true);
           return run(1);
         }
         throw new Error(msg || `HTTP ${resp.status}`);
