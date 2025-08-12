@@ -111,11 +111,27 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
     return p;
   }, [page, pageSize]);
 
+  // Tenta atualizar o token do ML e retorna sucesso/fracasso
+  const refreshMLTokens = useCallback(async (accountId?: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('mercadolivre-refresh-token', {
+        body: { account_id: accountId, force: true },
+      });
+      if (error) throw error;
+      console.info('[ML] Tokens atualizados:', data);
+      return true;
+    } catch (err) {
+      console.error('[ML] Falha ao atualizar tokens', err);
+      return false;
+    }
+  }, []);
+
   const refetch = useCallback(async () => {
     const t0 = performance.now();
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
+
+    const run = async (attempt = 0): Promise<void> => {
       const qs = buildQuery(filtrosRef.current);
       const headers = await headersPromise;
       const resp = await fetch(`https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/mercadolivre-orders-proxy?${qs.toString()}`, { headers });
@@ -125,9 +141,16 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
       const ct = resp.headers.get('content-type') || '';
       const raw = await resp.text();
       const json = ct.includes('application/json') && raw ? JSON.parse(raw) : undefined;
+
       if (!resp.ok) {
-        const msg = json?.error || json?.message || raw || `HTTP ${resp.status}`;
-        throw new Error(msg);
+        const msg = (json?.error || json?.message || raw || '').toString();
+        const tokenProblem = resp.status === 401 || /invalid|expired|token|Unexpected end of JSON input/i.test(msg);
+        if (attempt === 0 && tokenProblem) {
+          const accId = filtrosRef.current?.accountId && filtrosRef.current?.accountId !== 'all' ? filtrosRef.current.accountId : undefined;
+          await refreshMLTokens(accId);
+          return run(1);
+        }
+        throw new Error(msg || `HTTP ${resp.status}`);
       }
 
       const results = (json?.results || json?.orders || []) as any[];
@@ -135,6 +158,10 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
       const mapped = mapResultsToItems(Array.isArray(results) ? results : [], empresaLabel);
       setItens(mapped);
       setTotal(json?.paging?.total);
+    };
+
+    try {
+      await run();
     } catch (e: any) {
       console.error(e);
       setError(e?.message || 'Falha ao buscar ML');
@@ -143,7 +170,7 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
       setMs(Math.round(performance.now() - t0));
       setLoading(false);
     }
-  }, [buildQuery, headersPromise, mapResultsToItems]);
+  }, [buildQuery, headersPromise, mapResultsToItems, refreshMLTokens]);
 
   const fetchPage = useCallback(async (p?: number) => {
     if (typeof p === 'number') setPage(p);
