@@ -22,6 +22,7 @@ import { Loader2 } from 'lucide-react';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import MercadoLivre from '@/components/pages/MercadoLivre';
 import TinyV3Callback from '@/pages/TinyV3Callback';
+import AuthCallback from '@/pages/AuthCallback';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +83,7 @@ const App = () => {
                   {/* Rotas públicas */}
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
                   
                   {/* Onboarding (protegido mas sem exigir onboarding completo) */}
                   <Route 

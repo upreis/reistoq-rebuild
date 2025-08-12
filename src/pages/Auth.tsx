@@ -10,6 +10,7 @@ import { ReistoqLogo } from '@/components/ui/reistoq-logo';
 import { Eye, EyeOff, ArrowLeft, Chrome } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,43 +26,81 @@ export default function Auth() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  const { toast } = useToast();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    const { error } = await signIn(loginData.email, loginData.password);
-    
-    if (!error) {
-      navigate('/dashboard');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password,
+      });
+      if (error) throw error;
+
+      // Verificar organização do usuário
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organizacao_id')
+        .eq('id', data.user?.id)
+        .single();
+
+      toast({ title: 'Login realizado!' });
+      if (profile?.organizacao_id) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/onboarding', { replace: true });
+      }
+    } catch (err: any) {
+      toast({ title: 'Erro no login', description: err.message || 'Verifique suas credenciais.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (signupData.password !== signupData.confirmPassword) {
+
+    // validações simples
+    const emailOk = /.+@.+\..+/.test(signupData.email);
+    if (!emailOk) {
+      toast({ title: 'Email inválido', description: 'Informe um email válido.', variant: 'destructive' });
       return;
     }
-    
-    setLoading(true);
-    
-    const { error } = await signUp(
-      signupData.email, 
-      signupData.password,
-      { 
-        nome_completo: signupData.nomeCompleto,
-        nome_exibicao: signupData.nomeCompleto.split(' ')[0]
-      }
-    );
-    
-    if (!error) {
-      // Redirecionar para verificação de email ou login
+    if (signupData.password.length < 6) {
+      toast({ title: 'Senha fraca', description: 'Use pelo menos 6 caracteres.', variant: 'destructive' });
+      return;
     }
-    
-    setLoading(false);
-};
+    if (signupData.password !== signupData.confirmPassword) {
+      toast({ title: 'As senhas não coincidem', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { data, error } = await supabase.auth.signUp({
+        email: signupData.email,
+        password: signupData.password,
+        options: {
+          emailRedirectTo: redirectTo,
+          data: { full_name: signupData.nomeCompleto }
+        }
+      });
+      if (error) throw error;
+
+      if (data.session) {
+        // conta criada e logada -> seguir para onboarding
+        navigate('/onboarding', { replace: true });
+      } else {
+        toast({ title: 'Cadastro realizado!', description: 'Confirme seu e-mail para continuar.' });
+      }
+    } catch (err: any) {
+      toast({ title: 'Erro no cadastro', description: err.message || 'Tente novamente mais tarde.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -97,7 +136,7 @@ export default function Auth() {
 
       {/* Content */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-card border border-border rounded-2xl shadow-xl">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto">
               <ReistoqLogo className="h-12 w-auto" />
