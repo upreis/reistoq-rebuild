@@ -48,14 +48,11 @@ export function DeParaControleAlertas() {
 
   const salvarConfiguracao = async (chave: string, valor: string) => {
     try {
+      const { data: orgId } = await supabase.rpc('get_current_org_id');
+      if (!orgId) throw new Error('Organização não encontrada');
       const { error } = await supabase
         .from('configuracoes')
-        .upsert({
-          chave: `${chave}_depara`,
-          valor,
-          tipo: 'string',
-          descricao: `Configuração de alertas DePara: ${chave}`
-        });
+        .upsert({ organization_id: orgId, chave: `${chave}_depara`, valor, tipo: 'string', descricao: `Configuração de alertas DePara: ${chave}` }, { onConflict: 'organization_id,chave' });
 
       if (error) throw error;
     } catch (error) {

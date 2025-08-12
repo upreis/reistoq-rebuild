@@ -104,11 +104,13 @@ export function DashboardAutomacao() {
 
   const salvarConfig = async (chave: string, valor: string) => {
     try {
+      const { data: orgId } = await supabase.rpc('get_current_org_id');
+      if (!orgId) throw new Error('Organização não encontrada');
       await supabase
         .from('configuracoes')
         .upsert(
-          { chave, valor, tipo: typeof valor === 'boolean' ? 'boolean' : 'string' },
-          { onConflict: 'chave' }
+          { organization_id: orgId, chave, valor, tipo: typeof valor === 'boolean' ? 'boolean' : 'string' } as any,
+          { onConflict: 'organization_id,chave' }
         );
       
       // Gerenciar cron job de sincronização após salvar as configurações

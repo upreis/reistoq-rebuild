@@ -130,6 +130,9 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
   useEffect(() => {
     const loadConfiguracoes = async () => {
       try {
+        // Backfill de configs herdadas (sem org) para a organização atual
+        try { await supabase.rpc('backfill_config_for_current_org'); } catch {}
+
         const { data, error } = await supabase
           .from('configuracoes')
           .select('chave, valor')
@@ -281,8 +284,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'sync_intervalo', valor: syncIntervalo, tipo: 'number' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'sync_intervalo', valor: syncIntervalo, tipo: 'number' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -290,8 +293,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'auto_mapear_sku', valor: autoMapearSku.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'auto_mapear_sku', valor: autoMapearSku.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -299,8 +302,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'alertas_estoque_baixo', valor: alertasEstoqueBaixo.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'alertas_estoque_baixo', valor: alertasEstoqueBaixo.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -308,8 +311,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'alertas_skus_pendentes', valor: alertasSkusPendentes.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'alertas_skus_pendentes', valor: alertasSkusPendentes.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -317,8 +320,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'alertas_pedidos_parados', valor: alertasPedidosParados.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'alertas_pedidos_parados', valor: alertasPedidosParados.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -326,8 +329,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'alertas_sync_falhas', valor: alertasSyncFalhas.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'alertas_sync_falhas', valor: alertasSyncFalhas.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -414,9 +417,11 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
     try {
       const payloadMap = JSON.stringify(urgencyMap || {});
       const payloadItems = JSON.stringify(customItems || []);
+      const { data: orgId } = await supabase.rpc('get_current_org_id');
+      if (!orgId) throw new Error('Organização não encontrada');
       const [{ error: e1 }, { error: e2 }] = await Promise.all([
-        supabase.from('configuracoes').upsert({ chave: 'ticker_urgency_map', valor: payloadMap, tipo: 'json' }, { onConflict: 'chave' }),
-        supabase.from('configuracoes').upsert({ chave: 'ticker_custom_items', valor: payloadItems, tipo: 'json' }, { onConflict: 'chave' }),
+        supabase.from('configuracoes').upsert({ organization_id: orgId, chave: 'ticker_urgency_map', valor: payloadMap, tipo: 'json' }, { onConflict: 'organization_id,chave' }),
+        supabase.from('configuracoes').upsert({ organization_id: orgId, chave: 'ticker_custom_items', valor: payloadItems, tipo: 'json' }, { onConflict: 'organization_id,chave' }),
       ]);
       if (e1 || e2) throw e1 || e2;
       toast({ title: 'Ticker atualizado', description: 'Preferências e alertas salvos com sucesso.' });

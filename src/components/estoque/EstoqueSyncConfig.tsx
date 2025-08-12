@@ -46,11 +46,13 @@ export function EstoqueSyncConfig() {
   const handleToggleSync = async (enabled: boolean) => {
     setLoading(true);
     try {
+      const { data: orgId } = await supabase.rpc('get_current_org_id');
+      if (!orgId) throw new Error('Organização não encontrada');
       const { error } = await supabase
         .from('configuracoes')
         .upsert(
-          { chave: 'sync_estoque_automatico', valor: enabled.toString(), tipo: 'boolean' },
-          { onConflict: 'chave' }
+          { organization_id: orgId, chave: 'sync_estoque_automatico', valor: enabled.toString(), tipo: 'boolean' },
+          { onConflict: 'organization_id,chave' }
         );
 
       if (error) throw error;

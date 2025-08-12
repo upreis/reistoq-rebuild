@@ -1195,6 +1195,10 @@ export type Database = {
         Args: { _token: string }
         Returns: Json
       }
+      backfill_config_for_current_org: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       cleanup_expired_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
