@@ -104,6 +104,24 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
 
   // (sem progress bar)
 
+  React.useEffect(() => {
+    if (collapsed || !activeItem) return;
+    const root = document.querySelector('[data-nbar-root]') as HTMLElement | null;
+    if (!root) { console.warn('[nbg] root não encontrado'); return; }
+    const nodes = root.querySelectorAll<HTMLElement>('[class*="bg-"], [style*="background"]');
+    nodes.forEach(el => {
+      const cs = getComputedStyle(el);
+      const hasOpaqueBg =
+        (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') ||
+        (cs.backgroundImage && cs.backgroundImage !== 'none');
+      if (hasOpaqueBg) {
+        console.info('[nbg:offender]',
+          { tag: el.tagName.toLowerCase(), cls: (el as HTMLElement).className, bgColor: cs.backgroundColor, bgImage: cs.backgroundImage },
+          el
+        );
+      }
+    });
+  }, [collapsed, activeItem]);
 
   const onDismiss = () => {
     if (activeItem) {
@@ -151,7 +169,7 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <div data-bg-index={colorIndex} className={`bg-gradient-to-r ${BG_COLORS[colorIndex]} px-4 py-3 relative overflow-hidden`}>
+        <div data-nbar-root data-bg-index={colorIndex} className={`bg-gradient-to-r ${BG_COLORS[colorIndex]} px-4 py-3 relative overflow-hidden`}>
           <Alert className="bg-transparent border-0 shadow-none">
             <div className="flex w-full items-center gap-2">
                 <Bell className="h-[14px] w-[14px] text-primary" />
