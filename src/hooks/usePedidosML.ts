@@ -105,8 +105,14 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
     p.set("limit", String(effPageSize));
     p.set("offset", String(offset));
 
-    if (f?.accountId && f.accountId !== "all") p.set("account_id", f.accountId);
-    if (!f?.accountId || f.accountId === "all") p.set("all", "true");
+    const ids = (f as any)?.accountIds as string[] | undefined;
+    if (ids && ids.length > 0) {
+      p.set("account_ids", ids.join(","));
+    } else if (f?.accountId && f.accountId !== "all") {
+      p.set("account_id", f.accountId);
+    } else {
+      p.set("all", "true");
+    }
 
     return p;
   }, [page, pageSize]);

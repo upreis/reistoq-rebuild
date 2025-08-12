@@ -87,8 +87,8 @@ export function Pedidos() {
   const [itensSelecionados, setItensSelecionados] = useState<ItemPedidoEnriquecido[]>([]);
 
   // Dados vindos do Mercado Livre via hook
-  // Estado para seleção de conta ML e lista de contas
-  const [mlContaId, setMlContaId] = useState<string>('all');
+  // Estado para seleção de contas ML e lista de contas
+  const [mlAccountIds, setMlAccountIds] = useState<string[]>([]);
   const [contasML, setContasML] = useState<any[]>([]);
   useEffect(() => {
     let mounted = true;
@@ -107,8 +107,10 @@ export function Pedidos() {
     situacoes: filtros.situacoes,
     page: 1,
     pageSize: 50,
-    accountId: mlContaId,
-  });
+    accountId: 'all',
+    // Suporte a múltiplas contas (hook lê via any)
+    accountIds: mlAccountIds,
+  } as any);
   const [mlItens, setMlItens] = useState<ItemPedido[]>([]);
   const [mlLoading, setMlLoading] = useState(false);
   useEffect(() => { setMlItens(mlHook.itens as any); }, [mlHook.itens]);

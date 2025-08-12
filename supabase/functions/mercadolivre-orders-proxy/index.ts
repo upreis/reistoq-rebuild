@@ -77,6 +77,19 @@ async function getMLAccountById(supabase: any, userId: string, accountId: string
   return acc;
 }
 
+async function getMLAccountsByIds(supabase: any, userId: string, ids: string[]) {
+  const { data: profile, error: pErr } = await supabase.from('profiles').select('organizacao_id').eq('id', userId).single();
+  if (pErr || !profile?.organizacao_id) throw new Error('Organização não encontrada');
+  const { data: accs, error } = await supabase
+    .from('integration_accounts')
+    .select('*')
+    .eq('organization_id', profile.organizacao_id)
+    .eq('provider', 'mercadolivre')
+    .eq('is_active', true)
+    .in('id', ids);
+  if (error) throw error;
+  return accs || [];
+}
 
 async function refreshIfNeeded(acc: any) {
   const now = Date.now();
@@ -120,6 +133,57 @@ serve(async (req) => {
       qs.set('offset', String(offset));
       return qs;
     };
+
+    // Lista específica de contas (account_ids=uuid1,uuid2,...)
+    const accountIdsStr = params.get('account_ids') || '';
+    const accountIds = accountIdsStr.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (accountIds.length > 0) {
+      const accounts = await getMLAccountsByIds(supabase, user.id, accountIds);
+      const refreshed = await Promise.all(accounts.map((a: any) => refreshIfNeeded(a)));
+
+      const perAcc = await Promise.all(refreshed.map(async (acc: any) => {
+        const qs = buildQS(acc?.account_identifier);
+        const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
+          headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
+        });
+        const body = await resp.json();
+        return { acc, ok: resp.ok, body };
+      }));
+
+      const errors = perAcc.filter(x => !x.ok).map(x => ({ account_id: x.acc?.id, details: x.body }));
+      let combined = perAcc
+        .filter(x => x.ok && Array.isArray(x.body?.results))
+        .flatMap(x => (x.body.results as any[]).map(o => ({ order: o, __acc_id: x.acc?.id, __token: x.acc?.auth_data?.access_token })));
+
+      // Ordenar por data de criação desc
+      combined.sort((a, b) => {
+        const da = Date.parse(a.order?.date_created || a.order?.order?.date_created || '');
+        const db = Date.parse(b.order?.date_created || b.order?.order?.date_created || '');
+        return (db || 0) - (da || 0);
+      });
+
+      const total = combined.length;
+      const sliced = combined.slice(offset, offset + limit);
+
+      if (expandSet.has('details')) {
+        for (let i = 0; i < sliced.length; i++) {
+          const ord = sliced[i].order;
+          const id = ord?.id || ord?.order?.id;
+          if (!id) continue;
+          try {
+            const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/${id}`, {
+              headers: { Authorization: `Bearer ${sliced[i].__token}` },
+            });
+            const det = await resp.json();
+            sliced[i].order = { ...ord, _details: det };
+          } catch (_) { /* ignore */ }
+        }
+      }
+
+      const results = sliced.map(x => x.order);
+      return json({ aggregated: true, results, paging: { total, limit, offset }, errors: errors.length ? errors : undefined });
+    }
 
     if (all) {
       const accounts = await getAllActiveMLAccounts(supabase, user.id);
