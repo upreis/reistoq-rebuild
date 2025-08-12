@@ -181,8 +181,8 @@ export function AnnouncementTicker({
 
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
-    "relative isolate overflow-hidden min-h-[44px] w-full ticker-root",
-    collapsed ? "h-0" : "border-b bg-transparent",
+    "relative isolate overflow-hidden w-full ticker-root",
+    collapsed ? "h-0" : "min-h-[44px] border-b bg-transparent",
     className
   );
 
@@ -249,7 +249,8 @@ export function AnnouncementTicker({
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
           className={cn(
-            "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
+            collapsed ? "fixed right-2 top-2 z-[60]" : "absolute right-2 top-2",
+            "inline-flex h-7 w-7 items-center justify-center rounded-full",
             "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
           )}
         >
