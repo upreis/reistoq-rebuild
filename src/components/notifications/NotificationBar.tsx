@@ -55,6 +55,13 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
   const [collapsed, setCollapsed] = usePersistentState<boolean>(COLLAPSE_KEY, false);
   const [notifications, setNotifications] = React.useState<NotificationItem[]>([]);
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [colorIndex, setColorIndex] = React.useState(0);
+  const BG_COLORS = [
+    'from-blue-500 to-blue-600',
+    'from-green-500 to-green-600',
+    'from-orange-500 to-orange-600',
+    'from-purple-500 to-purple-600',
+  ] as const;
   const { fetchNotifications, saveAnnouncement, removeAnnouncement, dismissNotification } = useNotifications();
   const containerCls = placement === 'sticky' ? 'sticky top-0 z-40 flex w-full justify-center' : 'w-full flex justify-center';
   const innerWrapCls = placement === 'sticky' ? 'mx-3 mt-3 w-full max-w-4xl animate-fade-in' : 'mx-1 mt-1 w-full max-w-3xl animate-fade-in';
@@ -80,16 +87,41 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
     loadNotifications();
   }, [location.pathname]);
 
-  // Rotação automática de notificações a cada 8 segundos
+  // Rotação de cor de fundo a cada 5s (sem alterar a mensagem)
   React.useEffect(() => {
-    if (notifications.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % notifications.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [notifications.length]);
+    if (collapsed) return;
+    const id = setInterval(() => {
+      setColorIndex((i) => {
+        const next = (i + 1) % BG_COLORS.length;
+        console.info('[nbg]', new Date().toISOString(), 'colorIndex ->', next);
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(id);
+  }, [collapsed]);
 
   const activeItem: NotificationItem | null = notifications[currentIndex] ?? null;
+
+  // (sem progress bar)
+
+  React.useEffect(() => {
+    if (collapsed || !activeItem) return;
+    const root = document.querySelector('[data-nbar-root]') as HTMLElement | null;
+    if (!root) { console.warn('[nbg] root não encontrado'); return; }
+    const nodes = root.querySelectorAll<HTMLElement>('[class*="bg-"], [style*="background"]');
+    nodes.forEach(el => {
+      const cs = getComputedStyle(el);
+      const hasOpaqueBg =
+        (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') ||
+        (cs.backgroundImage && cs.backgroundImage !== 'none');
+      if (hasOpaqueBg) {
+        console.info('[nbg:offender]',
+          { tag: el.tagName.toLowerCase(), cls: (el as HTMLElement).className, bgColor: cs.backgroundColor, bgImage: cs.backgroundImage },
+          el
+        );
+      }
+    });
+  }, [collapsed, activeItem]);
 
   const onDismiss = () => {
     if (activeItem) {
@@ -132,56 +164,63 @@ export function NotificationBar({ placement = 'sticky' }: { placement?: 'sticky'
     destructive: "border-destructive/50",
   } as const;
 
+  
+
   return (
     <div className={containerCls}>
       <div className={innerWrapCls}>
-        <Alert className={`bg-muted/40 ${variantCls[activeItem.kind]} shadow-sm p-2 px-3`}> 
-          <div className="flex w-full items-center gap-2">
-              <Bell className="h-[14px] w-[14px] text-primary" />
-            <div className="flex-1">
-              <AlertDescription className="text-[13px] text-foreground">
-                {activeItem.message}
-                {activeItem.href && (
-                  <a
-                    href={activeItem.href}
-                    className="ml-2 text-[13px] text-primary underline underline-offset-4 hover-scale"
-                  >
-                    {activeItem.linkLabel ?? "Ver mais"}
-                  </a>
-                )}
-              </AlertDescription>
-            </div>
+        <div data-nbar-root data-bg-index={colorIndex} className="relative isolate overflow-hidden min-h-[44px] px-4 py-3">
+          {/* camada do gradiente (só a faixa) */}
+          <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`} aria-hidden />
+          {/* conteúdo por cima, intacto */}
+          <Alert className="relative z-10 bg-transparent border-0 shadow-none px-0">
+            <div className="flex w-full items-center gap-2">
+                <Bell className="h-[14px] w-[14px] text-primary" />
+              <div className="flex-1">
+                <AlertDescription className="text-[13px] text-foreground">
+                  {activeItem.message}
+                  {activeItem.href && (
+                    <a
+                      href={activeItem.href}
+                      className="ml-2 text-[13px] text-primary underline underline-offset-4 hover-scale"
+                    >
+                      {activeItem.linkLabel ?? "Ver mais"}
+                    </a>
+                  )}
+                </AlertDescription>
+              </div>
 
-            <div className="flex items-center gap-1">
-              <PermissionGate required="system:announce">
-                <NotificationManager
-                  onSave={async (item) => {
-                    await saveAnnouncement(item as any);
-                    // Recarregar notificações filtrando pela rota atual
-                    const fetchedNotifications = await fetchNotifications();
-                    const currentPath = location.pathname;
-                    const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
-                    const mapped = fetchedNotifications.map(n => ({
-                      id: n.id,
-                      kind: n.kind,
-                      message: n.message,
-                      href: n.href,
-                      linkLabel: n.link_label,
-                      type: n.type,
-                      target_routes: (n as any).target_routes || undefined,
-                    }));
-                    setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
-                  }}
-                />
-              </PermissionGate
-              >
+              <div className="flex items-center gap-1">
+                <PermissionGate required="system:announce">
+                  <NotificationManager
+                    onSave={async (item) => {
+                      await saveAnnouncement(item as any);
+                      // Recarregar notificações filtrando pela rota atual
+                      const fetchedNotifications = await fetchNotifications();
+                      const currentPath = location.pathname;
+                      const matchesRoute = (routes?: string[]) => !routes || routes.length === 0 || routes.includes('*') || routes.some(r => currentPath.startsWith(r));
+                      const mapped = fetchedNotifications.map(n => ({
+                        id: n.id,
+                        kind: n.kind,
+                        message: n.message,
+                        href: n.href,
+                        linkLabel: n.link_label,
+                        type: n.type,
+                        target_routes: (n as any).target_routes || undefined,
+                      }));
+                      setNotifications(mapped.filter(item => matchesRoute(item.target_routes)));
+                    }}
+                  />
+                </PermissionGate
+                >
 
-              <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
-                <ChevronUp className="h-[14px] w-[14px]" />
-              </Button>
+                <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Recolher barra">
+                  <ChevronUp className="h-[14px] w-[14px]" />
+                </Button>
+              </div>
             </div>
-          </div>
-        </Alert>
+          </Alert>
+        </div>
       </div>
     </div>
   );
