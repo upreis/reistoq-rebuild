@@ -126,19 +126,6 @@ export function AnnouncementTicker({
   const effectivePaused = paused || userPaused;
   const toggleUserPaused = React.useCallback(() => setUserPaused((p) => !p), []);
 
-  // Rotating background colors (5s)
-  const BG_COLORS = [
-    'from-blue-500 to-blue-600',
-    'from-green-500 to-green-600',
-    'from-orange-500 to-orange-600',
-    'from-purple-500 to-purple-600',
-  ] as const;
-  const [colorIndex, setColorIndex] = React.useState(0);
-  React.useEffect(() => {
-    const id = setInterval(() => setColorIndex((i) => (i + 1) % BG_COLORS.length), 5000);
-    return () => clearInterval(id);
-  }, []);
-
   React.useEffect(() => {
     if (!showClose) setHidden(false);
   }, [showClose]);
@@ -181,8 +168,8 @@ export function AnnouncementTicker({
 
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
-    "relative isolate overflow-hidden w-full ticker-root",
-    collapsed ? "h-0" : "min-h-[44px] border-b bg-transparent",
+    "relative w-full ticker-root",
+    collapsed ? "h-0 bg-transparent" : "border-b bg-white",
     className
   );
 
@@ -200,17 +187,12 @@ export function AnnouncementTicker({
       role="region"
       aria-label="Atualizações"
       dir={dir}
-      data-ann-root
       className={baseWrapperCls}
       onMouseEnter={pauseOnHover ? onMouseEnter : undefined}
       onMouseLeave={pauseOnHover ? onMouseLeave : undefined}
       onFocus={pauseOnHover ? onFocusIn : undefined}
       onBlur={pauseOnHover ? onFocusOut : undefined}
     >
-      <div
-        className={`absolute inset-0 -z-10 bg-gradient-to-r ${BG_COLORS[colorIndex]} pointer-events-none`}
-        aria-hidden style={{ opacity: collapsed ? 0 : 1 }}
-      />
       {collapsed ? (
         <div className={cn(innerBaseCls, "h-0")} />
       ) : (
@@ -249,8 +231,7 @@ export function AnnouncementTicker({
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expandir barra de anúncios" : "Recolher barra de anúncios"}
           className={cn(
-            collapsed ? "fixed right-2 top-2 z-[60]" : "absolute right-2 top-2",
-            "inline-flex h-7 w-7 items-center justify-center rounded-full",
+            "absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full",
             "bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
           )}
         >
@@ -443,21 +424,6 @@ function TickerRow({
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
   variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
-  // Single item: use slide mode to avoid duplicated text in continuous ticker
-  if (items.length <= 1) {
-    return (
-      <SlideTicker
-        items={items}
-        speed={speed}
-        paused={paused}
-        loop={loop}
-        divider={divider}
-        customDivider={customDivider}
-        themeVariant={themeVariant}
-        variant={variant}
-      />
-    );
-  }
   if (mode === "slide") {
     return (
       <SlideTicker
