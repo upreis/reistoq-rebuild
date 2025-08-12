@@ -9,9 +9,9 @@ const corsHeaders = {
 
 // Configuração
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+let supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface PrevisaoRequest {
   produto_id?: string;
@@ -320,6 +320,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
+
+    // Recriar client autenticado (RLS)
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: req.headers.get('authorization') || '' } },
+    });
 
     const body: PrevisaoRequest = await req.json();
     const { produto_id, dias_analise = 30 } = body;

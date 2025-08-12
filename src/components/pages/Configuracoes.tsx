@@ -209,6 +209,9 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
   const handleSaveConfig = async () => {
     setLoading(true);
     try {
+      // Obter organização atual
+      const { data: orgId } = await supabase.rpc('get_current_org_id');
+      if (!orgId) throw new Error('Organização não encontrada');
       // Salvar configurações no Supabase usando upsert com onConflict
       const updates = [];
       
@@ -218,7 +221,7 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
             .from('configuracoes')
             .upsert(
               { chave: 'tiny_token', valor: tinyToken, tipo: 'string' },
-              { onConflict: 'chave' }
+              { onConflict: 'organization_id,chave' }
             )
         );
       }
@@ -229,7 +232,7 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
             .from('configuracoes')
             .upsert(
               { chave: 'telegram_token', valor: telegramToken, tipo: 'string' },
-              { onConflict: 'chave' }
+              { onConflict: 'organization_id,chave' }
             )
         );
       }
@@ -239,8 +242,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
           supabase
             .from('configuracoes')
             .upsert(
-              { chave: 'telegram_chat_id', valor: telegramChatId, tipo: 'string' },
-              { onConflict: 'chave' }
+              { organization_id: orgId, chave: 'telegram_chat_id', valor: telegramChatId, tipo: 'string' },
+              { onConflict: 'organization_id,chave' }
             )
         );
       }
@@ -250,8 +253,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'alertas_automaticos', valor: alertasAutomaticos.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'alertas_automaticos', valor: alertasAutomaticos.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -259,8 +262,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'intervalo_alertas', valor: intervaloAlertas, tipo: 'number' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'intervalo_alertas', valor: intervaloAlertas, tipo: 'number' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 
@@ -269,8 +272,8 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
         supabase
           .from('configuracoes')
           .upsert(
-            { chave: 'sync_automatico', valor: syncAutomatico.toString(), tipo: 'boolean' },
-            { onConflict: 'chave' }
+            { organization_id: orgId, chave: 'sync_automatico', valor: syncAutomatico.toString(), tipo: 'boolean' },
+            { onConflict: 'organization_id,chave' }
           )
       );
 

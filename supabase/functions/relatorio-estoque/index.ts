@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Configuração do Supabase
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+let supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface RelatorioRequest {
   tipo: 'estoque_baixo' | 'movimentacoes' | 'valor_estoque' | 'produtos_inativos';
@@ -275,6 +275,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
+
+    // Recriar o client autenticado pelo usuário (RLS aplicado)
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: req.headers.get('authorization') || '' } },
+    });
 
     const body: RelatorioRequest = await req.json();
     const { tipo, dataInicio, dataFim, categoria } = body;

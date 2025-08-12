@@ -110,6 +110,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          organization_id: string | null
           tipo: string | null
           updated_at: string
           valor: string
@@ -119,6 +120,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          organization_id?: string | null
           tipo?: string | null
           updated_at?: string
           valor: string
@@ -128,6 +130,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          organization_id?: string | null
           tipo?: string | null
           updated_at?: string
           valor?: string
@@ -617,6 +620,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      oauth_states: {
+        Row: {
+          code_verifier: string
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code_verifier: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code_verifier?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       organizacoes: {
         Row: {

@@ -7,10 +7,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.relatorio-estoque]
-verify_jwt = false
+verify_jwt = true
 
 [functions.previsao-reposicao]
-verify_jwt = false
+verify_jwt = true
 
 [functions.sync-pedidos-rapido]
 verify_jwt = false
