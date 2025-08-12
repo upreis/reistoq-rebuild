@@ -45,3 +45,15 @@ verify_jwt = true   # autenticada para respeitar RLS
 
 [functions.tiny-orders-proxy]
 verify_jwt = true   # autenticada para respeitar RLS
+
+[functions.tiny-v3-oauth-start]
+verify_jwt = true
+
+[functions.tiny-v3-oauth-callback]
+verify_jwt = true
+
+[functions.tiny-v3-token-manager]
+verify_jwt = true
+
+[functions.tiny-v3-orders-proxy]
+verify_jwt = true

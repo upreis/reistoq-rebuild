@@ -17,6 +17,7 @@ export function usePedidosTinyV3(initialFiltros?: Partial<Filtros>): UsePedidosR
   const [total, setTotal] = useState<number>(0);
   const [reqId, setReqId] = useState<string | undefined>(undefined);
   const [ms, setMs] = useState<number | undefined>(undefined);
+  const [paging, setPaging] = useState<{ total: number; limit: number; offset: number } | undefined>(undefined);
 
   const filtros = useMemo(() => ({
     dataInicio: initialFiltros?.dataInicio || "",
@@ -47,8 +48,9 @@ export function usePedidosTinyV3(initialFiltros?: Partial<Filtros>): UsePedidosR
       setReqId(reqIdFromBody);
 
       const pedidos = (data as any)?.results || [];
-      const paging = (data as any)?.paging || {};
-      setTotal(Number(paging?.total || 0));
+      const pagingResp = (data as any)?.paging || {};
+      setPaging(pagingResp);
+      setTotal(Number(pagingResp?.total || 0));
 
       const itensFlatten: any[] = [];
       for (const pedido of pedidos) {
@@ -143,5 +145,6 @@ export function usePedidosTinyV3(initialFiltros?: Partial<Filtros>): UsePedidosR
     refetch,
     ms,
     reqId,
+    paging,
   };
 }

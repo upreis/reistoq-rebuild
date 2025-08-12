@@ -113,23 +113,20 @@ serve(async (req) => {
       return json({ error: "invalid_date_format", field: "dateTo", expected: "DD/MM/AAAA", requestId }, 400, requestId);
     }
 
-    // Resolve Tiny token: DB configuracoes then secret fallback
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    // Resolve Tiny token via token-manager (preferred) with fallback to secret
+    const supaClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
     });
 
-    const { data: cfgList } = await supabase
-      .from("configuracoes")
-      .select("chave,valor")
-      .in("chave", ["tiny_v3_token", "tiny_token"]) // prefer v3-specific
-      .limit(10);
-
-    let token = (cfgList || []).find((c: any) => c.chave === "tiny_v3_token" && c.valor)?.valor as string | undefined;
-    if (!token) token = (cfgList || []).find((c: any) => c.chave === "tiny_token" && c.valor)?.valor as string | undefined;
+    let token: string | undefined;
+    try {
+      const { data: tmData } = await supaClient.functions.invoke("tiny-v3-token-manager", { body: {} });
+      token = (tmData as any)?.bearer;
+    } catch (_) { /* ignore */ }
     if (!token) token = Deno.env.get("TINY_V3_TOKEN") || undefined;
 
     if (!token) {
-      return json({ error: "missing_tiny_v3_token", details: "Configure tiny_v3_token em Configurações ou a secret TINY_V3_TOKEN.", requestId }, 400, requestId);
+      return json({ error: "missing_tiny_v3_token", details: "Conecte o Tiny v3 (OAuth) ou defina a secret TINY_V3_TOKEN.", requestId }, 400, requestId);
     }
 
     const masked = token.substring(0, 4) + "***" + token.substring(Math.max(0, token.length - 4));
@@ -144,7 +141,7 @@ serve(async (req) => {
     });
 
     // Build v3 request
-    const base = "https://erp.tiny.com.br/public-api/v3";
+    const base = "https://api.tiny.com.br/public-api/v3";
     const url = new URL(`${base}/orders`);
     // Paging - v3 commonly supports page & limit
     url.searchParams.set("page", String(page));

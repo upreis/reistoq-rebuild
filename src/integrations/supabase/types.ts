@@ -1005,6 +1005,69 @@ export type Database = {
         }
         Relationships: []
       }
+      tiny_v3_credentials: {
+        Row: {
+          client_id: string
+          client_secret: string
+          created_at: string
+          id: string
+          organization_id: string
+          redirect_uri: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          client_secret: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          redirect_uri: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          redirect_uri?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tiny_v3_tokens: {
+        Row: {
+          access_token: string
+          expires_at: string
+          id: string
+          organization_id: string
+          refresh_token: string
+          scope: string | null
+          token_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          expires_at: string
+          id?: string
+          organization_id: string
+          refresh_token: string
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          expires_at?: string
+          id?: string
+          organization_id?: string
+          refresh_token?: string
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_dismissed_notifications: {
         Row: {
           dismissed_at: string

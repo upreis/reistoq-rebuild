@@ -1,0 +1,99 @@
+// Supabase Edge Function: tiny-v3-oauth-callback
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const OIDC_TOKEN_URL = "https://accounts.tiny.com.br/realms/tiny/protocol/openid-connect/token";
+
+const corsHeaders: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Expose-Headers": "x-request-id",
+};
+
+function json(body: unknown, status = 200, requestId?: string) {
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...corsHeaders };
+  if (requestId) headers["x-request-id"] = requestId;
+  return new Response(JSON.stringify(body), { status, headers });
+}
+
+function fromB64(s: string) {
+  try { return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch { return null; }
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const requestId = crypto.randomUUID();
+
+  try {
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code") || (await req.clone().json().catch(() => ({}))).code;
+    const state = url.searchParams.get("state") || (await req.clone().json().catch(() => ({}))).state;
+
+    if (!code || !state) return json({ error: "missing_params", requestId }, 400, requestId);
+    const stateObj = fromB64(state);
+    const orgId: string | undefined = stateObj?.orgId;
+    if (!orgId) return json({ error: "invalid_state", requestId }, 400, requestId);
+
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: credsRows } = await admin
+      .from("tiny_v3_credentials")
+      .select("client_id, client_secret, redirect_uri")
+      .eq("organization_id", orgId)
+      .limit(1);
+
+    const client_id = credsRows?.[0]?.client_id || Deno.env.get("TINY_V3_CLIENT_ID");
+    const client_secret = credsRows?.[0]?.client_secret || Deno.env.get("TINY_V3_CLIENT_SECRET");
+    const redirect_uri = credsRows?.[0]?.redirect_uri || Deno.env.get("TINY_V3_REDIRECT_URI");
+
+    if (!client_id || !client_secret || !redirect_uri) {
+      return json({ error: "missing_client_config", details: "Defina client_id/client_secret/redirect_uri ou secrets TINY_V3_*", requestId }, 400, requestId);
+    }
+
+    const form = new URLSearchParams();
+    form.set("grant_type", "authorization_code");
+    form.set("client_id", client_id);
+    form.set("client_secret", client_secret);
+    form.set("redirect_uri", redirect_uri);
+    form.set("code", code);
+
+    const resp = await fetch(OIDC_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.log("tinyv3.oauth.callback.error", { requestId, status: resp.status });
+      return json({ error: "token_exchange_failed", status: resp.status, requestId }, 400, requestId);
+    }
+
+    const access_token: string = payload.access_token;
+    const refresh_token: string = payload.refresh_token;
+    const expires_in: number = payload.expires_in || 3600;
+    const token_type: string = payload.token_type || "Bearer";
+    const scope: string = payload.scope || "";
+
+    const expires_at = new Date(Date.now() + (expires_in * 1000)).toISOString();
+
+    // Upsert tokens for org
+    await admin.from("tiny_v3_tokens").upsert({
+      organization_id: orgId,
+      access_token,
+      refresh_token,
+      expires_at,
+      token_type,
+      scope,
+    }, { onConflict: "organization_id" });
+
+    console.log("tinyv3.oauth.callback.saved", { requestId, orgId });
+
+    // Prefer JSON response for SPA handler
+    return json({ success: true, requestId, orgId, expires_at }, 200, requestId);
+  } catch (e) {
+    return json({ error: String(e), requestId }, 500, requestId);
+  }
+});

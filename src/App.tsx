@@ -21,6 +21,7 @@ import { Configuracoes } from '@/components/pages/Configuracoes';
 import { Loader2 } from 'lucide-react';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 import MercadoLivre from '@/components/pages/MercadoLivre';
+import TinyV3Callback from '@/pages/TinyV3Callback';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -172,6 +173,9 @@ const App = () => {
                       </MainLayout>
                     </ProtectedRoute>
                   } />
+
+                  {/* OAuth callback for Tiny v3 */}
+                  <Route path="/integrations/tiny/callback" element={<ProtectedRoute><TinyV3Callback /></ProtectedRoute>} />
                   
                   {/* Catch all - 404 */}
                   <Route path="*" element={<NotFound />} />

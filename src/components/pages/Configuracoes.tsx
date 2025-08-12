@@ -15,7 +15,7 @@ import { IntegrationAccountsManager } from "@/components/integrations/Integratio
 import { RolePermissionManager } from "@/components/auth/RolePermissionManager";
 import { AnnouncementsManager } from "@/components/notifications/AnnouncementsManager";
 import type { TickerItem, UrgencyLevel } from "@/components/notifications/AnnouncementTicker";
-
+import { FEATURE_TINY_V3_CONNECT } from "@/config/features";
 export function Configuracoes() {
   const [tinyToken, setTinyToken] = useState("");
   const [telegramToken, setTelegramToken] = useState("");
@@ -33,7 +33,45 @@ export function Configuracoes() {
   const [alertasSyncFalhas, setAlertasSyncFalhas] = useState(false);
   
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+const { toast } = useToast();
+
+  // Tiny v3 OAuth status
+  const [tinyV3Connected, setTinyV3Connected] = useState<boolean>(false);
+  const [tinyV3ExpiresAt, setTinyV3ExpiresAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadTinyV3Status = async () => {
+      try {
+        const { data } = await supabase
+          .from('tiny_v3_tokens')
+          .select('expires_at')
+          .limit(1);
+        if (!mounted) return;
+        if (data && data.length) {
+          setTinyV3Connected(true);
+          setTinyV3ExpiresAt(data[0].expires_at);
+        } else {
+          setTinyV3Connected(false);
+          setTinyV3ExpiresAt(null);
+        }
+      } catch { /* ignore */ }
+    };
+    if (FEATURE_TINY_V3_CONNECT) loadTinyV3Status();
+    return () => { mounted = false; };
+  }, []);
+
+  const handleTinyV3Connect = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('tiny-v3-oauth-start');
+      if (error) throw error;
+      const authUrl = (data as any)?.authUrl;
+      if (!authUrl) throw new Error('authUrl ausente');
+      window.location.href = authUrl;
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Erro', description: e?.message || 'Falha ao iniciar OAuth do Tiny v3' });
+    }
+  };
 
   // Announcement Ticker configs
 const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted" | "success" | "warning" | "primary" | "destructive" | "card">>>({});
@@ -443,6 +481,36 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
           </div>
         </CardContent>
       </Card>
+
+      {/* Tiny v3 (OAuth 2.0) */}
+      {FEATURE_TINY_V3_CONNECT && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Tiny v3 (OAuth 2.0)
+            </CardTitle>
+            <CardDescription>Conecte sua conta Tiny v3 via OAuth. Não armazenamos pedidos, apenas o token de acesso.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Status: {tinyV3Connected ? <span className="text-success">Conectado</span> : <span className="text-destructive">Desconectado</span>}
+                {tinyV3Connected && tinyV3ExpiresAt && (
+                  <>
+                    <span className="mx-2">•</span>
+                    <span>Expira em: {new Date(tinyV3ExpiresAt).toLocaleString()}</span>
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleTinyV3Connect} variant="secondary">Conectar Tiny v3</Button>
+              {tinyV3Connected && <Button onClick={handleTinyV3Connect} variant="outline">Reconectar</Button>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Integrações · Contas */}
       <IntegrationAccountsManager />
