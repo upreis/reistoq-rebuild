@@ -50,7 +50,7 @@ verify_jwt = true   # autenticada para respeitar RLS
 verify_jwt = true
 
 [functions.tiny-v3-oauth-callback]
-verify_jwt = true
+verify_jwt = false  # callback precisa ser público para o redirect do Tiny
 
 [functions.tiny-v3-token-manager]
 verify_jwt = true
