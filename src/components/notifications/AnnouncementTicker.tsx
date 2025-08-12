@@ -169,7 +169,7 @@ export function AnnouncementTicker({
   const baseWrapperCls = cn(
     sticky && "sticky top-0 z-50",
     "relative w-full ticker-root",
-    collapsed ? "h-0 bg-transparent" : "!bg-transparent !border-0 !shadow-none",
+    collapsed ? "h-0 bg-transparent" : "bg-transparent border-0 shadow-none",
     className
   );
 
