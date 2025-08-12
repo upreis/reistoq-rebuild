@@ -67,8 +67,8 @@ export default function Auth() {
       toast({ title: 'Email inválido', description: 'Informe um email válido.', variant: 'destructive' });
       return;
     }
-    if (signupData.password.length < 6) {
-      toast({ title: 'Senha fraca', description: 'Use pelo menos 6 caracteres.', variant: 'destructive' });
+    if (signupData.password.length < 10) {
+      toast({ title: 'Senha fraca', description: 'Use pelo menos 10 caracteres.', variant: 'destructive' });
       return;
     }
     if (signupData.password !== signupData.confirmPassword) {
@@ -96,7 +96,10 @@ export default function Auth() {
         toast({ title: 'Cadastro realizado!', description: 'Confirme seu e-mail para continuar.' });
       }
     } catch (err: any) {
-      toast({ title: 'Erro no cadastro', description: err.message || 'Tente novamente mais tarde.', variant: 'destructive' });
+      const msg = typeof err?.message === 'string' && err.message.toLowerCase().includes('password')
+        ? 'Senha muito curta: mínimo de 10 caracteres.'
+        : (err.message || 'Tente novamente mais tarde.');
+      toast({ title: 'Erro no cadastro', description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -214,6 +217,7 @@ export default function Auth() {
                     type="submit"
                     className="w-full"
                     disabled={loading}
+                    aria-busy={loading}
                   >
                     {loading ? "Entrando..." : "Entrar"}
                   </Button>
@@ -257,7 +261,7 @@ export default function Auth() {
                         value={signupData.password}
                         onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
                         required
-                        minLength={6}
+                        minLength={10}
                       />
                       <Button
                         type="button"
@@ -284,7 +288,7 @@ export default function Auth() {
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                       required
-                      minLength={6}
+                      minLength={10}
                     />
                     {signupData.password !== signupData.confirmPassword && signupData.confirmPassword && (
                       <p className="text-sm text-destructive">As senhas não coincidem</p>
@@ -295,6 +299,7 @@ export default function Auth() {
                     type="submit"
                     className="w-full"
                     disabled={loading || signupData.password !== signupData.confirmPassword}
+                    aria-busy={loading}
                   >
                     {loading ? "Criando conta..." : "Criar conta"}
                   </Button>
