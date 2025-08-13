@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -23,6 +23,7 @@ import { PermissionGate } from '@/components/auth/PermissionGate';
 import MercadoLivre from '@/components/pages/MercadoLivre';
 import TinyV3Callback from '@/pages/TinyV3Callback';
 import AuthCallback from '@/pages/AuthCallback';
+import { runHardeningProofs } from '@/utils/hardeningProofs';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +73,10 @@ function ErrorFallback({ error, resetErrorBoundary }: any) {
 }
 
 const App = () => {
+  useEffect(() => {
+    // Executa as provas de hardening ao carregar o app
+    runHardeningProofs();
+  }, []);
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <QueryClientProvider client={queryClient}>
