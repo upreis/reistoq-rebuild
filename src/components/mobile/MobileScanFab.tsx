@@ -9,23 +9,32 @@ export default function MobileScanFab() {
   const loc = useLocation();
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    const set = () => {
-      const mobile = mq.matches;
+    const checkMobile = () => {
+      // Multi-criteria mobile detection as requested
+      const viewportMobile = window.innerWidth <= 768;
+      const touchDevice = 'ontouchstart' in window;
+      const userAgentMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+      const mobile = viewportMobile || touchDevice || userAgentMobile;
+      
       setIsMobile(mobile);
       
       // Debug log
       console.log("MobileScanFab debug:", { 
         mobile, 
+        viewportMobile,
+        touchDevice,
+        userAgentMobile,
         flag: FEATURE_MOBILE_SCAN_FAB, 
         path: loc.pathname,
         viewport: `${window.innerWidth}x${window.innerHeight}`
       });
     };
     
-    set(); 
-    mq.addEventListener?.("change", set);
-    return () => mq.removeEventListener?.("change", set);
+    const mq = window.matchMedia("(max-width: 768px)");
+    mq.addEventListener?.("change", checkMobile);
+    checkMobile();
+    
+    return () => mq.removeEventListener?.("change", checkMobile);
   }, [loc.pathname]);
 
   if (!FEATURE_MOBILE_SCAN_FAB || !isMobile) return null;

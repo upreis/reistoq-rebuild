@@ -14,6 +14,7 @@ import { AnnouncementTicker } from '@/components/notifications/AnnouncementTicke
 import { useAnnouncementTicker } from '@/hooks/useAnnouncementTicker';
 import MobileScanFab from '@/components/mobile/MobileScanFab';
 import { OnboardingBanner } from '@/components/onboarding/OnboardingBanner';
+import FabDebug from '@/pages/FabDebug';
 
 
 interface MainLayoutProps {
@@ -53,6 +54,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Route path="/scanner" element={<Scanner />} />
                   <Route path="/historico" element={<Historico />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />
+                  <Route path="/_fab-debug" element={<FabDebug />} />
                 </Routes>
               )}
             </main>
