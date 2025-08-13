@@ -143,126 +143,85 @@ export function useHistoricoVendas() {
     });
   };
 
+  // ---- EXCLUIR UMA VENDA ----
   const excluirVenda = async (id: string) => {
-    if (!FEATURES.VENDAS_MUTATE_UI) {
-      toast({ title: "Operação não permitida", description: "Edição de vendas desabilitada por segurança", variant: "destructive" });
-      throw new Error('Vendas mutations disabled');
-    }
-  };
+    try {
+      // Se a UI não deve mutar, apenas avise e saia (evita side-effects em produção)
+      if (!FEATURES.VENDAS_MUTATE_UI) {
+        toast({
+          title: "Ação desabilitada",
+          description: "Exclusão de vendas pela UI está desligada.",
+        });
+        return;
+      }
 
-      // Se tem sku_kit e total_itens, reverter o estoque
-      if (venda?.sku_kit && venda?.total_itens) {
-        const quantidadeReverter = venda.total_itens;
-        
-        // Buscar o produto pelo sku_kit na coluna sku_interno
+      // (Opcional) reversão de estoque do SKU-kit — mantenha somente se você usa isso hoje
+      // Carrega a venda necessária para reverter a quantidade, se aplicável
+      const { data: venda, error: vendaErr } = await supabase
+        .from("historico_vendas")
+        .select("id, sku_kit, total_itens")
+        .eq("id", id)
+        .single();
+      if (vendaErr) throw vendaErr;
+
+      if (venda?.sku_kit && Number(venda.total_itens) > 0) {
+        const quantidadeReverter = Number(venda.total_itens);
+
         const { data: produto, error: produtoError } = await supabase
-          .from('produtos')
-          .select('id, quantidade_atual, nome')
-          .eq('sku_interno', venda.sku_kit)
+          .from("produtos")
+          .select("id, quantidade_atual, nome")
+          .eq("sku_interno", venda.sku_kit)
           .single();
+        if (produtoError) throw produtoError;
 
-        if (produtoError) {
-          // Produto não encontrado para reversão
-        } else {
-          // Atualizar quantidade atual somando a quantidade revertida
-          const novaQuantidade = produto.quantidade_atual + quantidadeReverter;
-          
-          const { error: updateError } = await supabase
-            .from('produtos')
-            .update({ quantidade_atual: novaQuantidade })
-            .eq('id', produto.id);
+        const novaQuantidade = Number(produto.quantidade_atual ?? 0) + quantidadeReverter;
 
-          if (updateError) {
-            // Erro silencioso
-          } else {
-            // Sucesso silencioso
-          }
-        }
+        const { error: updateError } = await supabase
+          .from("produtos")
+          .update({ quantidade_atual: novaQuantidade })
+          .eq("id", produto.id);
+        if (updateError) throw updateError;
       }
 
-      // Excluir a venda
-      const { error } = await supabase
-        .from('historico_vendas')
-        .delete()
-        .eq('id', id);
-
+      // 🔒 Deletar via RPC (não tocar a tabela diretamente)
+      const { error } = await supabase.rpc("hv_delete", { _id: id });
       if (error) throw error;
 
-      toast({
-        title: "Venda excluída",
-        description: "A venda foi excluída e o estoque foi revertido com sucesso.",
-      });
-
-      buscarVendas();
+      await buscarVendas();
+      toast({ title: "Venda excluída com sucesso" });
     } catch (error: any) {
       toast({
         title: "Erro ao excluir",
-        description: error.message,
+        description: error?.message ?? String(error),
         variant: "destructive",
       });
     }
   };
 
+  // ---- EXCLUIR VÁRIAS VENDAS ----
   const excluirVendasSelecionadas = async (ids: string[]) => {
-    if (!FEATURES.VENDAS_MUTATE_UI) {
-      toast({ title: "Operação não permitida", description: "Edição de vendas desabilitada por segurança", variant: "destructive" });
-      throw new Error('Vendas mutations disabled');
-    }
-  };
-
-      // Processar reversão de estoque para cada venda
-      for (const venda of vendas || []) {
-        if (venda?.sku_kit && venda?.total_itens) {
-          const quantidadeReverter = venda.total_itens;
-          
-          // Buscar o produto pelo sku_kit na coluna sku_interno
-          const { data: produto, error: produtoError } = await supabase
-            .from('produtos')
-            .select('id, quantidade_atual, nome')
-            .eq('sku_interno', venda.sku_kit)
-            .single();
-
-          if (produtoError) {
-            // Produto não encontrado para reversão
-          } else {
-            // Atualizar quantidade atual somando a quantidade revertida
-            const novaQuantidade = produto.quantidade_atual + quantidadeReverter;
-            
-            const { error: updateError } = await supabase
-              .from('produtos')
-              .update({ quantidade_atual: novaQuantidade })
-              .eq('id', produto.id);
-
-            if (updateError) {
-              // Erro silencioso
-            } else {
-              // Sucesso silencioso
-            }
-          }
-        }
+    try {
+      if (!FEATURES.VENDAS_MUTATE_UI) {
+        toast({
+          title: "Ação desabilitada",
+          description: "Exclusão de vendas pela UI está desligada.",
+        });
+        return;
       }
 
-      // Excluir as vendas
-      const { error } = await supabase
-        .from('historico_vendas')
-        .delete()
-        .in('id', ids);
-
+      const { error } = await supabase.rpc("hv_delete_many", { _ids: ids });
       if (error) throw error;
 
-      toast({
-        title: "Vendas excluídas",
-        description: `${ids.length} venda(s) foram excluídas e o estoque foi revertido com sucesso.`,
-      });
-
-      buscarVendas();
+      await buscarVendas();
+      toast({ title: "Vendas excluídas" });
     } catch (error: any) {
       toast({
-        title: "Erro ao excluir",
-        description: error.message,
+        title: "Erro ao excluir selecionadas",
+        description: error?.message ?? String(error),
         variant: "destructive",
       });
     }
+  }
   };
 
   const adicionarVenda = async (novaVenda: Omit<HistoricoVenda, 'id' | 'created_at' | 'updated_at'>) => {
