@@ -9,16 +9,17 @@ export default function MobileScanFab() {
   const loc = useLocation();
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
+    const mq = window.matchMedia("(max-width: 768px)");
     const set = () => {
       const mobile = mq.matches;
       setIsMobile(mobile);
       
       // Debug log
-      console.log("MobileScanFab mounted:", { 
+      console.log("MobileScanFab debug:", { 
         mobile, 
         flag: FEATURE_MOBILE_SCAN_FAB, 
-        path: loc.pathname 
+        path: loc.pathname,
+        viewport: `${window.innerWidth}x${window.innerHeight}`
       });
     };
     
