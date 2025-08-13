@@ -556,10 +556,14 @@ if (!syncError && syncData?.itens && syncData?.pedidos) {
         .from('produtos')
         .select('sku_interno, nome, categoria, quantidade_atual');
 
-      // Buscar histórico de vendas para verificar itens já processados e obter sku_kit/qtd_kit
-      const { data: historicoVendas } = await supabase
-        .from('historico_vendas')
-        .select('id_unico, status, sku_kit, qtd_kit, numero_pedido, sku_produto');
+      // Fetch sales history via RPC (read-only access)
+      const { data: historicoVendas } = await supabase.rpc('get_historico_vendas_masked', {
+        _start: null,
+        _end: null,
+        _search: null,
+        _limit: 10000,
+        _offset: 0
+      });
 
       
 

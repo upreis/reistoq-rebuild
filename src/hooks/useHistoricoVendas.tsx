@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { FEATURES } from '@/config/features';
 
 interface HistoricoVenda {
   id: string;
@@ -143,15 +144,11 @@ export function useHistoricoVendas() {
   };
 
   const excluirVenda = async (id: string) => {
-    try {
-      // Primeiro buscar os dados da venda para reversão de estoque
-      const { data: venda, error: fetchError } = await supabase
-        .from('historico_vendas')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
+    if (!FEATURES.VENDAS_MUTATE_UI) {
+      toast({ title: "Operação não permitida", description: "Edição de vendas desabilitada por segurança", variant: "destructive" });
+      throw new Error('Vendas mutations disabled');
+    }
+  };
 
       // Se tem sku_kit e total_itens, reverter o estoque
       if (venda?.sku_kit && venda?.total_itens) {
@@ -207,14 +204,11 @@ export function useHistoricoVendas() {
   };
 
   const excluirVendasSelecionadas = async (ids: string[]) => {
-    try {
-      // Primeiro buscar todas as vendas para reversão de estoque
-      const { data: vendas, error: fetchError } = await supabase
-        .from('historico_vendas')
-        .select('*')
-        .in('id', ids);
-
-      if (fetchError) throw fetchError;
+    if (!FEATURES.VENDAS_MUTATE_UI) {
+      toast({ title: "Operação não permitida", description: "Edição de vendas desabilitada por segurança", variant: "destructive" });
+      throw new Error('Vendas mutations disabled');
+    }
+  };
 
       // Processar reversão de estoque para cada venda
       for (const venda of vendas || []) {
@@ -272,12 +266,11 @@ export function useHistoricoVendas() {
   };
 
   const adicionarVenda = async (novaVenda: Omit<HistoricoVenda, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const { error } = await supabase
-        .from('historico_vendas')
-        .insert([novaVenda]);
-
-      if (error) throw error;
+    if (!FEATURES.VENDAS_MUTATE_UI) {
+      toast({ title: "Operação não permitida", description: "Adição de vendas desabilitada por segurança", variant: "destructive" });
+      throw new Error('Vendas mutations disabled');
+    }
+  };
 
       toast({
         title: "Venda adicionada",
@@ -295,13 +288,11 @@ export function useHistoricoVendas() {
   };
 
   const atualizarVenda = async (id: string, dadosAtualizados: Partial<HistoricoVenda>) => {
-    try {
-      const { error } = await supabase
-        .from('historico_vendas')
-        .update(dadosAtualizados)
-        .eq('id', id);
-
-      if (error) throw error;
+    if (!FEATURES.VENDAS_MUTATE_UI) {
+      toast({ title: "Operação não permitida", description: "Edição de vendas desabilitada por segurança", variant: "destructive" });
+      throw new Error('Vendas mutations disabled');
+    }
+  };
 
       toast({
         title: "Venda atualizada",

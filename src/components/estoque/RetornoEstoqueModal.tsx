@@ -142,12 +142,14 @@ export function RetornoEstoqueModal({ isOpen, onClose, onSuccess }: RetornoEstoq
         if (produtoError) {
           console.error('Erro ao buscar produto:', produtoError);
         } else if (produto?.sku_interno) {
-          // Buscar o ID do produto no Tiny através do mapeamento ou histórico
-          const { data: historicoVenda } = await supabase
-            .from('historico_vendas')
-            .select('pedido_id')
-            .eq('sku_estoque', produto.sku_interno)
-            .limit(1);
+          // Look up via RPC (read-only access)
+          const { data: historicoVenda } = await supabase.rpc('get_historico_vendas_masked', {
+            _start: null,
+            _end: null,
+            _search: produto.sku_interno,
+            _limit: 1,
+            _offset: 0
+          });
 
           if (historicoVenda && historicoVenda.length > 0) {
             const { error: tinyError } = await supabase.functions.invoke('atualizar-estoque-tiny', {

@@ -151,10 +151,14 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
       const errosValidacao: string[] = [];
       let duplicatas = 0;
       
-      // Verificar duplicatas existentes
-      const { data: vendasExistentes } = await supabase
-        .from('historico_vendas')
-        .select('id_unico');
+      // Check for duplicates via RPC (read-only access)
+      const { data: vendasExistentes } = await supabase.rpc('get_historico_vendas_masked', {
+        _start: null,
+        _end: null,
+        _search: null,
+        _limit: 10000,
+        _offset: 0
+      });
       
       const idsExistentes = new Set(vendasExistentes?.map(v => v.id_unico) || []);
       
@@ -245,20 +249,11 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
       
       setProgress(50);
       
-      // Inserir vendas válidas no banco
-      let sucesso = 0;
-      if (vendasProcessadas.length > 0) {
-        const { data, error } = await supabase
-          .from('historico_vendas')
-          .insert(vendasProcessadas)
-          .select();
-        
-        if (error) {
-          throw error;
-        }
-        
-        sucesso = data?.length || 0;
-      }
+      // Insert disabled for security - would need edge function with service_role
+      setProgress(100);
+      throw new Error('Importação desabilitada por segurança. Funcionalidade será implementada via edge function.');
+      
+      const sucesso = 0;
       
       setProgress(100);
       

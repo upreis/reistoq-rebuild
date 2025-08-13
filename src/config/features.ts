@@ -1,36 +1,27 @@
-export type Filtros = {
-  dataInicio?: string;
-  dataFinal?: string;
-  situacoes?: string[];
-  busca?: string;
-  accountId?: string; // ML
-  integrationAccountId?: string; // Tiny (multi-conta)
-  fulfillmentOnly?: boolean; // ML
-  page?: number;
-  pageSize?: number;
-};
+// Feature flags for the application
+export const FEATURES = {
+  // Disable client mutations to historico_vendas (read via RPC only)
+  VENDAS_MUTATE_UI: false,
+  
+  // Other feature flags
+  SYNC_AUTOMATICO: true,
+  ALERTAS_TEMPO_REAL: true,
+  SCANNER_AVANCADO: true,
+} as const;
 
-export type UsePedidosReturn = {
-  itens: any[];
-  loading: boolean;
-  error: string | null;
-  total?: number;
-  fetchPage: (page?: number) => Promise<void>;
-  refetch: () => Promise<void>;
-  lastRequestId?: string; // ML
-  ms?: number;            // duração da última chamada
-  reqId?: string;         // alias amigável para lastRequestId
-  paging?: { total: number; limit: number; offset: number };
-};
+// Legacy exports for compatibility (will be migrated)
+export const FEATURE_TINY_V3_CONNECT = true;
+export const FEATURE_QA_TEST = false;
+export const IS_NON_PRODUCTION = false;
+export const FEATURE_TINY_LIVE = true;
+export const FEATURE_TINY_V3_LIVE = true;
+export const FEATURE_TINY_EDGE = true;
 
-export const FEATURE_ML = true;
-export const FEATURE_TINY = true;
-export const FEATURE_SHOPEE = true; // habilitado nesta branch
-export const FEATURE_QA_TEST = true; // desligado por padrão nesta branch
-export const FEATURE_TINY_EDGE = false; // controla uso da nova edge do Tiny
-export const FEATURE_TINY_LIVE = true; // controla uso do novo proxy live do Tiny
-export const FEATURE_TINY_V3_LIVE = false; // controla uso do novo proxy Tiny v3
-export const FEATURE_TINY_V3_CONNECT = true; // exibe botão Conectar Tiny v3 em Configurações
+// Types for hooks
+export interface Filtros {
+  [key: string]: any;
+}
 
-// Helper to detect non-production quickly without relying on VITE_* variables
-export const IS_NON_PRODUCTION = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.MODE !== 'production');
+export interface UsePedidosReturn {
+  [key: string]: any;
+}
