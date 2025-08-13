@@ -106,14 +106,6 @@ export function Scanner() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 id="scanner-title" className="text-3xl font-bold text-foreground">Scanner de Código de Barras</h1>
-          <p className="text-muted-foreground">Leitura rápida de códigos para consulta de produtos</p>
-        </div>
-      </div>
-
       {/* Layout responsivo reorganizado */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         {/* Camera Scanner - order-1 md:order-1 md:col-span-8 */}
