@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScanLine } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function FabDebug() {
   const [forceFab, setForceFab] = useState(false);
   const nav = useNavigate();
+  const loc = useLocation();
 
   const handleScanClick = () => {
     if ('vibrate' in navigator) {
@@ -12,6 +13,17 @@ export default function FabDebug() {
     }
     nav("/scanner");
   };
+
+  useEffect(() => {
+    // Force log FAB debug info for /_fab-debug page
+    console.log("FAB debug", { 
+      flag: true,
+      width: window.innerWidth,
+      ua: navigator.userAgent,
+      path: loc.pathname,
+      isMobile: window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window || /Android|iPhone|iPad/i.test(navigator.userAgent)
+    });
+  }, [loc.pathname]);
 
   return (
     <div className="container mx-auto p-8">
@@ -30,16 +42,17 @@ export default function FabDebug() {
           <p>Viewport: {window.innerWidth}x{window.innerHeight}</p>
           <p>Touch: {'ontouchstart' in window ? 'Yes' : 'No'}</p>
           <p>User Agent: {navigator.userAgent}</p>
+          <p>MediaQuery Match: {window.matchMedia('(max-width: 768px)').matches ? 'Yes' : 'No'}</p>
         </div>
       </div>
 
       {/* Force FAB for testing */}
       {forceFab && (
-        <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center pb-[env(safe-area-inset-bottom)] pointer-events-none">
+        <div className="fixed inset-x-0 bottom-4 flex justify-center z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
           <button
             data-testid="force-mobile-scan-fab"
             aria-label="Abrir scanner (debug)"
-            className="pointer-events-auto h-14 min-w-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 flex items-center gap-2"
+            className="pointer-events-auto h-14 min-w-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground flex items-center gap-2"
             onClick={handleScanClick}
           >
             <ScanLine className="h-5 w-5" />

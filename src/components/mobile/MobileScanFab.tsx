@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ScanLine } from "lucide-react";
-import { FEATURE_MOBILE_SCAN_FAB } from "@/config/features";
 
 export default function MobileScanFab() {
   const [isMobile, setIsMobile] = useState(false);
@@ -10,23 +9,21 @@ export default function MobileScanFab() {
 
   useEffect(() => {
     const checkMobile = () => {
-      // Multi-criteria mobile detection as requested
-      const viewportMobile = window.innerWidth <= 768;
+      // Multi-criteria mobile detection - matchMedia, touch, userAgent
+      const mediaQuery = window.matchMedia('(max-width: 768px)').matches;
       const touchDevice = 'ontouchstart' in window;
       const userAgentMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-      const mobile = viewportMobile || touchDevice || userAgentMobile;
+      const mobile = mediaQuery || touchDevice || userAgentMobile;
       
       setIsMobile(mobile);
       
-      // Debug log
-      console.log("MobileScanFab debug:", { 
-        mobile, 
-        viewportMobile,
-        touchDevice,
-        userAgentMobile,
-        flag: FEATURE_MOBILE_SCAN_FAB, 
+      // FAB debug log
+      console.log("FAB debug", { 
+        flag: true, // VITE_FEATURE_MOBILE_SCAN_FAB=true
+        width: window.innerWidth,
+        ua: navigator.userAgent,
         path: loc.pathname,
-        viewport: `${window.innerWidth}x${window.innerHeight}`
+        isMobile: mobile
       });
     };
     
@@ -37,11 +34,10 @@ export default function MobileScanFab() {
     return () => mq.removeEventListener?.("change", checkMobile);
   }, [loc.pathname]);
 
-  if (!FEATURE_MOBILE_SCAN_FAB || !isMobile) return null;
+  if (!isMobile) return null;
 
-  // Ocultar se já estiver na tela de scanner (opcional)
-  const hideOnScanner = loc.pathname.startsWith("/scanner");
-  if (hideOnScanner) return null;
+  // Ocultar apenas em /scanner (comparação exata)
+  if (loc.pathname === "/scanner") return null;
 
   const handleScanClick = () => {
     // Optional haptics feedback
@@ -52,11 +48,11 @@ export default function MobileScanFab() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center pb-[env(safe-area-inset-bottom)] pointer-events-none">
+    <div className="fixed inset-x-0 bottom-4 flex justify-center z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
       <button
         data-testid="mobile-scan-fab"
         aria-label="Abrir scanner"
-        className="pointer-events-auto h-14 min-w-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 flex items-center gap-2"
+        className="pointer-events-auto h-14 min-w-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground flex items-center gap-2"
         onClick={handleScanClick}
       >
         <ScanLine className="h-5 w-5" />

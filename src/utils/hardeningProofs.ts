@@ -10,6 +10,12 @@ function mask(token?: string | null) {
 
 export async function runHardeningProofs() {
   try {
+    // Log environment confirmation (masked)
+    const supabaseUrl = "https://tdjyfqnxvjgossuncpwm.supabase.co";
+    console.group('[Environment] Supabase Configuration');
+    console.log('SUPABASE_URL (masked)', supabaseUrl.replace(/\/\/(.+?)\./, '//*****.'));
+    console.groupEnd();
+
     const { data: session } = await (supabase as any).auth.getSession();
     const jwt = session?.session?.access_token || null;
     console.group('[Hardening] Auth context');
