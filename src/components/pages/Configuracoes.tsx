@@ -71,7 +71,10 @@ export function Configuracoes() {
       if (error) throw error;
       const authUrl = (data as any)?.authUrl;
       if (!authUrl) throw new Error('authUrl ausente');
-      window.location.href = authUrl;
+      
+      // Usar launchTop para evitar problema com iframe
+      const { launchTop } = await import('@/lib/launchTop');
+      launchTop(authUrl);
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Erro', description: e?.message || 'Falha ao iniciar OAuth do Tiny v3' });
     }

@@ -17,10 +17,18 @@ export default function TinyV3Callback() {
           body: { code, state },
         });
         if (error) throw error;
-        // redirect to settings
-        navigate("/configuracoes?tinyv3=connected", { replace: true });
+        // garantir retorno no topo
+        if (window.top) {
+          (window.top as Window).location.replace("/configuracoes?tinyv3=connected");
+        } else {
+          navigate("/configuracoes?tinyv3=connected", { replace: true });
+        }
       } catch (e) {
-        navigate("/configuracoes?tinyv3=error", { replace: true });
+        if (window.top) {
+          (window.top as Window).location.replace("/configuracoes?tinyv3=error");
+        } else {
+          navigate("/configuracoes?tinyv3=error", { replace: true });
+        }
       }
     };
     run();
