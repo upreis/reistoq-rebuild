@@ -1341,6 +1341,14 @@ export type Database = {
         Args: { permission_key: string }
         Returns: boolean
       }
+      hv_delete: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      hv_delete_many: {
+        Args: { _ids: string[] }
+        Returns: undefined
+      }
       mask_document: {
         Args: { doc: string }
         Returns: string

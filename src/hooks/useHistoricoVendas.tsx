@@ -221,48 +221,53 @@ export function useHistoricoVendas() {
         variant: "destructive",
       });
     }
-  }
   };
 
   const adicionarVenda = async (novaVenda: Omit<HistoricoVenda, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!FEATURES.VENDAS_MUTATE_UI) {
-      toast({ title: "Operação não permitida", description: "Adição de vendas desabilitada por segurança", variant: "destructive" });
-      throw new Error('Vendas mutations disabled');
-    }
-  };
+    try {
+      if (!FEATURES.VENDAS_MUTATE_UI) {
+        toast({ 
+          title: "Operação não permitida", 
+          description: "Adição de vendas desabilitada por segurança", 
+          variant: "destructive" 
+        });
+        return;
+      }
 
+      // Implementar via RPC quando necessário
       toast({
-        title: "Venda adicionada",
-        description: "A venda foi adicionada com sucesso.",
+        title: "Funcionalidade em desenvolvimento",
+        description: "Adição de vendas será implementada via RPC.",
       });
-
-      buscarVendas();
     } catch (error: any) {
       toast({
         title: "Erro ao adicionar",
-        description: error.message,
+        description: error?.message ?? String(error),
         variant: "destructive",
       });
     }
   };
 
   const atualizarVenda = async (id: string, dadosAtualizados: Partial<HistoricoVenda>) => {
-    if (!FEATURES.VENDAS_MUTATE_UI) {
-      toast({ title: "Operação não permitida", description: "Edição de vendas desabilitada por segurança", variant: "destructive" });
-      throw new Error('Vendas mutations disabled');
-    }
-  };
+    try {
+      if (!FEATURES.VENDAS_MUTATE_UI) {
+        toast({ 
+          title: "Operação não permitida", 
+          description: "Edição de vendas desabilitada por segurança", 
+          variant: "destructive" 
+        });
+        return;
+      }
 
+      // Implementar via RPC quando necessário
       toast({
-        title: "Venda atualizada",
-        description: "A venda foi atualizada com sucesso.",
+        title: "Funcionalidade em desenvolvimento",
+        description: "Atualização de vendas será implementada via RPC.",
       });
-
-      buscarVendas();
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar",
-        description: error.message,
+        description: error?.message ?? String(error),
         variant: "destructive",
       });
     }
