@@ -12,6 +12,7 @@ import { Configuracoes } from '@/components/pages/Configuracoes';
 import DePara from '@/components/pages/DePara';
 import { AnnouncementTicker } from '@/components/notifications/AnnouncementTicker';
 import { useAnnouncementTicker } from '@/hooks/useAnnouncementTicker';
+import { MobileScanFab } from '@/components/mobile/MobileScanFab';
 
 
 interface MainLayoutProps {
@@ -55,6 +56,9 @@ export function MainLayout({ children }: MainLayoutProps) {
             </main>
           </SidebarInset>
         </div>
+        
+        {/* Mobile Scanner FAB */}
+        <MobileScanFab />
       </div>
     </SidebarProvider>
   );

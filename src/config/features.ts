@@ -7,6 +7,9 @@ export const FEATURES = {
   SYNC_AUTOMATICO: true,
   ALERTAS_TEMPO_REAL: true,
   SCANNER_AVANCADO: true,
+  
+  // Mobile FAB scanner button
+  MOBILE_SCAN_FAB: false,
 } as const;
 
 // Legacy exports for compatibility (will be migrated)
