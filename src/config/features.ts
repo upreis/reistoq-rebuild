@@ -9,10 +9,11 @@ export const FEATURES = {
   SCANNER_AVANCADO: true,
   
   // Mobile FAB scanner button
-  MOBILE_SCAN_FAB: false,
+  MOBILE_SCAN_FAB: true,
 } as const;
 
 // Legacy exports for compatibility (will be migrated)
+export const FEATURE_MOBILE_SCAN_FAB = true;
 export const FEATURE_TINY_V3_CONNECT = true;
 export const FEATURE_QA_TEST = false;
 export const IS_NON_PRODUCTION = false;

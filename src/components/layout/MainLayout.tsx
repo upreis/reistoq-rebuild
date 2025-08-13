@@ -12,7 +12,7 @@ import { Configuracoes } from '@/components/pages/Configuracoes';
 import DePara from '@/components/pages/DePara';
 import { AnnouncementTicker } from '@/components/notifications/AnnouncementTicker';
 import { useAnnouncementTicker } from '@/hooks/useAnnouncementTicker';
-import { MobileScanFab } from '@/components/mobile/MobileScanFab';
+import MobileScanFab from '@/components/mobile/MobileScanFab';
 import { OnboardingBanner } from '@/components/onboarding/OnboardingBanner';
 
 
