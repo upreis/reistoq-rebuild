@@ -1,0 +1,19 @@
+-- Apply FORCE RLS to all remaining tables
+ALTER TABLE public._backfill_report_org_nulls FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.app_permissions FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.configuracoes FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.historico FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.historico_depara FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.itens_pedidos FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.mapeamentos_depara FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.movimentacoes_estoque FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.oauth_states FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.produtos FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.role_permissions FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.roles FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.sync_control FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.system_alerts FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.user_dismissed_notifications FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.user_permission_overrides FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.user_role_assignments FORCE ROW LEVEL SECURITY;
