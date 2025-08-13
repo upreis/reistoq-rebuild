@@ -4,11 +4,10 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requireOnboarding?: boolean;
 }
 
-export function ProtectedRoute({ children, requireOnboarding = true }: ProtectedRouteProps) {
-  const { user, loading, onboardingCompleto } = useAuth();
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   // Mostrar loading enquanto verifica autenticação
@@ -26,16 +25,6 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
   // Redirecionar para login se não autenticado
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
-
-  // Redirecionar para onboarding se necessário
-  if (requireOnboarding && !onboardingCompleto && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // Evitar acesso ao onboarding se já foi completo
-  if (onboardingCompleto && location.pathname === '/onboarding') {
-    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

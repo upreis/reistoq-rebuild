@@ -38,19 +38,8 @@ export default function Auth() {
       });
       if (error) throw error;
 
-      // Verificar organização do usuário
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organizacao_id')
-        .eq('id', data.user?.id)
-        .single();
-
       toast({ title: 'Login realizado!' });
-      if (profile?.organizacao_id) {
-        navigate('/dashboard', { replace: true });
-      } else {
-        navigate('/onboarding', { replace: true });
-      }
+      navigate('/pedidos', { replace: true });
     } catch (err: any) {
       toast({ title: 'Erro no login', description: err.message || 'Verifique suas credenciais.', variant: 'destructive' });
     } finally {
@@ -90,8 +79,8 @@ export default function Auth() {
       if (error) throw error;
 
       if (data.session) {
-        // conta criada e logada -> seguir para onboarding
-        navigate('/onboarding', { replace: true });
+        // conta criada e logada -> ir para APP_HOME
+        navigate('/pedidos', { replace: true });
       } else {
         toast({ title: 'Cadastro realizado!', description: 'Confirme seu e-mail para continuar.' });
       }
@@ -110,7 +99,7 @@ export default function Auth() {
       setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/dashboard` }
+        options: { redirectTo: `${window.location.origin}/auth/callback` }
       });
       if (error) {
         console.error('Erro ao iniciar login com Google:', error.message);

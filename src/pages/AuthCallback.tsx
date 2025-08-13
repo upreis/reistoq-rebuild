@@ -13,13 +13,8 @@ export default function AuthCallback() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
       if (session?.user) {
-        // verificar organização
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('organizacao_id')
-          .eq('id', session.user.id)
-          .single();
-        navigate(profile?.organizacao_id ? '/dashboard' : '/onboarding', { replace: true });
+        // ir direto para APP_HOME após autenticação
+        navigate('/pedidos', { replace: true });
       } else {
         // se não logou ainda, ir para /auth
         navigate('/auth', { replace: true });

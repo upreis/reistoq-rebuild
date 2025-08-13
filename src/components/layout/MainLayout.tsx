@@ -13,6 +13,7 @@ import DePara from '@/components/pages/DePara';
 import { AnnouncementTicker } from '@/components/notifications/AnnouncementTicker';
 import { useAnnouncementTicker } from '@/hooks/useAnnouncementTicker';
 import { MobileScanFab } from '@/components/mobile/MobileScanFab';
+import { OnboardingBanner } from '@/components/onboarding/OnboardingBanner';
 
 
 interface MainLayoutProps {
@@ -40,6 +41,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
             <Header />
+            <OnboardingBanner />
             <main className="flex-1 p-6 overflow-auto">
 
               {children || (
