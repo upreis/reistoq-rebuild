@@ -56,6 +56,7 @@ export function RolePermissionManager() {
     if (!user || !newRoleName.trim()) return;
     setLoading(true);
     try {
+      // ALLOW_SELF_PROFILE_QUERY
       const { data: profile } = await supabase
         .from("profiles")
         .select("organizacao_id")

@@ -21,6 +21,7 @@ export function OnboardingBanner() {
 
     const checkBannerStatus = async () => {
       try {
+        // ALLOW_SELF_PROFILE_QUERY
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -48,7 +49,7 @@ export function OnboardingBanner() {
     try {
       setLoading(true);
       
-      // Try to save dismiss state to user profile
+      // ALLOW_SELF_PROFILE_QUERY - Try to save dismiss state to user profile
       const { error } = await supabase
         .from('profiles')
         .update({ onboarding_banner_dismissed: true } as any)

@@ -87,6 +87,7 @@ export function IntegrationAccountsManager() {
         throw new Error("Usuário não autenticado.");
       }
 
+      // ALLOW_SELF_PROFILE_QUERY
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("organizacao_id")
