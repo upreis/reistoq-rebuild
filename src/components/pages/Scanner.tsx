@@ -11,11 +11,10 @@ import { MovimentacaoRapida } from "@/components/scanner/MovimentacaoRapida";
 import { ScannerStats } from "@/components/scanner/ScannerStats";
 import { ScannerHistory } from "@/components/scanner/ScannerHistory";
 import { ScannerModeToggle } from "@/components/scanner/ScannerModeToggle";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Scanner() {
   const {
@@ -56,16 +55,6 @@ export function Scanner() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
-
-  // Scroll automático para mobile na montagem
-  useEffect(() => {
-    if (isMobile) {
-      setTimeout(() => {
-        document.getElementById('camera-scanner')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      }, 100);
-    }
-  }, [isMobile]);
 
   // Função para recarregar dados do produto após movimentação
   const recarregarProduto = async () => {
@@ -114,6 +103,7 @@ export function Scanner() {
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -125,11 +115,11 @@ export function Scanner() {
       </div>
 
       {/* Layout responsivo reorganizado */}
-      <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'} gap-4`}>
-        {/* Camera Scanner - Prioridade no mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Camera Scanner - order-1 md:order-1 md:col-span-8 */}
         <Card 
           id="camera-scanner" 
-          className={isFullscreen ? 'col-span-1' : 'order-1 md:order-first md:col-span-8 min-h-[280px] md:min-h-0'}
+          className="order-1 md:order-1 md:col-span-8 min-h-[280px] md:min-h-0"
           aria-labelledby="camera-scanner-title"
         >
           <CardHeader>
@@ -288,13 +278,8 @@ export function Scanner() {
           </CardContent>
         </Card>
 
-        {/* Cards de Estatísticas - Segunda ordem no mobile */}
-        <div className={isFullscreen ? 'hidden' : 'order-2 md:order-none md:col-span-12'}>
-          <ScannerStats scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
-        </div>
-
-        {/* Manual Input com busca inteligente - Terceira ordem no mobile */}
-        <Card className={isFullscreen ? 'hidden' : 'order-3 md:order-none md:col-span-4'}>
+        {/* Busca Inteligente - order-3 md:order-1 md:col-span-4 */}
+        <Card className="order-3 md:order-1 md:col-span-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
@@ -383,19 +368,22 @@ export function Scanner() {
             )}
           </CardContent>
         </Card>
+
+        {/* Estatísticas - order-2 md:order-2 md:col-span-12 */}
+        <div className="order-2 md:order-2 md:col-span-12">
+          <ScannerStats scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
+        </div>
       </div>
 
       {/* Configurações do Scanner */}
-      {!isFullscreen && (
-        <ScannerModeToggle
-          continuousMode={continuousMode}
-          onContinuousModeChange={setContinuousMode}
-          soundEnabled={soundEnabled}
-          onSoundEnabledChange={setSoundEnabled}
-          vibrationEnabled={vibrationEnabled}
-          onVibrationEnabledChange={setVibrationEnabled}
-        />
-      )}
+      <ScannerModeToggle
+        continuousMode={continuousMode}
+        onContinuousModeChange={setContinuousMode}
+        soundEnabled={soundEnabled}
+        onSoundEnabledChange={setSoundEnabled}
+        vibrationEnabled={vibrationEnabled}
+        onVibrationEnabledChange={setVibrationEnabled}
+      />
 
       {/* Results */}
       <Card>
@@ -517,9 +505,7 @@ export function Scanner() {
       </Card>
 
       {/* Histórico com filtros avançados */}
-      {!isFullscreen && (
-        <ScannerHistory scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
-      )}
+      <ScannerHistory scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
 
       {/* Modal para criar/editar produto */}
       <ProdutoScannerModal 
