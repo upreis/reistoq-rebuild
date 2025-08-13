@@ -126,6 +126,63 @@ export function Configuracoes() {
     }
   };
 
+  const handleTestTinyV3Connection = async () => {
+    setLoading(true);
+    try {
+      // Test connection by trying to fetch orders for the last 30 days
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      const formatDate = (date: Date) => {
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+      };
+
+      const { data, error } = await supabase.functions.invoke('tiny-v3-orders-proxy', {
+        body: {
+          dateFrom: formatDate(thirtyDaysAgo),
+          dateTo: formatDate(today),
+          page: 1,
+          pageSize: 5 // Just a small test
+        }
+      });
+
+      if (error) throw error;
+
+      if (data && data.results) {
+        toast({ 
+          title: 'Conexão funcionando!', 
+          description: `Encontrados ${data.paging?.total || data.results.length} pedidos nos últimos 30 dias.`
+        });
+      } else {
+        toast({ 
+          title: 'Conexão ativa', 
+          description: 'API respondeu mas nenhum pedido encontrado nos últimos 30 dias.'
+        });
+      }
+    } catch (e: any) {
+      console.error('Erro ao testar conexão:', e);
+      if (e?.message?.includes('unauthorized') || e?.message?.includes('missing_tiny_v3_token')) {
+        toast({ 
+          variant: 'destructive', 
+          title: 'Conexão não funcionando', 
+          description: 'Token inválido ou expirado. Reconecte o Tiny v3.'
+        });
+        setTinyV3Connected(false);
+      } else {
+        toast({ 
+          variant: 'destructive', 
+          title: 'Erro no teste', 
+          description: e?.message || 'Falha ao testar conexão'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Announcement Ticker configs
 const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted" | "success" | "warning" | "primary" | "destructive" | "card">>>({});
   const [customItems, setCustomItems] = useState<TickerItem[]>([]);
@@ -569,6 +626,13 @@ const [urgencyMap, setUrgencyMap] = useState<Partial<Record<UrgencyLevel, "muted
               <Button onClick={handleTinyV3Connect} variant="secondary">Conectar Tiny v3</Button>
               {tinyV3Connected && (
                 <>
+                  <Button 
+                    onClick={handleTestTinyV3Connection} 
+                    variant="outline"
+                    disabled={loading}
+                  >
+                    {loading ? "Testando..." : "🔍 Testar Conexão"}
+                  </Button>
                   <Button onClick={handleTinyV3Connect} variant="outline">Reconectar</Button>
                   <Button onClick={handleTinyV3Disconnect} variant="destructive" disabled={disconnecting}>
                     {disconnecting ? 'Desconectando...' : 'Desconectar'}
