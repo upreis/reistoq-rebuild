@@ -182,7 +182,7 @@ const App = () => {
                   } />
 
                   {/* OAuth callback for Tiny v3 */}
-                  <Route path="/integrations/tiny/callback" element={<ProtectedRoute><TinyV3Callback /></ProtectedRoute>} />
+                  <Route path="/tiny-v3-callback" element={<TinyV3Callback />} />
                   
                   {/* Catch all - 404 */}
                   <Route path="*" element={<NotFound />} />
