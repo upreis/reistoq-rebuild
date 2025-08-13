@@ -46,20 +46,29 @@ export function Configuracoes() {
     let mounted = true;
     const loadTinyV3Status = async () => {
       try {
+        console.log('🔍 Verificando status do Tiny v3...');
         // Use Edge Function to check Tiny v3 status (service_role only)
-        const { data } = await supabase.functions.invoke('tiny-v3-token-manager', {
+        const { data, error } = await supabase.functions.invoke('tiny-v3-token-manager', {
           body: { action: 'status' }
         });
         
+        console.log('📊 Resposta do token-manager:', { data, error });
+        
         if (!mounted) return;
         if (data && data.connected) {
+          console.log('✅ Tiny v3 conectado!', { expires_at: data.expires_at });
           setTinyV3Connected(true);
           setTinyV3ExpiresAt(data.expires_at);
         } else {
+          console.log('❌ Tiny v3 não conectado:', data);
           setTinyV3Connected(false);
           setTinyV3ExpiresAt(null);
         }
-      } catch { /* ignore */ }
+      } catch (e) {
+        console.error('❌ Erro ao verificar status:', e);
+        setTinyV3Connected(false);
+        setTinyV3ExpiresAt(null);
+      }
     };
     if (FEATURE_TINY_V3_CONNECT) loadTinyV3Status();
     return () => { mounted = false; };
