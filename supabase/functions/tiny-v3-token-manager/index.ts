@@ -44,8 +44,8 @@ serve(async (req) => {
     if (!tokenRow) {
       // fallback: static secret (not recommended, but allowed)
       const bearer = Deno.env.get("TINY_V3_TOKEN");
-      if (!bearer) return json({ error: "no_token", action: "connect", requestId }, 401, requestId);
-      return json({ bearer, expiresAt: null, requestId }, 200, requestId);
+      if (!bearer) return json({ error: "no_token", action: "connect", connected: false, requestId }, 401, requestId);
+      return json({ bearer, expiresAt: null, connected: true, requestId }, 200, requestId);
     }
 
     const expiresAt = new Date(tokenRow.expires_at).getTime();
@@ -91,7 +91,7 @@ serve(async (req) => {
       }
     }
 
-    return json({ bearer: access, expiresAt: tokenRow.expires_at, refreshed, requestId }, 200, requestId);
+    return json({ bearer: access, expiresAt: tokenRow.expires_at, refreshed, connected: true, requestId }, 200, requestId);
   } catch (e) {
     return json({ error: String(e), requestId }, 500, requestId);
   }
