@@ -21,7 +21,7 @@ type IntegrationAccount = {
   cnpj: string | null;
   account_identifier: string | null;
   is_active: boolean;
-  auth_data: any | null;
+  public_auth: any | null;
   created_at: string;
   updated_at: string;
 };

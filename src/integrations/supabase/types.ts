@@ -343,7 +343,6 @@ export type Database = {
       integration_accounts: {
         Row: {
           account_identifier: string | null
-          auth_data: Json | null
           cnpj: string | null
           created_at: string
           id: string
@@ -351,11 +350,11 @@ export type Database = {
           name: string
           organization_id: string
           provider: Database["public"]["Enums"]["integration_provider"]
+          public_auth: Json | null
           updated_at: string
         }
         Insert: {
           account_identifier?: string | null
-          auth_data?: Json | null
           cnpj?: string | null
           created_at?: string
           id?: string
@@ -363,11 +362,11 @@ export type Database = {
           name: string
           organization_id: string
           provider: Database["public"]["Enums"]["integration_provider"]
+          public_auth?: Json | null
           updated_at?: string
         }
         Update: {
           account_identifier?: string | null
-          auth_data?: Json | null
           cnpj?: string | null
           created_at?: string
           id?: string
@@ -375,11 +374,72 @@ export type Database = {
           name?: string
           organization_id?: string
           provider?: Database["public"]["Enums"]["integration_provider"]
+          public_auth?: Json | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "integration_accounts_org_fk"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_secrets: {
+        Row: {
+          access_token: string | null
+          client_id: string | null
+          client_secret: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          integration_account_id: string
+          organization_id: string
+          payload: Json | null
+          provider: string
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          integration_account_id: string
+          organization_id: string
+          payload?: Json | null
+          provider: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          integration_account_id?: string
+          organization_id?: string
+          payload?: Json | null
+          provider?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_secrets_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_secrets_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizacoes"
