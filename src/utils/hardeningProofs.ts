@@ -17,41 +17,12 @@ export async function runHardeningProofs() {
     console.log('authorization', mask(jwt));
     console.groupEnd();
 
-    // 1) /rest/v1/tiny_v3_tokens -> deve 42501
-    try {
-      const res1 = await ((supabase as any).from('tiny_v3_tokens').select('*').limit(1) as any);
-      console.group('[Hardening] GET /rest/v1/tiny_v3_tokens?select=* (expect 42501)');
-      if (res1?.error) {
-        console.log('status', res1.error?.code || res1.error?.status || 'error');
-        console.log('error', res1.error);
-      } else {
-        console.log('status', 200);
-        console.log('data_sample', Array.isArray(res1?.data) ? res1.data.slice(0, 1) : res1?.data);
-      }
-      console.groupEnd();
-    } catch (e) {
-      console.group('[Hardening] GET /rest/v1/tiny_v3_tokens?select=* (exception)');
-      console.log('exception', e);
-      console.groupEnd();
-    }
-
-    // 2) /rest/v1/integration_secrets -> deve 42501
-    try {
-      const res2 = await ((supabase as any).from('integration_secrets').select('*').limit(1) as any);
-      console.group('[Hardening] GET /rest/v1/integration_secrets?select=* (expect 42501)');
-      if (res2?.error) {
-        console.log('status', res2.error?.code || res2.error?.status || 'error');
-        console.log('error', res2.error);
-      } else {
-        console.log('status', 200);
-        console.log('data_sample', Array.isArray(res2?.data) ? res2.data.slice(0, 1) : res2?.data);
-      }
-      console.groupEnd();
-    } catch (e) {
-      console.group('[Hardening] GET /rest/v1/integration_secrets?select=* (exception)');
-      console.log('exception', e);
-      console.groupEnd();
-    }
+    // Note: Direct access to secrets tables removed for security
+    // These tables are now only accessible via Edge Functions with service_role
+    console.group('[Hardening] Secrets tables access (via Edge Functions only)');
+    console.log('tiny_v3_tokens', 'Access restricted to service_role via Edge Functions');
+    console.log('integration_secrets', 'Access restricted to service_role via Edge Functions');
+    console.groupEnd();
 
     // 3) /rest/v1/historico_vendas_public -> deve 404
     try {

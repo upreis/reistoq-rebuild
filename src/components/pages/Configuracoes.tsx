@@ -46,14 +46,15 @@ export function Configuracoes() {
     let mounted = true;
     const loadTinyV3Status = async () => {
       try {
-        const { data } = await supabase
-          .from('tiny_v3_tokens')
-          .select('expires_at')
-          .limit(1);
+        // Use Edge Function to check Tiny v3 status (service_role only)
+        const { data } = await supabase.functions.invoke('tiny-v3-token-manager', {
+          body: { action: 'status' }
+        });
+        
         if (!mounted) return;
-        if (data && data.length) {
+        if (data && data.connected) {
           setTinyV3Connected(true);
-          setTinyV3ExpiresAt(data[0].expires_at);
+          setTinyV3ExpiresAt(data.expires_at);
         } else {
           setTinyV3Connected(false);
           setTinyV3ExpiresAt(null);
@@ -81,25 +82,29 @@ export function Configuracoes() {
     const params = new URLSearchParams(location.search || '');
     const status = params.get('tinyv3') || params.get('tiny_v3');
     if (!status) return;
-    supabase
-      .from('tiny_v3_tokens')
-      .select('expires_at')
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data.length) {
-          setTinyV3Connected(true);
-          setTinyV3ExpiresAt(data[0].expires_at);
-          if (status === 'connected') {
-            toast({ title: 'Tiny v3 conectado', description: 'Conexão ativa.' });
-          }
-        } else {
-          setTinyV3Connected(false);
-          setTinyV3ExpiresAt(null);
-          if (status === 'error') {
-            toast({ variant: 'destructive', title: 'Erro', description: 'Falha ao conectar Tiny v3' });
-          }
+    
+    // Use Edge Function to check status after callback
+    supabase.functions.invoke('tiny-v3-token-manager', {
+      body: { action: 'status' }
+    })
+    .then(({ data }) => {
+      if (data && data.connected) {
+        setTinyV3Connected(true);
+        setTinyV3ExpiresAt(data.expires_at);
+        if (status === 'connected') {
+          toast({ title: 'Tiny v3 conectado', description: 'Conexão ativa.' });
         }
-      });
+      } else {
+        setTinyV3Connected(false);
+        setTinyV3ExpiresAt(null);
+        if (status === 'error') {
+          toast({ variant: 'destructive', title: 'Erro', description: 'Falha ao conectar Tiny v3' });
+        }
+      }
+    })
+    .catch((error) => {
+      console.error('Erro ao atualizar status pós-callback:', error);
+    });
   }, [location.search]);
 
   const handleTinyV3Disconnect = async () => {
