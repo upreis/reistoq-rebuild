@@ -91,8 +91,16 @@ serve(async (req) => {
 
     console.log("tinyv3.oauth.callback.saved", { requestId, orgId });
 
-    // Prefer JSON response for SPA handler
-    return json({ success: true, requestId, orgId, expires_at }, 200, requestId);
+    // Redirect to configurações page with success parameter
+    const redirectUrl = `${Deno.env.get("TINY_V3_REDIRECT_URI")?.replace('/tiny-v3-callback', '/configuracoes?tinyv3=connected')}`;
+    
+    return new Response(null, {
+      status: 302,
+      headers: {
+        ...corsHeaders,
+        "Location": redirectUrl
+      }
+    });
   } catch (e) {
     return json({ error: String(e), requestId }, 500, requestId);
   }
