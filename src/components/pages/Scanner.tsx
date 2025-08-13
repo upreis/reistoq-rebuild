@@ -11,10 +11,11 @@ import { MovimentacaoRapida } from "@/components/scanner/MovimentacaoRapida";
 import { ScannerStats } from "@/components/scanner/ScannerStats";
 import { ScannerHistory } from "@/components/scanner/ScannerHistory";
 import { ScannerModeToggle } from "@/components/scanner/ScannerModeToggle";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Scanner() {
   const {
@@ -55,6 +56,16 @@ export function Scanner() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+
+  // Scroll automático para mobile na montagem
+  useEffect(() => {
+    if (isMobile) {
+      setTimeout(() => {
+        document.getElementById('camera-scanner')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }, 100);
+    }
+  }, [isMobile]);
 
   // Função para recarregar dados do produto após movimentação
   const recarregarProduto = async () => {
@@ -108,23 +119,24 @@ export function Scanner() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Scanner de Código de Barras</h1>
+          <h1 id="scanner-title" className="text-3xl font-bold text-foreground">Scanner de Código de Barras</h1>
           <p className="text-muted-foreground">Leitura rápida de códigos para consulta de produtos</p>
         </div>
       </div>
 
-      {/* Estatísticas */}
-      <ScannerStats scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
-
-      {/* Scanner Interface - Layout mais compacto */}
-      <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-4`}>
-        {/* Camera Scanner */}
-        <Card className={isFullscreen ? 'col-span-1' : 'lg:col-span-2'}>
+      {/* Layout responsivo reorganizado */}
+      <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'} gap-4`}>
+        {/* Camera Scanner - Prioridade no mobile */}
+        <Card 
+          id="camera-scanner" 
+          className={isFullscreen ? 'col-span-1' : 'order-1 md:order-first md:col-span-8 min-h-[280px] md:min-h-0'}
+          aria-labelledby="camera-scanner-title"
+        >
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Camera className="h-5 w-5" />
-                <CardTitle>Scanner de Câmera</CardTitle>
+                <CardTitle id="camera-scanner-title">Scanner de Câmera</CardTitle>
               </div>
               <div className="flex items-center gap-2">
                 <Button 
@@ -276,8 +288,13 @@ export function Scanner() {
           </CardContent>
         </Card>
 
-        {/* Manual Input com busca instantânea */}
-        <Card className={isFullscreen ? 'hidden' : ''}>
+        {/* Cards de Estatísticas - Segunda ordem no mobile */}
+        <div className={isFullscreen ? 'hidden' : 'order-2 md:order-none md:col-span-12'}>
+          <ScannerStats scanHistory={scanHistory.map(h => ({ ...h, timestamp: new Date(h.timestamp) }))} />
+        </div>
+
+        {/* Manual Input com busca inteligente - Terceira ordem no mobile */}
+        <Card className={isFullscreen ? 'hidden' : 'order-3 md:order-none md:col-span-4'}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
