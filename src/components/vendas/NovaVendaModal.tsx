@@ -53,24 +53,9 @@ export function NovaVendaModal({ open, onOpenChange, onSuccess }: NovaVendaModal
       const valorUnitario = parseFloat(formData.valor_unitario) || 0;
       const valorTotal = formData.valor_total ? parseFloat(formData.valor_total) : quantidade * valorUnitario;
 
-      const { error } = await supabase
-        .from('historico_vendas')
-        .insert([{
-          id_unico: formData.id_unico,
-          numero_pedido: formData.numero_pedido,
-          sku_produto: formData.sku_produto,
-          descricao: formData.nome_produto || null,
-          quantidade: quantidade,
-          valor_unitario: valorUnitario,
-          valor_total: valorTotal,
-          cliente_nome: formData.cliente_nome || null,
-          cliente_documento: formData.cliente_documento || null,
-          status: formData.status,
-          observacoes: formData.observacoes || null,
-          data_pedido: formData.data_venda,
-        }]);
-
-      if (error) throw error;
+      // Note: Direct INSERT to historico_vendas is disabled for security
+      // This feature requires service_role access via edge function
+      throw new Error('Adição de vendas temporariamente desabilitada por segurança');
 
       toast({
         title: "Venda adicionada",

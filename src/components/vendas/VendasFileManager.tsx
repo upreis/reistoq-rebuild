@@ -306,9 +306,13 @@ export function VendasFileManager({ onUploadSuccess }: VendasFileManagerProps) {
   const exportarDados = async () => {
     try {
       const { data: vendas, error } = await supabase
-        .from('historico_vendas')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_historico_vendas_masked', {
+          _start: null,
+          _end: null,
+          _search: null,
+          _limit: 10000,
+          _offset: 0
+        });
 
       if (error) throw error;
 

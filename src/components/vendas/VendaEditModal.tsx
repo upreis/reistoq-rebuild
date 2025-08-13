@@ -91,25 +91,9 @@ export function VendaEditModal({ open, onOpenChange, venda, onSuccess }: VendaEd
       const valorUnitario = parseFloat(formData.valor_unitario) || 0;
       const valorTotal = parseFloat(formData.valor_total) || 0;
 
-      const { error } = await supabase
-        .from('historico_vendas')
-        .update({
-          id_unico: formData.id_unico,
-          numero_pedido: formData.numero_pedido,
-          sku_produto: formData.sku_produto,
-          nome_produto: formData.nome_produto || null,
-          quantidade_vendida: quantidade,
-          valor_unitario: valorUnitario,
-          valor_total: valorTotal,
-          cliente_nome: formData.cliente_nome || null,
-          cliente_documento: formData.cliente_documento || null,
-          status: formData.status,
-          observacoes: formData.observacoes || null,
-          data_venda: formData.data_venda,
-        })
-        .eq('id', venda.id);
-
-      if (error) throw error;
+      // Note: Direct UPDATE to historico_vendas is disabled for security
+      // This feature requires service_role access via edge function
+      throw new Error('Edição de vendas temporariamente desabilitada por segurança');
 
       toast({
         title: "Venda atualizada",
