@@ -906,6 +906,7 @@ export type Database = {
           id: string
           nome_completo: string | null
           nome_exibicao: string | null
+          onboarding_banner_dismissed: boolean
           organizacao_id: string | null
           telefone: string | null
           updated_at: string
@@ -920,6 +921,7 @@ export type Database = {
           id: string
           nome_completo?: string | null
           nome_exibicao?: string | null
+          onboarding_banner_dismissed?: boolean
           organizacao_id?: string | null
           telefone?: string | null
           updated_at?: string
@@ -934,6 +936,7 @@ export type Database = {
           id?: string
           nome_completo?: string | null
           nome_exibicao?: string | null
+          onboarding_banner_dismissed?: boolean
           organizacao_id?: string | null
           telefone?: string | null
           updated_at?: string

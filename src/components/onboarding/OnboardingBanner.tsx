@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,9 +13,34 @@ export function OnboardingBanner() {
   const { toast } = useToast();
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  // Check if banner is dismissed
+  useEffect(() => {
+    if (!user) return;
+
+    const checkBannerStatus = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profile && 'onboarding_banner_dismissed' in profile) {
+          setBannerDismissed(profile.onboarding_banner_dismissed as boolean);
+        }
+      } catch (error) {
+        // If field doesn't exist or query fails, show banner
+        setBannerDismissed(false);
+      }
+    };
+
+    checkBannerStatus();
+  }, [user]);
 
   // Don't show if onboarding is complete, user is not logged in, or banner was dismissed
-  if (onboardingCompleto || !user || dismissed) {
+  if (onboardingCompleto || !user || dismissed || bannerDismissed) {
     return null;
   }
 
@@ -23,26 +48,29 @@ export function OnboardingBanner() {
     try {
       setLoading(true);
       
-      // Save dismiss state to user profile
+      // Try to save dismiss state to user profile
       const { error } = await supabase
         .from('profiles')
-        .update({ onboarding_banner_dismissed: true })
+        .update({ onboarding_banner_dismissed: true } as any)
         .eq('id', user.id);
 
       if (error) {
-        throw error;
+        // If update fails (field might not exist), just dismiss locally
+        console.warn('Could not save banner dismiss state:', error);
       }
 
       setDismissed(true);
+      setBannerDismissed(true);
       toast({
         title: "Banner ocultado",
         description: "O aviso não será mais exibido.",
       });
     } catch (error: any) {
+      // Even if save fails, dismiss locally
+      setDismissed(true);
       toast({
-        title: "Erro ao ocultar banner",
-        description: error.message,
-        variant: "destructive",
+        title: "Banner ocultado",
+        description: "O aviso foi ocultado localmente.",
       });
     } finally {
       setLoading(false);
