@@ -104,7 +104,6 @@ export function IntegrationAccountsManager() {
         cnpj: cnpj || null,
         account_identifier: identifier || null,
         is_active: active,
-        auth_data: token ? { token, tiny_token: token } : null,
       } as any);
 
       if (error) throw error;
@@ -146,7 +145,7 @@ export function IntegrationAccountsManager() {
     setEName(acc.name);
     setECnpj(acc.cnpj || "");
     setEIdentifier(acc.account_identifier || "");
-    setEToken(acc.auth_data?.tiny_token || acc.auth_data?.token || "");
+    setEToken("");
     setEActive(acc.is_active);
     setShowToken(false);
     setEditOpen(true);
@@ -167,7 +166,6 @@ export function IntegrationAccountsManager() {
           cnpj: eCnpj || null,
           account_identifier: eIdentifier || null,
           is_active: eActive,
-          auth_data: eToken ? { token: eToken, tiny_token: eToken } : null,
         })
         .eq("id", editId);
       if (error) throw error;

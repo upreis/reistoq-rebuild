@@ -381,14 +381,20 @@ Deno.serve(async (req) => {
           if (orgId) {
             const { data: contas } = await supabase
               .from('integration_accounts')
-              .select('id,name,auth_data')
+              .select('id,name')
               .eq('organization_id', orgId)
               .eq('provider', 'tiny')
               .eq('is_active', true)
               .limit(1);
             if (contas && contas.length > 0) {
               const conta = contas[0] as any;
-              const tokenConta = conta?.auth_data?.tiny_token;
+              const { data: sec } = await supabase
+                .from('integration_secrets')
+                .select('access_token')
+                .eq('integration_account_id', conta.id)
+                .eq('provider', 'tiny')
+                .maybeSingle();
+              const tokenConta = sec?.access_token as string | undefined;
               if (tokenConta) {
                 config.tiny_erp_token = tokenConta;
                 CURRENT_ACCOUNT_ID = conta.id;
@@ -451,12 +457,18 @@ Deno.serve(async (req) => {
       if (orgId) {
         const { data: contas } = await supabase
           .from('integration_accounts')
-          .select('id,name,auth_data')
+          .select('id,name')
           .eq('provider', 'tiny')
           .eq('is_active', true)
           .eq('organization_id', orgId);
-        (contas || []).forEach((conta: any) => {
-          const token = conta?.auth_data?.tiny_token || conta?.auth_data?.token;
+        (contas || []).forEach(async (conta: any) => {
+          const { data: sec } = await supabase
+            .from('integration_secrets')
+            .select('access_token')
+            .eq('integration_account_id', conta.id)
+            .eq('provider', 'tiny')
+            .maybeSingle();
+          const token = (sec?.access_token as string) || '';
           if (token) contasTiny.push({ id: conta.id, name: conta.name, token });
         });
       } else {

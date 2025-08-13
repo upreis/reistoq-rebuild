@@ -42,23 +42,32 @@ serve(async (req) => {
   // Buscar contas ML acessíveis ao usuário (RLS cuida da organização)
   let query = supabase
     .from('integration_accounts')
-    .select('id, provider, organization_id, account_identifier, auth_data')
+    .select('id, provider, organization_id, account_identifier')
     .eq('provider', 'mercadolivre');
   if (accountId) query = query.eq('id', accountId);
 
   const { data: accounts, error } = await query;
   if (error) return json({ error: 'Falha ao listar contas', details: error.message }, 500);
 
+  const svc = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
   const results: any[] = [];
   for (const acc of accounts || []) {
-    const auth = acc.auth_data || {};
-    const expiresAt = auth?.expires_at ? new Date(auth.expires_at).getTime() : 0;
+    // Buscar segredos
+    const { data: secret } = await svc
+      .from('integration_secrets')
+      .select('id, access_token, refresh_token, expires_at')
+      .eq('integration_account_id', acc.id)
+      .eq('provider', 'mercadolivre')
+      .maybeSingle();
+
+    const expiresAt = secret?.expires_at ? new Date(secret.expires_at as string).getTime() : 0;
     const needs = force || !expiresAt || (expiresAt - Date.now() < 5 * 60 * 1000);
     if (!needs) {
       results.push({ id: acc.id, refreshed: false, reason: 'valid' });
       continue;
     }
-    if (!auth?.refresh_token) {
+    if (!secret?.refresh_token) {
       results.push({ id: acc.id, refreshed: false, error: 'Sem refresh_token salvo' });
       continue;
     }
@@ -67,7 +76,7 @@ serve(async (req) => {
     form.set('grant_type', 'refresh_token');
     form.set('client_id', ML_APP_ID);
     form.set('client_secret', ML_APP_SECRET);
-    form.set('refresh_token', auth.refresh_token);
+    form.set('refresh_token', secret.refresh_token as string);
 
     const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
@@ -81,15 +90,15 @@ serve(async (req) => {
     }
 
     const access_token = tokenJson.access_token as string;
-    const refresh_token = (tokenJson.refresh_token as string | undefined) || auth.refresh_token;
+    const refresh_token = (tokenJson.refresh_token as string | undefined) || (secret.refresh_token as string);
     const expires_in = tokenJson.expires_in as number | undefined;
-    const expires_at = expires_in ? new Date(Date.now() + expires_in * 1000).toISOString() : auth.expires_at;
+    const expires_at = expires_in ? new Date(Date.now() + expires_in * 1000).toISOString() : (secret.expires_at as string | null);
 
-    const newAuth = { ...auth, access_token, refresh_token, expires_at };
-    const { error: upErr } = await supabase
-      .from('integration_accounts')
-      .update({ auth_data: newAuth, updated_at: new Date().toISOString() })
-      .eq('id', acc.id);
+    const { error: upErr } = await svc
+      .from('integration_secrets')
+      .update({ access_token, refresh_token, expires_at, updated_at: new Date().toISOString() })
+      .eq('integration_account_id', acc.id)
+      .eq('provider', 'mercadolivre');
     if (upErr) {
       results.push({ id: acc.id, refreshed: false, error: upErr.message });
     } else {

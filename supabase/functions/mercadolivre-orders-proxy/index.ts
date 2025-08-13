@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey",
@@ -140,21 +141,27 @@ serve(async (req) => {
 
     if (accountIds.length > 0) {
       const accounts = await getMLAccountsByIds(supabase, user.id, accountIds);
-      const refreshed = await Promise.all(accounts.map((a: any) => refreshIfNeeded(a)));
+      const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      const perAcc = await Promise.all(refreshed.map(async (acc: any) => {
+      const perAcc = await Promise.all(accounts.map(async (acc: any) => {
+        const { data: sec } = await svc
+          .from('integration_secrets')
+          .select('access_token')
+          .eq('integration_account_id', acc.id)
+          .eq('provider', 'mercadolivre')
+          .maybeSingle();
         const qs = buildQS(acc?.account_identifier);
         const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-          headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
+          headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
         });
         const body = await resp.json();
-        return { acc, ok: resp.ok, body };
+        return { acc, ok: resp.ok, body, __token: sec?.access_token };
       }));
 
       const errors = perAcc.filter(x => !x.ok).map(x => ({ account_id: x.acc?.id, details: x.body }));
       let combined = perAcc
         .filter(x => x.ok && Array.isArray(x.body?.results))
-        .flatMap(x => (x.body.results as any[]).map(o => ({ order: o, __acc_id: x.acc?.id, __token: x.acc?.auth_data?.access_token })));
+        .flatMap(x => (x.body.results as any[]).map(o => ({ order: o, __acc_id: x.acc?.id, __token: x.__token })));
 
       // Ordenar por data de criação desc
       combined.sort((a, b) => {
@@ -187,21 +194,27 @@ serve(async (req) => {
 
     if (all) {
       const accounts = await getAllActiveMLAccounts(supabase, user.id);
-      const refreshed = await Promise.all(accounts.map((a: any) => refreshIfNeeded(a)));
+      const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      const perAcc = await Promise.all(refreshed.map(async (acc: any) => {
+      const perAcc = await Promise.all(accounts.map(async (acc: any) => {
+        const { data: sec } = await svc
+          .from('integration_secrets')
+          .select('access_token')
+          .eq('integration_account_id', acc.id)
+          .eq('provider', 'mercadolivre')
+          .maybeSingle();
         const qs = buildQS(acc?.account_identifier);
         const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-          headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
+          headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
         });
         const body = await resp.json();
-        return { acc, ok: resp.ok, body };
+        return { acc, ok: resp.ok, body, __token: sec?.access_token };
       }));
 
       const errors = perAcc.filter(x => !x.ok).map(x => ({ account_id: x.acc?.id, details: x.body }));
       let combined = perAcc
         .filter(x => x.ok && Array.isArray(x.body?.results))
-        .flatMap(x => (x.body.results as any[]).map(o => ({ order: o, __acc_id: x.acc?.id, __token: x.acc?.auth_data?.access_token })));
+        .flatMap(x => (x.body.results as any[]).map(o => ({ order: o, __acc_id: x.acc?.id, __token: x.__token })));
 
       // Ordenar por data de criação descendente (quando disponível)
       combined.sort((a, b) => {
@@ -235,11 +248,18 @@ serve(async (req) => {
 
     // Single account path (default)
     let acc = accountId ? await getMLAccountById(supabase, user.id, accountId) : await getActiveMLAccount(supabase, user.id);
-    acc = await refreshIfNeeded(acc);
+
+    const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: sec } = await svc
+      .from('integration_secrets')
+      .select('access_token')
+      .eq('integration_account_id', acc.id)
+      .eq('provider', 'mercadolivre')
+      .maybeSingle();
 
     const qs = buildQS(acc?.account_identifier);
     const mlResp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
+      headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
     });
     const jsonBody = await mlResp.json();
     if (!mlResp.ok) return json({ error: 'Falha na API ML', details: jsonBody }, 400);
@@ -251,7 +271,7 @@ serve(async (req) => {
         if (!id) continue;
         try {
           const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/${id}`, {
-            headers: { Authorization: `Bearer ${acc?.auth_data?.access_token}` },
+            headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
           });
           const det = await resp.json();
           jsonBody.results[i] = { ...ord, _details: det };

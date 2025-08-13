@@ -136,18 +136,18 @@ serve(async (req) => {
       if (!prof?.organizacao_id) throw new Error('Organização não encontrada para o usuário');
       const orgId = prof.organizacao_id as string;
 
-      const base: any = {
+      const baseAccount: any = {
         organization_id: orgId,
         provider: 'mercadolivre',
         name: `ML ${user_id ?? 'conta'}`,
         cnpj: null,
         account_identifier: String(user_id ?? ''),
         is_active: true,
-        auth_data: { access_token, refresh_token, user_id, expires_at },
         updated_at: new Date().toISOString(),
       };
 
-      // UPSERT by (organization_id, provider, account_identifier)
+      // UPSERT account and retrieve id
+      let accountId: string | null = null;
       const { data: existing } = await svc
         .from('integration_accounts')
         .select('id')
@@ -157,11 +157,49 @@ serve(async (req) => {
         .maybeSingle();
 
       if (existing?.id) {
-        const { error } = await svc.from('integration_accounts').update(base).eq('id', existing.id);
+        const { error } = await svc.from('integration_accounts').update(baseAccount).eq('id', existing.id);
         if (error) throw error;
+        accountId = existing.id;
       } else {
-        const { error } = await svc.from('integration_accounts').insert(base);
+        const { data: ins, error } = await svc.from('integration_accounts').insert(baseAccount).select('id').single();
         if (error) throw error;
+        accountId = ins.id as string;
+      }
+
+      // Upsert secrets securely
+      if (accountId) {
+        const { data: sec } = await svc
+          .from('integration_secrets')
+          .select('id')
+          .eq('integration_account_id', accountId)
+          .eq('provider', 'mercadolivre')
+          .maybeSingle();
+
+        const secretPayload = {
+          organization_id: orgId,
+          integration_account_id: accountId,
+          provider: 'mercadolivre',
+          client_id: ML_APP_ID,
+          client_secret: null,
+          access_token,
+          refresh_token: refresh_token ?? null,
+          expires_at,
+          payload: { user_id },
+          updated_at: new Date().toISOString(),
+        } as const;
+
+        if (sec?.id) {
+          const { error } = await svc
+            .from('integration_secrets')
+            .update(secretPayload)
+            .eq('id', sec.id);
+          if (error) throw error;
+        } else {
+          const { error } = await svc
+            .from('integration_secrets')
+            .insert(secretPayload);
+          if (error) throw error;
+        }
       }
 
       // Limpar state usado
