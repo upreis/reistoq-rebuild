@@ -143,10 +143,9 @@ export function useHistoricoVendas() {
     });
   };
 
-  // ---- EXCLUIR UMA VENDA ----
+  // ---- EXCLUIR UMA VENDA (RPC) ----
   const excluirVenda = async (id: string) => {
     try {
-      // Se a UI não deve mutar, apenas avise e saia (evita side-effects em produção)
       if (!FEATURES.VENDAS_MUTATE_UI) {
         toast({
           title: "Ação desabilitada",
@@ -155,8 +154,8 @@ export function useHistoricoVendas() {
         return;
       }
 
-      // (Opcional) reversão de estoque do SKU-kit — mantenha somente se você usa isso hoje
-      // Carrega a venda necessária para reverter a quantidade, se aplicável
+      // (opcional) reversão de estoque — deixe comentado se não usa
+      /*
       const { data: venda, error: vendaErr } = await supabase
         .from("historico_vendas")
         .select("id, sku_kit, total_itens")
@@ -165,25 +164,23 @@ export function useHistoricoVendas() {
       if (vendaErr) throw vendaErr;
 
       if (venda?.sku_kit && Number(venda.total_itens) > 0) {
-        const quantidadeReverter = Number(venda.total_itens);
-
-        const { data: produto, error: produtoError } = await supabase
+        const qtd = Number(venda.total_itens);
+        const { data: produto, error: prodErr } = await supabase
           .from("produtos")
-          .select("id, quantidade_atual, nome")
+          .select("id, quantidade_atual")
           .eq("sku_interno", venda.sku_kit)
           .single();
-        if (produtoError) throw produtoError;
+        if (prodErr) throw prodErr;
 
-        const novaQuantidade = Number(produto.quantidade_atual ?? 0) + quantidadeReverter;
-
-        const { error: updateError } = await supabase
+        const novaQuantidade = Number(produto.quantidade_atual ?? 0) + qtd;
+        const { error: updErr } = await supabase
           .from("produtos")
           .update({ quantidade_atual: novaQuantidade })
           .eq("id", produto.id);
-        if (updateError) throw updateError;
+        if (updErr) throw updErr;
       }
+      */
 
-      // 🔒 Deletar via RPC (não tocar a tabela diretamente)
       const { error } = await supabase.rpc("hv_delete", { _id: id });
       if (error) throw error;
 
@@ -198,7 +195,7 @@ export function useHistoricoVendas() {
     }
   };
 
-  // ---- EXCLUIR VÁRIAS VENDAS ----
+  // ---- EXCLUIR VÁRIAS VENDAS (RPC) ----
   const excluirVendasSelecionadas = async (ids: string[]) => {
     try {
       if (!FEATURES.VENDAS_MUTATE_UI) {
