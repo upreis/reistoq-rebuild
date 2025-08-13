@@ -1,63 +1,49 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ScanLine } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export default function FabDebug() {
-  const [forcedFab, setForcedFab] = useState(false);
+  const [forceFab, setForceFab] = useState(false);
   const nav = useNavigate();
 
-  const debugInfo = {
-    viewport: `${window.innerWidth}x${window.innerHeight}`,
-    viewportMobile: window.innerWidth <= 768,
-    touchDevice: 'ontouchstart' in window,
-    userAgentMobile: /Android|iPhone|iPad/i.test(navigator.userAgent),
-    userAgent: navigator.userAgent
+  const handleScanClick = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    nav("/scanner");
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>FAB Debug Page</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">Mobile Detection Info:</h3>
-            <pre className="bg-muted p-2 rounded text-xs overflow-auto">
-              {JSON.stringify(debugInfo, null, 2)}
-            </pre>
-          </div>
-          
-          <div className="space-x-2">
-            <Button 
-              onClick={() => setForcedFab(!forcedFab)}
-              variant={forcedFab ? "destructive" : "default"}
-            >
-              {forcedFab ? "Hide" : "Show"} Forced FAB
-            </Button>
-            <Button onClick={() => nav("/scanner")}>
-              Go to Scanner
-            </Button>
-            <Button onClick={() => nav("/dashboard")}>
-              Go to Dashboard
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-6">FAB Debug Page</h1>
+      
+      <div className="space-y-4">
+        <button
+          onClick={() => setForceFab(!forceFab)}
+          className="px-4 py-2 bg-secondary text-secondary-foreground rounded"
+        >
+          {forceFab ? 'Hide' : 'Show'} Force FAB
+        </button>
+        
+        <div className="p-4 bg-muted rounded">
+          <h3 className="font-semibold mb-2">Device Info:</h3>
+          <p>Viewport: {window.innerWidth}x{window.innerHeight}</p>
+          <p>Touch: {'ontouchstart' in window ? 'Yes' : 'No'}</p>
+          <p>User Agent: {navigator.userAgent}</p>
+        </div>
+      </div>
 
-      {/* Forced FAB for testing */}
-      {forcedFab && (
+      {/* Force FAB for testing */}
+      {forceFab && (
         <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center pb-[env(safe-area-inset-bottom)] pointer-events-none">
           <button
-            data-testid="mobile-scan-fab-debug"
+            data-testid="force-mobile-scan-fab"
             aria-label="Abrir scanner (debug)"
             className="pointer-events-auto h-14 min-w-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 flex items-center gap-2"
-            onClick={() => nav("/scanner")}
+            onClick={handleScanClick}
           >
             <ScanLine className="h-5 w-5" />
-            <span className="text-sm font-medium">Scanner</span>
+            <span className="text-sm font-medium">Scanner (Debug)</span>
           </button>
         </div>
       )}
