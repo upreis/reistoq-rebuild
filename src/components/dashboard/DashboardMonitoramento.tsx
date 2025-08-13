@@ -72,11 +72,15 @@ export function DashboardMonitoramento() {
       // Calcular métricas do dia
       const hoje = new Date().toISOString().split('T')[0];
       
-      const { count: pedidosHoje } = await supabase
-        .from('pedidos')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', `${hoje}T00:00:00`)
-        .lt('created_at', `${hoje}T23:59:59`);
+      // Use RPC to count pedidos safely
+      const { data: pedidosData } = await supabase.rpc('get_pedidos_masked', {
+        _start: hoje,
+        _end: hoje,
+        _search: null,
+        _limit: 1000,
+        _offset: 0
+      });
+      const pedidosHoje = pedidosData?.length || 0;
 
       const alertasHoje = historicoData?.filter(h => 
         h.tipo.includes('alert') && 

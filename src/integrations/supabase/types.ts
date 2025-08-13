@@ -1261,6 +1261,18 @@ export type Database = {
         Args: { _token: string }
         Returns: Json
       }
+      admin_list_profiles: {
+        Args: { _search?: string; _limit?: number; _offset?: number }
+        Returns: {
+          id: string
+          nome_completo: string
+          nome_exibicao: string
+          email: string
+          telefone: string
+          cargo: string
+          organizacao_id: string
+        }[]
+      }
       backfill_config_for_current_org: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1334,6 +1346,39 @@ export type Database = {
           sku_kit: string
           qtd_kit: number
           total_itens: number
+        }[]
+      }
+      get_pedidos_masked: {
+        Args: {
+          _start?: string
+          _end?: string
+          _search?: string
+          _limit?: number
+          _offset?: number
+        }
+        Returns: {
+          cidade: string | null
+          codigo_rastreamento: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          data_pedido: string
+          data_prevista: string | null
+          empresa: string | null
+          id: string
+          integration_account_id: string | null
+          nome_cliente: string
+          numero: string
+          numero_ecommerce: string | null
+          numero_venda: string | null
+          obs: string | null
+          obs_interna: string | null
+          situacao: string
+          uf: string | null
+          updated_at: string
+          url_rastreamento: string | null
+          valor_desconto: number
+          valor_frete: number
+          valor_total: number
         }[]
       }
       get_user_permissions: {

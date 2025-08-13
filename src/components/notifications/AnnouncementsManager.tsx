@@ -75,17 +75,20 @@ export function AnnouncementsManager() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [{ data: ann }, { data: rls }, { data: profs }] = await Promise.all([
+      const [{ data: ann }, { data: rls }, profsResult] = await Promise.all([
         supabase.from("announcements").select("*").order("created_at", { ascending: false }),
         supabase.from("roles").select("id,name"),
         organizacao
-          ? supabase.from("profiles").select("id,nome_exibicao,nome_completo").eq("organizacao_id", organizacao.id)
-          : supabase.from("profiles").select("id,nome_exibicao,nome_completo").limit(0),
+          ? supabase.rpc("admin_list_profiles", { _search: null, _limit: 100, _offset: 0 })
+          : Promise.resolve({ data: [] }),
       ]);
       setList((ann || []) as AnnRow[]);
       setRoles((rls || []).map((r: any) => ({ id: r.id, name: r.name })));
+      
+      // Handle profiles data properly
+      const profilesData = profsResult?.data || [];
       setUsers(
-        (profs || []).map((p: any) => ({ id: p.id, name: p.nome_exibicao || p.nome_completo || "Usuário" }))
+        profilesData.map((p: any) => ({ id: p.id, name: p.nome_exibicao || p.nome_completo || "Usuário" }))
       );
     } catch (e) {
       console.error(e);

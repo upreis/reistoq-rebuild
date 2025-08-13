@@ -28,18 +28,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Carregar dados da organização e verificar onboarding
   const carregarDadosUsuario = async (userId: string) => {
     try {
-      // Buscar profile com organização
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          organizacoes (*)
-        `)
-        .eq('id', userId)
-        .single();
+      // Usar RPC seguro para buscar profile com organização
+      const { data: profiles } = await supabase.rpc('admin_list_profiles', {
+        _search: null,
+        _limit: 1,
+        _offset: 0
+      });
 
-      if (profile?.organizacoes) {
-        setOrganizacao(profile.organizacoes);
+      const profile = profiles?.[0];
+      
+      if (profile?.organizacao_id) {
+        // Buscar dados da organização separadamente
+        const { data: org } = await supabase
+          .from('organizacoes')
+          .select('*')
+          .eq('id', profile.organizacao_id)
+          .single();
+        
+        if (org) {
+          setOrganizacao(org);
+        }
       }
 
       // Verificar se onboarding foi completo
@@ -173,10 +181,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user) return { error: new Error('Usuário não autenticado') };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', user.id);
+      // Note: Profile updates now need to be handled via admin functions
+      // For self-updates, we'll need to create a separate RPC function
+      const error = new Error('Profile updates via RPC not yet implemented');
 
       if (error) {
         toast({

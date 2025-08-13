@@ -115,35 +115,16 @@ export function usePedidos() {
           description: syncData.message || `${pedidosFiltrados.length} pedidos carregados com sucesso`,
         });
       } else {
-        // Fallback: se a edge function não retornar dados, usar consulta local
-        console.log('⚠️ Edge function não retornou dados. Usando fallback para consulta local...');
+        // Fallback: usar RPC seguro
+        console.log('⚠️ Edge function não retornou dados. Usando RPC para consulta segura...');
         
-        let query = supabase
-          .from('pedidos')
-          .select('*');
-
-        // Aplicar filtros locais
-        if (filtros.busca) {
-          query = query.or(`numero.ilike.%${filtros.busca}%,numero_ecommerce.ilike.%${filtros.busca}%`);
-        }
-
-        if (filtros.cliente) {
-          query = query.ilike('nome_cliente', `%${filtros.cliente}%`);
-        }
-
-        if (filtros.dataInicio) {
-          query = query.gte('data_pedido', filtros.dataInicio);
-        }
-
-        if (filtros.dataFim) {
-          query = query.lte('data_pedido', filtros.dataFim);
-        }
-
-        if (filtros.situacao && filtros.situacao !== 'todas') {
-          query = query.eq('situacao', filtros.situacao);
-        }
-
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error } = await supabase.rpc('get_pedidos_masked', {
+          _start: filtros.dataInicio || null,
+          _end: filtros.dataFim || null,
+          _search: filtros.busca || null,
+          _limit: 100,
+          _offset: 0
+        });
 
         if (error) {
           throw error;
