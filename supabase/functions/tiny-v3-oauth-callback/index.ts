@@ -28,13 +28,34 @@ serve(async (req) => {
   const requestId = crypto.randomUUID();
 
   try {
+    console.log("tinyv3.oauth.callback.start", { requestId, method: req.method, url: req.url });
+
     const url = new URL(req.url);
-    const code = url.searchParams.get("code") || (await req.clone().json().catch(() => ({}))).code;
-    const state = url.searchParams.get("state") || (await req.clone().json().catch(() => ({}))).state;
+    let code: string | null = null;
+    let state: string | null = null;
+
+    // Try to get from URL params first, then from body
+    code = url.searchParams.get("code");
+    state = url.searchParams.get("state");
+
+    if (!code || !state) {
+      try {
+        const body = await req.json();
+        code = body.code || code;
+        state = body.state || state;
+      } catch (e) {
+        console.log("tinyv3.oauth.callback.body_parse_error", { requestId, error: String(e) });
+      }
+    }
+
+    console.log("tinyv3.oauth.callback.params", { requestId, hasCode: !!code, hasState: !!state });
 
     if (!code || !state) return json({ error: "missing_params", requestId }, 400, requestId);
+    
     const stateObj = fromB64(state);
     const orgId: string | undefined = stateObj?.orgId;
+    console.log("tinyv3.oauth.callback.state_decoded", { requestId, orgId, stateObj });
+    
     if (!orgId) return json({ error: "invalid_state", requestId }, 400, requestId);
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -116,6 +137,7 @@ serve(async (req) => {
     // Return success response for client-side redirect
     return json({ success: true, requestId, orgId, expires_at }, 200, requestId);
   } catch (e) {
+    console.log("tinyv3.oauth.callback.fatal_error", { requestId, error: String(e), stack: e.stack });
     return json({ error: String(e), requestId }, 500, requestId);
   }
 });
