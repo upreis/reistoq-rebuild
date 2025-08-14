@@ -491,11 +491,12 @@ function ContinuousTicker({
     if (!track || !container) return;
 
     const measure = () => {
-      // Para item único, não duplicar. Para múltiplos itens, duplicar apenas se necessário para scroll contínuo
-      const needsDuplication = items.length > 1 && loop;
-      const copies = needsDuplication ? 2 : 1;
-      const bw = needsDuplication ? Math.max(1, Math.floor(track.scrollWidth / copies)) : track.scrollWidth;
+      // Apenas duplicar se o conteúdo for menor que o viewport E loop estiver ativo
       const cw = container.clientWidth;
+      const tw = track.scrollWidth;
+      const needsDuplication = loop && tw < cw;
+      const copies = needsDuplication ? 2 : 1;
+      const bw = needsDuplication ? Math.max(1, Math.floor(tw / copies)) : tw;
       setBaseWidth(bw);
       if (repeatCount !== copies) setRepeatCount(copies);
       // Start from the right edge so items enter the viewport from the end without flashing
