@@ -91,16 +91,8 @@ serve(async (req) => {
 
     console.log("tinyv3.oauth.callback.saved", { requestId, orgId });
 
-    // Redirect to configurações page with success parameter
-    const redirectUrl = `${Deno.env.get("TINY_V3_REDIRECT_URI")?.replace('/tiny-v3-callback', '/configuracoes?tinyv3=connected')}`;
-    
-    return new Response(null, {
-      status: 302,
-      headers: {
-        ...corsHeaders,
-        "Location": redirectUrl
-      }
-    });
+    // Return success response for client-side redirect
+    return json({ success: true, requestId, orgId, expires_at }, 200, requestId);
   } catch (e) {
     return json({ error: String(e), requestId }, 500, requestId);
   }
