@@ -443,51 +443,9 @@ function TickerRow({
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
   variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
-  // Single item: use slide mode to avoid duplicated text in continuous ticker
-  if (items.length <= 1) {
-    return (
-      <SlideTicker
-        items={items}
-        speed={speed}
-        paused={paused}
-        loop={loop}
-        divider={divider}
-        customDivider={customDivider}
-        themeVariant={themeVariant}
-        variant={variant}
-      />
-    );
-  }
-  if (mode === "slide") {
-    return (
-      <SlideTicker
-        items={items}
-        speed={speed}
-        paused={paused}
-        loop={loop}
-        divider={divider}
-        customDivider={customDivider}
-        themeVariant={themeVariant}
-        variant={variant}
-      />
-    );
-  }
-
-  if (false) {
-    return (
-      <CssContinuousTicker
-        items={items}
-        speed={speed}
-        divider={divider}
-        customDivider={customDivider}
-        themeVariant={themeVariant}
-        variant={variant}
-      />
-    );
-  }
-
+  // Sempre usar slide mode para evitar duplicação desnecessária
   return (
-    <ContinuousTicker
+    <SlideTicker
       items={items}
       speed={speed}
       paused={paused}
