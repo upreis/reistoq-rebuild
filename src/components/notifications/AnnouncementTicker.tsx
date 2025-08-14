@@ -443,9 +443,26 @@ function TickerRow({
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
   variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
-  // Sempre usar slide mode para evitar duplicação desnecessária
+  // Para item único: usar slide sem loop para evitar duplicação
+  // Para múltiplos itens: usar continuous com scroll
+  if (items.length <= 1) {
+    return (
+      <SlideTicker
+        items={items}
+        speed={speed}
+        paused={paused}
+        loop={false}
+        divider={divider}
+        customDivider={customDivider}
+        themeVariant={themeVariant}
+        variant={variant}
+      />
+    );
+  }
+
+  // Múltiplos itens: usar continuous mode para scroll suave
   return (
-    <SlideTicker
+    <ContinuousTicker
       items={items}
       speed={speed}
       paused={paused}
