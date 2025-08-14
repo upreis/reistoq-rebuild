@@ -491,17 +491,19 @@ function ContinuousTicker({
     if (!track || !container) return;
 
     const measure = () => {
-      // Apenas duplicar se o conteúdo for menor que o viewport E loop estiver ativo
       const cw = container.clientWidth;
       const tw = track.scrollWidth;
-      const needsDuplication = loop && tw < cw;
-      const copies = needsDuplication ? 2 : 1;
-      const bw = needsDuplication ? Math.max(1, Math.floor(tw / copies)) : tw;
+      
+      // SEMPRE usar 2 cópias para garantir scroll infinito suave
+      const copies = loop ? 2 : 1;
+      const bw = loop ? Math.max(1, Math.floor(tw / copies)) : tw;
+      
       setBaseWidth(bw);
       if (repeatCount !== copies) setRepeatCount(copies);
+      
       // Start from the right edge so items enter the viewport from the end without flashing
       if (!initializedRef.current && cw > 0) {
-        setOffset(needsDuplication ? cw : 0);
+        setOffset(loop ? cw : 0);
         initializedRef.current = true;
       }
     };
@@ -515,7 +517,7 @@ function ContinuousTicker({
       ro1.disconnect();
       ro2.disconnect();
     };
-  }, [items]);
+  }, [items, loop]);
 
   // Re-initialize start position when items change
   React.useEffect(() => {
