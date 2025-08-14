@@ -38,6 +38,9 @@ serve(async (req) => {
     if (!orgId) return json({ error: "invalid_state", requestId }, 400, requestId);
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    console.log("tinyv3.oauth.callback.debug", { requestId, orgId, code: code?.substring(0, 10) + "...", state: state?.substring(0, 10) + "..." });
+    
     const { data: credsRows } = await admin
       .from("tiny_v3_credentials")
       .select("client_id, client_secret, redirect_uri")
@@ -47,6 +50,14 @@ serve(async (req) => {
     const client_id = credsRows?.[0]?.client_id || Deno.env.get("TINY_V3_CLIENT_ID");
     const client_secret = credsRows?.[0]?.client_secret || Deno.env.get("TINY_V3_CLIENT_SECRET");
     const redirect_uri = credsRows?.[0]?.redirect_uri || Deno.env.get("TINY_V3_REDIRECT_URI");
+
+    console.log("tinyv3.oauth.callback.config", { 
+      requestId, 
+      hasClientId: !!client_id, 
+      hasClientSecret: !!client_secret,
+      hasRedirectUri: !!redirect_uri,
+      credsRowsLength: credsRows?.length || 0
+    });
 
     if (!client_id || !client_secret || !redirect_uri) {
       return json({ error: "missing_client_config", details: "Defina client_id/client_secret/redirect_uri ou secrets TINY_V3_*", requestId }, 400, requestId);
@@ -66,9 +77,11 @@ serve(async (req) => {
     });
 
     const payload = await resp.json().catch(() => ({}));
+    console.log("tinyv3.oauth.callback.token_response", { requestId, status: resp.status, hasAccessToken: !!payload.access_token });
+    
     if (!resp.ok) {
-      console.log("tinyv3.oauth.callback.error", { requestId, status: resp.status });
-      return json({ error: "token_exchange_failed", status: resp.status, requestId }, 400, requestId);
+      console.log("tinyv3.oauth.callback.error", { requestId, status: resp.status, payload });
+      return json({ error: "token_exchange_failed", status: resp.status, payload, requestId }, 400, requestId);
     }
 
     const access_token: string = payload.access_token;
@@ -79,8 +92,10 @@ serve(async (req) => {
 
     const expires_at = new Date(Date.now() + (expires_in * 1000)).toISOString();
 
+    console.log("tinyv3.oauth.callback.before_upsert", { requestId, orgId, hasTokens: !!access_token && !!refresh_token });
+
     // Upsert tokens for org
-    await admin.from("tiny_v3_tokens").upsert({
+    const { data: upsertData, error: upsertError } = await admin.from("tiny_v3_tokens").upsert({
       organization_id: orgId,
       access_token,
       refresh_token,
@@ -88,6 +103,13 @@ serve(async (req) => {
       token_type,
       scope,
     }, { onConflict: "organization_id" });
+
+    console.log("tinyv3.oauth.callback.upsert_result", { requestId, orgId, upsertError, upsertData });
+
+    if (upsertError) {
+      console.log("tinyv3.oauth.callback.upsert_error", { requestId, error: upsertError });
+      return json({ error: "token_save_failed", details: upsertError, requestId }, 500, requestId);
+    }
 
     console.log("tinyv3.oauth.callback.saved", { requestId, orgId });
 
