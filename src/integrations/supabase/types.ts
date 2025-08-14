@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -1263,8 +1263,8 @@ export type Database = {
       }
       admin_list_profiles: {
         Args:
+          | { _limit?: number; _offset?: number; _search?: string }
           | { _search?: string }
-          | { _search?: string; _limit?: number; _offset?: number }
         Returns: {
           avatar_url: string | null
           bio: string | null
@@ -1291,16 +1291,16 @@ export type Database = {
       }
       complete_onboarding: {
         Args: {
-          org_nome: string
           org_cnpj: string
-          user_nome: string
-          user_cargo: string
+          org_nome: string
           tiny_token: string
+          user_cargo: string
+          user_nome: string
         }
         Returns: Json
       }
       create_invitation: {
-        Args: { _email: string; _role_id: string; _expires_in_days?: number }
+        Args: { _email: string; _expires_in_days?: number; _role_id: string }
         Returns: {
           id: string
           token: string
@@ -1312,57 +1312,57 @@ export type Database = {
       }
       get_historico_vendas_masked: {
         Args: {
-          _start?: string
           _end?: string
-          _search?: string
           _limit?: number
           _offset?: number
+          _search?: string
+          _start?: string
         }
         Returns: {
+          cidade: string
+          cliente_documento: string
+          cliente_nome: string
+          codigo_barras: string
+          codigo_rastreamento: string
+          cpf_cnpj: string
+          created_at: string
+          data_pedido: string
+          data_prevista: string
+          descricao: string
           id: string
           id_unico: string
-          numero_pedido: string
-          sku_produto: string
-          descricao: string
-          quantidade: number
-          valor_unitario: number
-          valor_total: number
-          cliente_nome: string
-          cliente_documento: string
-          status: string
-          observacoes: string
-          data_pedido: string
-          created_at: string
-          updated_at: string
           ncm: string
-          codigo_barras: string
-          pedido_id: string
-          cpf_cnpj: string
-          valor_frete: number
-          data_prevista: string
+          numero_ecommerce: string
+          numero_pedido: string
+          numero_venda: string
           obs: string
           obs_interna: string
-          cidade: string
-          uf: string
-          url_rastreamento: string
+          observacoes: string
+          pedido_id: string
+          qtd_kit: number
+          quantidade: number
           situacao: string
-          codigo_rastreamento: string
-          numero_ecommerce: string
-          valor_desconto: number
-          numero_venda: string
           sku_estoque: string
           sku_kit: string
-          qtd_kit: number
+          sku_produto: string
+          status: string
           total_itens: number
+          uf: string
+          updated_at: string
+          url_rastreamento: string
+          valor_desconto: number
+          valor_frete: number
+          valor_total: number
+          valor_unitario: number
         }[]
       }
       get_pedidos_masked: {
         Args: {
-          _start?: string
           _end?: string
-          _search?: string
           _limit?: number
           _offset?: number
+          _search?: string
+          _start?: string
         }
         Returns: {
           cidade: string | null
@@ -1422,7 +1422,7 @@ export type Database = {
         Returns: undefined
       }
       user_matches_announcement: {
-        Args: { _target_users: string[]; _target_roles: string[] }
+        Args: { _target_roles: string[]; _target_users: string[] }
         Returns: boolean
       }
     }
