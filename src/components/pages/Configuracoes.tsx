@@ -76,6 +76,15 @@ export function Configuracoes() {
 
   const handleTinyV3Connect = async () => {
     try {
+      // First test credentials
+      const { data: credTest } = await supabase.functions.invoke("test-tiny-v3-credentials");
+      console.log("🔧 Teste de credenciais:", credTest);
+      
+      if (!credTest?.credentials?.hasClientId || !credTest?.credentials?.hasClientSecret) {
+        alert("Credenciais do Tiny v3 não estão configuradas corretamente");
+        return;
+      }
+      
       const { data, error } = await supabase.functions.invoke('tiny-v3-oauth-start');
       if (error) throw error;
       const authUrl = (data as any)?.authUrl;
