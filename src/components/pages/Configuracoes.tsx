@@ -85,15 +85,23 @@ export function Configuracoes() {
         return;
       }
       
+      console.log("🚀 Iniciando OAuth flow...");
       const { data, error } = await supabase.functions.invoke('tiny-v3-oauth-start');
+      console.log("📋 Resposta do oauth-start:", { data, error });
+      
       if (error) throw error;
       const authUrl = (data as any)?.authUrl;
       if (!authUrl) throw new Error('authUrl ausente');
       
+      console.log("🔗 URL de autorização:", authUrl);
+      console.log('🎯 TINY_REDIRECT_URI:', credTest?.credentials?.redirectUri);
+      
       // Usar launchTop para evitar problema com iframe
       const { launchTop } = await import('@/lib/launchTop');
+      console.log("🪟 Abrindo janela OAuth...");
       launchTop(authUrl);
     } catch (e: any) {
+      console.error('❌ Erro na conexão:', e);
       toast({ variant: 'destructive', title: 'Erro', description: e?.message || 'Falha ao iniciar OAuth do Tiny v3' });
     }
   };
