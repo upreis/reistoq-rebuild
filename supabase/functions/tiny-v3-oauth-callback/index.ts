@@ -75,16 +75,20 @@ serve(async (req) => {
       return json({ error: "missing_client_config", details: "Defina client_id/client_secret/redirect_uri ou secrets TINY_V3_*", requestId }, 400, requestId);
     }
 
+    // Create Basic Auth header like in the Flask example: base64(client_id:client_secret)
+    const basicAuth = btoa(`${client_id}:${client_secret}`);
+    
     const form = new URLSearchParams();
     form.set("grant_type", "authorization_code");
-    form.set("client_id", client_id);
-    form.set("client_secret", client_secret);
-    form.set("redirect_uri", redirect_uri);
     form.set("code", code);
+    form.set("redirect_uri", redirect_uri);
 
     const resp = await fetch(OIDC_TOKEN_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { 
+        "Authorization": `Basic ${basicAuth}`,
+        "Content-Type": "application/x-www-form-urlencoded" 
+      },
       body: form.toString(),
     });
 
