@@ -388,12 +388,12 @@ Deno.serve(async (req) => {
               .limit(1);
             if (contas && contas.length > 0) {
               const conta = contas[0] as any;
-              const { data: sec } = await supabase
-                .from('integration_secrets')
-                .select('access_token')
-                .eq('integration_account_id', conta.id)
-                .eq('provider', 'tiny')
-                .maybeSingle();
+              const { data: secData } = await supabase.rpc('get_integration_secret_secure', {
+                account_id: conta.id,
+                provider_name: 'tiny',
+                requesting_function: 'sync-pedidos-rapido'
+              });
+              const sec = secData && secData.length > 0 ? secData[0] : null;
               const tokenConta = sec?.access_token as string | undefined;
               if (tokenConta) {
                 config.tiny_erp_token = tokenConta;
@@ -462,12 +462,12 @@ Deno.serve(async (req) => {
           .eq('is_active', true)
           .eq('organization_id', orgId);
         (contas || []).forEach(async (conta: any) => {
-          const { data: sec } = await supabase
-            .from('integration_secrets')
-            .select('access_token')
-            .eq('integration_account_id', conta.id)
-            .eq('provider', 'tiny')
-            .maybeSingle();
+          const { data: secData } = await supabase.rpc('get_integration_secret_secure', {
+            account_id: conta.id,
+            provider_name: 'tiny',
+            requesting_function: 'sync-pedidos-rapido'
+          });
+          const sec = secData && secData.length > 0 ? secData[0] : null;
           const token = (sec?.access_token as string) || '';
           if (token) contasTiny.push({ id: conta.id, name: conta.name, token });
         });

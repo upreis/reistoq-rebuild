@@ -387,15 +387,54 @@ export type Database = {
           },
         ]
       }
+      integration_secret_audit: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          integration_account_id: string
+          ip_address: unknown | null
+          provider: string
+          requesting_function: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          integration_account_id: string
+          ip_address?: unknown | null
+          provider: string
+          requesting_function?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          integration_account_id?: string
+          ip_address?: unknown | null
+          provider?: string
+          requesting_function?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       integration_secrets: {
         Row: {
+          access_count: number | null
           access_token: string | null
           client_id: string | null
           client_secret: string | null
           created_at: string
+          encrypted_note: string | null
           expires_at: string | null
           id: string
           integration_account_id: string
+          last_accessed_at: string | null
           organization_id: string
           payload: Json | null
           provider: string
@@ -403,13 +442,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_count?: number | null
           access_token?: string | null
           client_id?: string | null
           client_secret?: string | null
           created_at?: string
+          encrypted_note?: string | null
           expires_at?: string | null
           id?: string
           integration_account_id: string
+          last_accessed_at?: string | null
           organization_id: string
           payload?: Json | null
           provider: string
@@ -417,13 +459,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_count?: number | null
           access_token?: string | null
           client_id?: string | null
           client_secret?: string | null
           created_at?: string
+          encrypted_note?: string | null
           expires_at?: string | null
           id?: string
           integration_account_id?: string
+          last_accessed_at?: string | null
           organization_id?: string
           payload?: Json | null
           provider?: string
@@ -1299,6 +1344,20 @@ export type Database = {
         }
         Returns: Json
       }
+      create_integration_secret_secure: {
+        Args: {
+          access_token?: string
+          account_id: string
+          client_id?: string
+          client_secret?: string
+          expires_at?: string
+          org_id: string
+          payload?: Json
+          provider_name: string
+          refresh_token?: string
+        }
+        Returns: string
+      }
       create_invitation: {
         Args: { _email: string; _expires_in_days?: number; _role_id: string }
         Returns: {
@@ -1354,6 +1413,21 @@ export type Database = {
           valor_frete: number
           valor_total: number
           valor_unitario: number
+        }[]
+      }
+      get_integration_secret_secure: {
+        Args: {
+          account_id: string
+          provider_name: string
+          requesting_function?: string
+        }
+        Returns: {
+          access_token: string
+          client_id: string
+          client_secret: string
+          expires_at: string
+          payload: Json
+          refresh_token: string
         }[]
       }
       get_pedidos_masked: {
@@ -1420,6 +1494,19 @@ export type Database = {
       seed_admin_role_for_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: undefined
+      }
+      update_integration_secret_secure: {
+        Args: {
+          account_id: string
+          new_access_token?: string
+          new_client_id?: string
+          new_client_secret?: string
+          new_expires_at?: string
+          new_payload?: Json
+          new_refresh_token?: string
+          provider_name: string
+        }
+        Returns: boolean
       }
       user_matches_announcement: {
         Args: { _target_roles: string[]; _target_users: string[] }

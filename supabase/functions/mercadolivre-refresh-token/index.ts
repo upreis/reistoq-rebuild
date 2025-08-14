@@ -53,13 +53,13 @@ serve(async (req) => {
 
   const results: any[] = [];
   for (const acc of accounts || []) {
-    // Buscar segredos
-    const { data: secret } = await svc
-      .from('integration_secrets')
-      .select('id, access_token, refresh_token, expires_at')
-      .eq('integration_account_id', acc.id)
-      .eq('provider', 'mercadolivre')
-      .maybeSingle();
+    // Buscar segredos usando função segura
+    const { data: secretData } = await svc.rpc('get_integration_secret_secure', {
+      account_id: acc.id,
+      provider_name: 'mercadolivre',
+      requesting_function: 'mercadolivre-refresh-token'
+    });
+    const secret = secretData && secretData.length > 0 ? secretData[0] : null;
 
     const expiresAt = secret?.expires_at ? new Date(secret.expires_at as string).getTime() : 0;
     const needs = force || !expiresAt || (expiresAt - Date.now() < 5 * 60 * 1000);
@@ -94,11 +94,14 @@ serve(async (req) => {
     const expires_in = tokenJson.expires_in as number | undefined;
     const expires_at = expires_in ? new Date(Date.now() + expires_in * 1000).toISOString() : (secret.expires_at as string | null);
 
-    const { error: upErr } = await svc
-      .from('integration_secrets')
-      .update({ access_token, refresh_token, expires_at, updated_at: new Date().toISOString() })
-      .eq('integration_account_id', acc.id)
-      .eq('provider', 'mercadolivre');
+    const { data: updateResult } = await svc.rpc('update_integration_secret_secure', {
+      account_id: acc.id,
+      provider_name: 'mercadolivre',
+      new_access_token: access_token,
+      new_refresh_token: refresh_token,
+      new_expires_at: expires_at
+    });
+    const upErr = updateResult ? null : { message: 'Failed to update secret' };
     if (upErr) {
       results.push({ id: acc.id, refreshed: false, error: upErr.message });
     } else {

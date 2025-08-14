@@ -130,12 +130,14 @@ async function refreshIfNeeded(svc: any, accountId: string, secret: any) {
     const expires_in = tokenJson.expires_in;
     const expires_at = expires_in ? new Date(Date.now() + expires_in * 1000).toISOString() : secret.expires_at;
 
-    // Atualizar no banco
-    await svc
-      .from('integration_secrets')
-      .update({ access_token, refresh_token, expires_at, updated_at: new Date().toISOString() })
-      .eq('integration_account_id', accountId)
-      .eq('provider', 'mercadolivre');
+    // Atualizar no banco usando função segura
+    await svc.rpc('update_integration_secret_secure', {
+      account_id: accountId,
+      provider_name: 'mercadolivre',
+      new_access_token: access_token,
+      new_refresh_token: refresh_token,
+      new_expires_at: expires_at
+    });
 
     return { ...secret, access_token, refresh_token, expires_at };
   } catch (e) {
@@ -186,12 +188,12 @@ serve(async (req) => {
       const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       const perAcc = await Promise.all(accounts.map(async (acc: any) => {
-        const { data: sec } = await svc
-          .from('integration_secrets')
-          .select('access_token, refresh_token, expires_at')
-          .eq('integration_account_id', acc.id)
-          .eq('provider', 'mercadolivre')
-          .maybeSingle();
+        const { data: secData } = await svc.rpc('get_integration_secret_secure', {
+          account_id: acc.id,
+          provider_name: 'mercadolivre',
+          requesting_function: 'mercadolivre-orders-proxy'
+        });
+        const sec = secData && secData.length > 0 ? secData[0] : null;
         
         // Refresh token se necessário
         const refreshedSec = await refreshIfNeeded(svc, acc.id, sec);
@@ -243,12 +245,12 @@ serve(async (req) => {
       const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       const perAcc = await Promise.all(accounts.map(async (acc: any) => {
-        const { data: sec } = await svc
-          .from('integration_secrets')
-          .select('access_token, refresh_token, expires_at')
-          .eq('integration_account_id', acc.id)
-          .eq('provider', 'mercadolivre')
-          .maybeSingle();
+        const { data: secData } = await svc.rpc('get_integration_secret_secure', {
+          account_id: acc.id,
+          provider_name: 'mercadolivre',
+          requesting_function: 'mercadolivre-orders-proxy'
+        });
+        const sec = secData && secData.length > 0 ? secData[0] : null;
         
         // Refresh token se necessário
         const refreshedSec = await refreshIfNeeded(svc, acc.id, sec);
@@ -300,12 +302,12 @@ serve(async (req) => {
     let acc = accountId ? await getMLAccountById(supabase, user.id, accountId) : await getActiveMLAccount(supabase, user.id);
 
     const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data: sec } = await svc
-      .from('integration_secrets')
-      .select('access_token, refresh_token, expires_at')
-      .eq('integration_account_id', acc.id)
-      .eq('provider', 'mercadolivre')
-      .maybeSingle();
+    const { data: secData } = await svc.rpc('get_integration_secret_secure', {
+      account_id: acc.id,
+      provider_name: 'mercadolivre',
+      requesting_function: 'mercadolivre-orders-proxy'
+    });
+    const sec = secData && secData.length > 0 ? secData[0] : null;
 
     // Refresh token se necessário
     const refreshedSec = await refreshIfNeeded(svc, acc.id, sec);

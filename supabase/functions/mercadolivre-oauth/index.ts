@@ -166,39 +166,39 @@ serve(async (req) => {
         accountId = ins.id as string;
       }
 
-      // Upsert secrets securely
+      // Upsert secrets securely using new secure function
       if (accountId) {
-        const { data: sec } = await svc
-          .from('integration_secrets')
-          .select('id')
-          .eq('integration_account_id', accountId)
-          .eq('provider', 'mercadolivre')
-          .maybeSingle();
+        const { data: existingSecret } = await svc.rpc('get_integration_secret_secure', {
+          account_id: accountId,
+          provider_name: 'mercadolivre',
+          requesting_function: 'mercadolivre-oauth'
+        });
 
-        const secretPayload = {
-          organization_id: orgId,
-          integration_account_id: accountId,
-          provider: 'mercadolivre',
-          client_id: ML_APP_ID,
-          client_secret: null,
-          access_token,
-          refresh_token: refresh_token ?? null,
-          expires_at,
-          payload: { user_id },
-          updated_at: new Date().toISOString(),
-        } as const;
-
-        if (sec?.id) {
-          const { error } = await svc
-            .from('integration_secrets')
-            .update(secretPayload)
-            .eq('id', sec.id);
-          if (error) throw error;
+        if (existingSecret && existingSecret.length > 0) {
+          // Update existing secret
+          const { data: updateResult } = await svc.rpc('update_integration_secret_secure', {
+            account_id: accountId,
+            provider_name: 'mercadolivre',
+            new_access_token: access_token,
+            new_refresh_token: refresh_token ?? null,
+            new_client_id: ML_APP_ID,
+            new_expires_at: expires_at,
+            new_payload: { user_id }
+          });
+          if (!updateResult) throw new Error('Failed to update integration secret');
         } else {
-          const { error } = await svc
-            .from('integration_secrets')
-            .insert(secretPayload);
-          if (error) throw error;
+          // Create new secret
+          const { data: createResult } = await svc.rpc('create_integration_secret_secure', {
+            account_id: accountId,
+            provider_name: 'mercadolivre',
+            org_id: orgId,
+            access_token: access_token,
+            refresh_token: refresh_token ?? null,
+            client_id: ML_APP_ID,
+            expires_at: expires_at,
+            payload: { user_id }
+          });
+          if (!createResult) throw new Error('Failed to create integration secret');
         }
       }
 
