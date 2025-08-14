@@ -340,6 +340,21 @@ export type Database = {
           },
         ]
       }
+      historico_vendas_public: {
+        Row: {
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       integration_accounts: {
         Row: {
           account_identifier: string | null
@@ -491,6 +506,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      integration_secrets_audit: {
+        Row: {
+          account_id: string
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          requesting_function: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_id: string
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          requesting_function?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          requesting_function?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       invitations: {
         Row: {
