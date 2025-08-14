@@ -92,14 +92,56 @@ async function getMLAccountsByIds(supabase: any, userId: string, ids: string[]) 
   return accs || [];
 }
 
-async function refreshIfNeeded(acc: any) {
+async function refreshIfNeeded(svc: any, accountId: string, secret: any) {
+  if (!secret?.expires_at || !secret?.refresh_token) return secret;
+  
   const now = Date.now();
-  const expiresAt = acc?.auth_data?.expires_at ? Date.parse(acc.auth_data.expires_at) : 0;
-  if (expiresAt && expiresAt - now > 60 * 1000) return acc; // válido >60s
-  if (!acc?.auth_data?.refresh_token) return acc;
-  // NOTE: refresh é feito no endpoint /oauth/token com grant_type=refresh_token, mas precisamos do client_id/secret
-  // Para simplificar, deixamos o refresh para uma iteração futura; o token pode ainda estar válido.
-  return acc;
+  const expiresAt = new Date(secret.expires_at).getTime();
+  
+  // Se válido por mais de 5 minutos, não precisa refresh
+  if (expiresAt - now > 5 * 60 * 1000) return secret;
+  
+  const ML_APP_ID = Deno.env.get("ML_APP_ID");
+  const ML_APP_SECRET = Deno.env.get("ML_APP_SECRET");
+  
+  if (!ML_APP_ID || !ML_APP_SECRET) return secret;
+  
+  try {
+    const form = new URLSearchParams();
+    form.set('grant_type', 'refresh_token');
+    form.set('client_id', ML_APP_ID);
+    form.set('client_secret', ML_APP_SECRET);
+    form.set('refresh_token', secret.refresh_token);
+
+    const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+    });
+    
+    const tokenJson = await resp.json();
+    if (!resp.ok) {
+      console.error('Falha no refresh ML:', tokenJson);
+      return secret;
+    }
+
+    const access_token = tokenJson.access_token;
+    const refresh_token = tokenJson.refresh_token || secret.refresh_token;
+    const expires_in = tokenJson.expires_in;
+    const expires_at = expires_in ? new Date(Date.now() + expires_in * 1000).toISOString() : secret.expires_at;
+
+    // Atualizar no banco
+    await svc
+      .from('integration_secrets')
+      .update({ access_token, refresh_token, expires_at, updated_at: new Date().toISOString() })
+      .eq('integration_account_id', accountId)
+      .eq('provider', 'mercadolivre');
+
+    return { ...secret, access_token, refresh_token, expires_at };
+  } catch (e) {
+    console.error('Erro ao refreshar token ML:', e);
+    return secret;
+  }
 }
 
 serve(async (req) => {
@@ -146,16 +188,20 @@ serve(async (req) => {
       const perAcc = await Promise.all(accounts.map(async (acc: any) => {
         const { data: sec } = await svc
           .from('integration_secrets')
-          .select('access_token')
+          .select('access_token, refresh_token, expires_at')
           .eq('integration_account_id', acc.id)
           .eq('provider', 'mercadolivre')
           .maybeSingle();
+        
+        // Refresh token se necessário
+        const refreshedSec = await refreshIfNeeded(svc, acc.id, sec);
+        
         const qs = buildQS(acc?.account_identifier);
         const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-          headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
+          headers: { Authorization: `Bearer ${refreshedSec?.access_token || ''}` },
         });
         const body = await resp.json();
-        return { acc, ok: resp.ok, body, __token: sec?.access_token };
+        return { acc, ok: resp.ok, body, __token: refreshedSec?.access_token };
       }));
 
       const errors = perAcc.filter(x => !x.ok).map(x => ({ account_id: x.acc?.id, details: x.body }));
@@ -199,16 +245,20 @@ serve(async (req) => {
       const perAcc = await Promise.all(accounts.map(async (acc: any) => {
         const { data: sec } = await svc
           .from('integration_secrets')
-          .select('access_token')
+          .select('access_token, refresh_token, expires_at')
           .eq('integration_account_id', acc.id)
           .eq('provider', 'mercadolivre')
           .maybeSingle();
+        
+        // Refresh token se necessário
+        const refreshedSec = await refreshIfNeeded(svc, acc.id, sec);
+        
         const qs = buildQS(acc?.account_identifier);
         const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-          headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
+          headers: { Authorization: `Bearer ${refreshedSec?.access_token || ''}` },
         });
         const body = await resp.json();
-        return { acc, ok: resp.ok, body, __token: sec?.access_token };
+        return { acc, ok: resp.ok, body, __token: refreshedSec?.access_token };
       }));
 
       const errors = perAcc.filter(x => !x.ok).map(x => ({ account_id: x.acc?.id, details: x.body }));
@@ -252,14 +302,17 @@ serve(async (req) => {
     const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data: sec } = await svc
       .from('integration_secrets')
-      .select('access_token')
+      .select('access_token, refresh_token, expires_at')
       .eq('integration_account_id', acc.id)
       .eq('provider', 'mercadolivre')
       .maybeSingle();
 
+    // Refresh token se necessário
+    const refreshedSec = await refreshIfNeeded(svc, acc.id, sec);
+
     const qs = buildQS(acc?.account_identifier);
     const mlResp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/search?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
+      headers: { Authorization: `Bearer ${refreshedSec?.access_token || ''}` },
     });
     const jsonBody = await mlResp.json();
     if (!mlResp.ok) return json({ error: 'Falha na API ML', details: jsonBody }, 400);
@@ -271,7 +324,7 @@ serve(async (req) => {
         if (!id) continue;
         try {
           const resp = await fetchWithBackoff(`https://api.mercadolibre.com/orders/${id}`, {
-            headers: { Authorization: `Bearer ${sec?.access_token || ''}` },
+            headers: { Authorization: `Bearer ${refreshedSec?.access_token || ''}` },
           });
           const det = await resp.json();
           jsonBody.results[i] = { ...ord, _details: det };

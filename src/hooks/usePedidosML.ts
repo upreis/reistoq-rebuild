@@ -160,6 +160,9 @@ export function usePedidosML(initialFiltros?: Partial<Filtros>): UsePedidosRetur
           await refreshMLTokens(accId, true);
           return run(1);
         }
+        if (msg.includes('Nenhuma conta Mercado Livre ativa')) {
+          throw new Error('As contas do Mercado Livre precisam ser reconectadas. Os tokens expiraram.');
+        }
         throw new Error(msg || `HTTP ${resp.status}`);
       }
 
