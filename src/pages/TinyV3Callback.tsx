@@ -26,23 +26,20 @@ export default function TinyV3Callback() {
       }
       
       try {
-        // Fazer fetch direto para a URL da edge function com query parameters
-        const callbackUrl = `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/tiny-v3-oauth-callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
-        
-        const response = await fetch(callbackUrl, {
+        // Usar o método invoke do Supabase com URL customizada
+        const { data, error } = await supabase.functions.invoke("tiny-v3-oauth-callback", {
+          body: {}, // body vazio 
           method: "GET",
+          // Adicionar code e state como headers customizados
           headers: {
-            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
-          },
+            "x-code": code,
+            "x-state": state,
+          }
         });
         
-        const result = await response.json();
-        console.log("📊 Resposta do callback:", { status: response.status, result });
+        console.log("📊 Resposta do callback:", { data, error });
         
-        if (!response.ok) {
-          throw new Error(result.error || "Falha no callback");
-        }
+        if (error) throw error;
         
         // garantir retorno no topo
         if (window.top) {

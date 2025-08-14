@@ -9,7 +9,7 @@ const OIDC_TOKEN_URL = "https://accounts.tiny.com.br/realms/tiny/protocol/openid
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-code, x-state",
   "Access-Control-Expose-Headers": "x-request-id",
 };
 
@@ -35,9 +35,9 @@ serve(async (req) => {
   try {
     console.log("tinyv3.oauth.callback.start", { requestId, method: req.method, url: req.url });
 
-    const url = new URL(req.url);
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
+    // Extract code and state from custom headers (sent by React app)
+    const code = req.headers.get("x-code");
+    const state = req.headers.get("x-state");
 
     console.log("tinyv3.oauth.callback.params", { requestId, hasCode: !!code, hasState: !!state });
 
