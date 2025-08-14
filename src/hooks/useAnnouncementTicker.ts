@@ -106,7 +106,7 @@ export function useAnnouncementTicker() {
   });
   const props: AnnouncementTickerProps = {
     items: effectiveItems,
-    mode: "slide", // SEMPRE slide para evitar duplicação
+    mode: "continuous", // SEMPRE continuous mode
     speed: speeds[speedMode],
     pauseOnHover: true,
     loop: effectiveItems.length > 1, // Só faz loop se tem múltiplos itens
