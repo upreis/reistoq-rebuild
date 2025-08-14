@@ -443,24 +443,7 @@ function TickerRow({
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
   variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
-  // Para item único: usar slide sem loop para evitar duplicação
-  // Para múltiplos itens: usar continuous com scroll
-  if (items.length <= 1) {
-    return (
-      <SlideTicker
-        items={items}
-        speed={speed}
-        paused={paused}
-        loop={false}
-        divider={divider}
-        customDivider={customDivider}
-        themeVariant={themeVariant}
-        variant={variant}
-      />
-    );
-  }
-
-  // Múltiplos itens: usar continuous mode para scroll suave
+  // Sempre usar continuous mode, mas sem duplicação desnecessária
   return (
     <ContinuousTicker
       items={items}
@@ -508,8 +491,8 @@ function ContinuousTicker({
     if (!track || !container) return;
 
     const measure = () => {
-      // Se tem apenas 1 item, não precisa duplicar
-      const needsDuplication = items.length > 1;
+      // Para item único, não duplicar. Para múltiplos itens, duplicar apenas se necessário para scroll contínuo
+      const needsDuplication = items.length > 1 && loop;
       const copies = needsDuplication ? 2 : 1;
       const bw = needsDuplication ? Math.max(1, Math.floor(track.scrollWidth / copies)) : track.scrollWidth;
       const cw = container.clientWidth;
