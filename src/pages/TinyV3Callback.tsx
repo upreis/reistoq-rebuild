@@ -12,11 +12,38 @@ export default function TinyV3Callback() {
       const params = new URLSearchParams(location.search);
       const code = params.get("code");
       const state = params.get("state");
+      
+      console.log("🔄 TinyV3Callback recebido:", { code: code?.substring(0, 10) + "...", state: state?.substring(0, 10) + "..." });
+      
+      if (!code || !state) {
+        console.error("❌ Parâmetros ausentes:", { hasCode: !!code, hasState: !!state });
+        if (window.top) {
+          (window.top as Window).location.replace("/configuracoes?tinyv3=error");
+        } else {
+          navigate("/configuracoes?tinyv3=error", { replace: true });
+        }
+        return;
+      }
+      
       try {
-        const { data, error } = await supabase.functions.invoke("tiny-v3-oauth-callback", {
-          body: { code, state },
+        // Fazer fetch direto para a URL da edge function com query parameters
+        const callbackUrl = `https://tdjyfqnxvjgossuncpwm.supabase.co/functions/v1/tiny-v3-oauth-callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+        
+        const response = await fetch(callbackUrl, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkanlmcW54dmpnb3NzdW5jcHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTczNTMsImV4cCI6MjA2OTQ3MzM1M30.qrEBpARgfuWF74zHoRzGJyWjgxN_oCG5DdKjPVGJYxk",
+          },
         });
-        if (error) throw error;
+        
+        const result = await response.json();
+        console.log("📊 Resposta do callback:", { status: response.status, result });
+        
+        if (!response.ok) {
+          throw new Error(result.error || "Falha no callback");
+        }
+        
         // garantir retorno no topo
         if (window.top) {
           (window.top as Window).location.replace("/configuracoes?tinyv3=connected");
