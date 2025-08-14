@@ -18,38 +18,8 @@ export function useAnnouncementTicker() {
     const load = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("configuracoes")
-          .select("chave, valor")
-          .in("chave", ["ticker_custom_items", "ticker_urgency_map", "ticker_speed_mode"]);
-        if (error) throw error;
-
-        const mapRow = data?.find((d) => d.chave === "ticker_urgency_map");
-        const itemsRow = data?.find((d) => d.chave === "ticker_custom_items");
-        const speedRow = data?.find((d) => d.chave === "ticker_speed_mode");
-
-        if (mapRow?.valor) {
-          try {
-            const parsed = JSON.parse(mapRow.valor);
-            setThemeVariant(parsed);
-          } catch {}
-        }
-
-        if (itemsRow?.valor) {
-          try {
-            const parsed: TickerItem[] = JSON.parse(itemsRow.valor);
-            setItems(parsed);
-          } catch {}
-        }
-
-        if (speedRow?.valor) {
-          const v = String(speedRow.valor).toLowerCase();
-          if (v === "slow" || v === "normal" || v === "fast") setSpeedMode(v);
-        }
-
-        // Carregar anúncios ativos e mapear para itens do ticker com filtros fiéis (rotas, usuários e cargos)
+        // Carregar anúncios ativos com filtros fiéis
         try {
-          // Buscar cargos do usuário atual (RLS já limita à organização)
           const { data: myRoles } = await supabase
             .from("user_role_assignments")
             .select("role_id");
@@ -66,30 +36,25 @@ export function useAnnouncementTicker() {
           const now = Date.now();
 
           const filtered = (ann || []).filter((a: any) => {
-            // validade
             if (a.active !== true) return false;
             if (a.expires_at && new Date(a.expires_at).getTime() <= now) return false;
 
-            // rotas
             const routes: string[] | null = (a.target_routes as any) || null;
             const routeOk = !routes || routes.length === 0 || routes.includes('*') || routes.some((r) => path.startsWith(String(r)));
             if (!routeOk) return false;
 
-            // alvo por usuário
             const users: string[] | null = (a.target_users as any) || null;
             if (users && users.length > 0) {
               if (!user) return false;
               if (!users.includes(user.id)) return false;
-              return true; // já passou
+              return true;
             }
 
-            // alvo por cargos
             const roles: string[] | null = (a.target_roles as any) || null;
             if (roles && roles.length > 0) {
               return roles.some((rid) => roleSet.has(String(rid)));
             }
 
-            // sem alvo específico -> todos
             return true;
           });
 
