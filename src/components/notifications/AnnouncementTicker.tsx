@@ -526,21 +526,23 @@ function ContinuousTicker({
   const [repeatCount, setRepeatCount] = React.useState(2);
   const initializedRef = React.useRef(false);
 
-  // Measure using layout effect to set initial offset before paint and keep exactly 2 copies
+  // Measure using layout effect to set initial offset before paint and adjust copies dynamically
   React.useLayoutEffect(() => {
     const track = trackRef.current;
     const container = containerRef.current;
     if (!track || !container) return;
 
     const measure = () => {
-      const copies = 2;
-      const bw = Math.max(1, Math.floor(track.scrollWidth / copies));
+      // Se tem apenas 1 item, não precisa duplicar
+      const needsDuplication = items.length > 1;
+      const copies = needsDuplication ? 2 : 1;
+      const bw = needsDuplication ? Math.max(1, Math.floor(track.scrollWidth / copies)) : track.scrollWidth;
       const cw = container.clientWidth;
       setBaseWidth(bw);
       if (repeatCount !== copies) setRepeatCount(copies);
       // Start from the right edge so items enter the viewport from the end without flashing
       if (!initializedRef.current && cw > 0) {
-        setOffset(cw);
+        setOffset(needsDuplication ? cw : 0);
         initializedRef.current = true;
       }
     };
@@ -624,12 +626,19 @@ function ContinuousTicker({
         className="absolute left-0 top-1/2 -translate-y-1/2 inline-flex whitespace-nowrap items-stretch gap-2 pr-4 will-change-transform"
         style={{ transform: `translateY(-50%) translateX(${offset}px)` }}
       >
-        {Array.from({ length: repeatCount }).map((_, i) => (
-          <div key={`row-${i}`} className="inline-flex items-stretch gap-2 pr-4">
+        {/* Se tem apenas 1 item, exibe apenas uma vez. Senão, duplica para scroll infinito */}
+        {repeatCount === 1 ? (
+          <div className="inline-flex items-stretch gap-2">
             {row}
-            <Divider type={divider} custom={customDivider} />
           </div>
-        ))}
+        ) : (
+          Array.from({ length: repeatCount }).map((_, i) => (
+            <div key={`row-${i}`} className="inline-flex items-stretch gap-2 pr-4">
+              {row}
+              <Divider type={divider} custom={customDivider} />
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

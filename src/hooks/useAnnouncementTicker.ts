@@ -132,6 +132,7 @@ export function useAnnouncementTicker() {
     const href = String(t.href || "").trim();
     return `${title}|${href}`;
   };
+  // Remove duplicatas para evitar texto repetido
   const effectiveItems = combinedRaw.filter((t) => {
     const k = keyOf(t);
     if (seen.has(k)) return false;
@@ -140,10 +141,10 @@ export function useAnnouncementTicker() {
   });
   const props: AnnouncementTickerProps = {
     items: effectiveItems,
-    mode: "continuous",
+    mode: effectiveItems.length <= 1 ? "slide" : "continuous", // Usa slide para item único
     speed: speeds[speedMode],
     pauseOnHover: true,
-    loop: true,
+    loop: effectiveItems.length > 1, // Só faz loop se tem múltiplos itens
     divider: "bar",
     showCollapse: true,
     showPause: false,
