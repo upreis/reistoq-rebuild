@@ -20,7 +20,12 @@ function json(body: unknown, status = 200, requestId?: string) {
 }
 
 function fromB64(s: string) {
-  try { return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch { return null; }
+  try { 
+    return JSON.parse(atob(s)); 
+  } catch (e) { 
+    console.log("fromB64 error:", e, "input:", s);
+    return null; 
+  }
 }
 
 serve(async (req) => {
@@ -31,22 +36,8 @@ serve(async (req) => {
     console.log("tinyv3.oauth.callback.start", { requestId, method: req.method, url: req.url });
 
     const url = new URL(req.url);
-    let code: string | null = null;
-    let state: string | null = null;
-
-    // Try to get from URL params first, then from body
-    code = url.searchParams.get("code");
-    state = url.searchParams.get("state");
-
-    if (!code || !state) {
-      try {
-        const body = await req.json();
-        code = body.code || code;
-        state = body.state || state;
-      } catch (e) {
-        console.log("tinyv3.oauth.callback.body_parse_error", { requestId, error: String(e) });
-      }
-    }
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
 
     console.log("tinyv3.oauth.callback.params", { requestId, hasCode: !!code, hasState: !!state });
 
