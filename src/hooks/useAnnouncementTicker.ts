@@ -106,7 +106,7 @@ export function useAnnouncementTicker() {
   });
   const props: AnnouncementTickerProps = {
     items: effectiveItems,
-    mode: effectiveItems.length <= 1 ? "slide" : "continuous", // Usa slide para item único
+    mode: "slide", // SEMPRE slide para evitar duplicação
     speed: speeds[speedMode],
     pauseOnHover: true,
     loop: effectiveItems.length > 1, // Só faz loop se tem múltiplos itens

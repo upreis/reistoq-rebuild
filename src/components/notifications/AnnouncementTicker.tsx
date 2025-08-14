@@ -443,13 +443,13 @@ function TickerRow({
   themeVariant?: Partial<Record<UrgencyLevel, TokenVariant>>;
   variant: NonNullable<AnnouncementTickerProps["variant"]>;
 }) {
-  // Sempre usar continuous mode, mas sem duplicação desnecessária
+  // SEMPRE usar SlideTicker para evitar qualquer duplicação
   return (
-    <ContinuousTicker
+    <SlideTicker
       items={items}
       speed={speed}
       paused={paused}
-      loop={loop}
+      loop={true} // Permitir loop apenas no slide
       divider={divider}
       customDivider={customDivider}
       themeVariant={themeVariant}
