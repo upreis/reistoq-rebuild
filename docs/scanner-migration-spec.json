@@ -1,0 +1,199 @@
+{
+  "page": "Scanner",
+  "route": "/scanner",
+  "feature_flag": "SCANNER_IMPROVED",
+  "objectives": [
+    "Capturar códigos via câmera/upload com alta precisão",
+    "Busca inteligente de produtos multi-campo",
+    "Movimentações rápidas de estoque",
+    "Histórico persistente com analytics"
+  ],
+  
+  "architecture": {
+    "presentation": {
+      "ScannerPage": {
+        "purpose": "Orquestração principal e layout responsivo",
+        "props": ["onScanResult", "onProductFound", "onMovement"],
+        "children": ["CameraScanner", "ProductSearch", "ScanHistory", "QuickActions"]
+      },
+      "CameraScanner": {
+        "purpose": "Interface de câmera com overlay otimizado",
+        "features": ["multi-device", "torch", "fullscreen", "orientation-lock"],
+        "mobile_optimizations": ["gesture-handling", "auto-focus", "constraint-fallbacks"]
+      },
+      "ProductSearch": {
+        "purpose": "Busca inteligente multi-campo com sugestões",
+        "search_fields": ["sku_interno", "nome", "codigo_barras", "categoria"],
+        "features": ["debounce_300ms", "auto-complete", "recent_searches"]
+      },
+      "ScanHistory": {
+        "purpose": "Histórico persistente com filtros e analytics",
+        "features": ["local_storage", "export_csv", "success_rate", "time_analytics"]
+      },
+      "QuickActions": {
+        "purpose": "Movimentações rápidas sem modais pesados",
+        "actions": ["entrada", "saida", "transferencia", "ajuste"],
+        "validation": ["estoque_minimo", "produtos_ativos", "quantidades_validas"]
+      }
+    },
+    
+    "business_logic": {
+      "useScannerCore": {
+        "purpose": "Estado central e coordenação de hooks",
+        "state": ["currentScan", "selectedProduct", "scanMode", "settings"],
+        "actions": ["processScan", "selectProduct", "clearScan", "updateSettings"]
+      },
+      "useCameraManager": {
+        "purpose": "Gestão de câmera multiplataforma",
+        "features": ["device_enumeration", "permission_handling", "constraint_optimization"],
+        "mobile_specific": ["orientation_changes", "app_lifecycle", "torch_control"]
+      },
+      "useProductLookup": {
+        "purpose": "Busca e cache inteligente de produtos",
+        "cache_strategy": ["memory_cache", "session_storage", "ttl_5min"],
+        "search_strategy": ["exact_match_first", "fuzzy_fallback", "weighted_results"]
+      },
+      "useScanHistory": {
+        "purpose": "Histórico persistente com analytics",
+        "storage": ["localStorage", "compression", "rotation_500_items"],
+        "analytics": ["success_rate", "scan_time", "popular_products"]
+      },
+      "useQuickMovements": {
+        "purpose": "Movimentações sem friction",
+        "validation": ["dry_run", "business_rules", "confirmation_thresholds"],
+        "optimistic_updates": true
+      }
+    },
+    
+    "services": {
+      "ScannerService": {
+        "purpose": "Abstração do ZXing com melhorias",
+        "features": ["multi_format", "image_preprocessing", "confidence_scoring"],
+        "optimizations": ["worker_threads", "roi_detection", "adaptive_settings"]
+      },
+      "CameraService": {
+        "purpose": "Abstração de acesso à câmera",
+        "capabilities": ["device_selection", "constraint_validation", "fallback_chains"],
+        "mobile_features": ["orientation_handling", "lifecycle_management", "torch_api"]
+      },
+      "ProductService": {
+        "purpose": "Acesso a produtos com cache inteligente",
+        "endpoints": ["/products/by-barcode", "/products/search", "/products/suggestions"],
+        "cache_strategy": ["stale_while_revalidate", "background_refresh", "offline_support"]
+      },
+      "MovementService": {
+        "purpose": "Processamento de movimentações",
+        "validation": ["business_rules", "stock_validation", "user_permissions"],
+        "endpoints": ["/movements/quick", "/movements/validate", "/movements/batch"]
+      }
+    }
+  },
+  
+  "performance": {
+    "core_vitals": {
+      "lcp_target": "< 1.5s",
+      "fid_target": "< 100ms", 
+      "cls_target": "< 0.1"
+    },
+    "scanner_specific": {
+      "camera_init": "< 2s",
+      "scan_processing": "< 500ms",
+      "product_lookup": "< 1s",
+      "cache_hit_ratio": "> 85%"
+    }
+  },
+  
+  "user_experience": {
+    "scan_flow": {
+      "steps": ["camera_permission", "device_selection", "scan_overlay", "result_processing"],
+      "fallbacks": ["image_upload", "manual_input", "product_search"],
+      "feedback": ["audio_cues", "haptic_feedback", "visual_indicators"]
+    },
+    "mobile_optimizations": {
+      "gestures": ["tap_to_focus", "pinch_to_zoom", "swipe_torch"],
+      "orientation": ["lock_landscape", "auto_rotate", "fixed_ui"],
+      "performance": ["frame_rate_60fps", "low_latency", "battery_efficient"]
+    }
+  },
+  
+  "data_management": {
+    "cache_layers": {
+      "l1_memory": {"size": "50MB", "ttl": "5min", "items": "products"},
+      "l2_session": {"size": "20MB", "ttl": "session", "items": "search_results"},
+      "l3_local": {"size": "10MB", "ttl": "7days", "items": "scan_history"}
+    },
+    "offline_support": {
+      "recently_scanned": "available_offline",
+      "favorites": "cached_locally", 
+      "quick_movements": "queued_for_sync"
+    }
+  },
+  
+  "integrations": {
+    "camera_apis": {
+      "primary": "getUserMedia",
+      "ios_specific": ["playsInline", "webkit-playsinline"],
+      "android_specific": ["facingMode: environment", "torch"]
+    },
+    "barcode_engines": {
+      "primary": "ZXing",
+      "formats": ["EAN-13", "EAN-8", "Code128", "QR"],
+      "fallback": "manual_input_with_validation"
+    },
+    "backend": {
+      "products": "supabase.products",
+      "movements": "supabase.movimentacoes_estoque", 
+      "history": "localStorage + periodic_sync"
+    }
+  },
+
+  "testing": {
+    "unit_tests": [
+      "ScannerService.decode",
+      "CameraService.getDevices", 
+      "ProductService.lookup",
+      "cache_strategies"
+    ],
+    "integration_tests": [
+      "camera_permission_flow",
+      "scan_to_movement_flow",
+      "offline_fallback"
+    ],
+    "e2e_scenarios": [
+      "complete_scan_cycle",
+      "multi_device_switching",
+      "error_recovery"
+    ]
+  },
+
+  "migration_strategy": {
+    "feature_flag": {
+      "name": "SCANNER_IMPROVED",
+      "default": false,
+      "rollout": ["dev", "staging", "prod_gradual"]
+    },
+    "backward_compatibility": {
+      "legacy_routes": "maintained",
+      "legacy_data": "migrated_automatically",
+      "legacy_behavior": "preserved_when_flag_off"
+    },
+    "rollout_phases": {
+      "phase_1": "core_scanning_replacement",
+      "phase_2": "enhanced_features_addition", 
+      "phase_3": "legacy_deprecation"
+    }
+  },
+
+  "success_metrics": {
+    "adoption": {
+      "scan_success_rate": "> 95%",
+      "user_satisfaction": "> 4.5/5",
+      "performance_improvement": "> 50%"
+    },
+    "technical": {
+      "cache_hit_ratio": "> 85%",
+      "error_rate": "< 1%",
+      "load_time": "< 2s"
+    }
+  }
+}
