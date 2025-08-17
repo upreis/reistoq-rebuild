@@ -193,21 +193,33 @@ try {
 }
 ```
 
-## Como Usar a Nova Rota
+## Controle por Feature Flag
+
+### Ativação
+```typescript
+// src/config/features.ts
+export const FEATURES = {
+  PEDIDOS_IMPROVED: false, // false = legado, true = melhorias
+} as const;
+```
+
+### Como Funciona
+- **Flag OFF (default)**: Rota `/pedidos` usa `<Pedidos />` (página legado)
+- **Flag ON**: Rota `/pedidos` usa `<OrdersPage />` (arquitetura modular)
 
 ### 1. Navegação
 ```typescript
-// A rota /pedidos agora está disponível
-<Route path="/pedidos" element={<OrdersPage />} />
+// App.tsx - rota conditional
+{FEATURES.PEDIDOS_IMPROVED ? <OrdersPage /> : <Pedidos />}
 ```
 
-### 2. Estado em URL
+### 2. Estado em URL (apenas com flag ON)
 ```
 # Filtros ficam na URL automaticamente
 /pedidos?q=12345&from=2024-01-01&to=2024-01-31&fonte=interno&situacoes=Aprovado,Enviado
 ```
 
-### 3. Hooks Disponíveis
+### 3. Hooks Disponíveis (apenas com flag ON)
 ```typescript
 // Hook principal
 const { orders, loading, updateFilters } = useOrders();
@@ -240,15 +252,38 @@ const { processBulkStock, getStockStatus } = useBulkStock();
 
 ## Próximos Passos
 
-1. **Remover página antiga**: Após validação, deletar `src/components/pages/Pedidos.tsx`
-2. **Atualizar navegação**: Substituir links para nova rota
-3. **Monitorar logs**: Verificar performance de edge functions vs RPC
-4. **Expandir testes**: Adicionar testes unitários para service layer
+### Testagem
+1. **Flag OFF**: Validar que `/pedidos` funciona idêntico ao legado
+2. **Flag ON**: Testar melhorias (SWR, debounce, fallback, etc.)
+3. **Transição**: Alterar flag para ON gradualmente (dev → staging → prod)
+
+### Pós-migração
+1. **Monitorar logs**: Verificar performance de edge functions vs RPC
+2. **Expandir testes**: Adicionar testes unitários para service layer
+3. **Implementar TODO**: Export server-side para >5k linhas
+4. **Remover legado**: Após validação completa, remover `src/components/pages/Pedidos.tsx`
+
+## Controle de Qualidade
+
+### Checklist Flag OFF
+- [ ] Página carrega e lista pedidos
+- [ ] Filtros funcionam como antes
+- [ ] Export CSV idêntico ao legado
+- [ ] Baixa de estoque preserva comportamento
+- [ ] Modais e mensagens iguais
+
+### Checklist Flag ON  
+- [ ] Estado vai para URL automaticamente
+- [ ] Datas padrão são últimos 7 dias
+- [ ] Debounce 300ms na busca
+- [ ] Cache SWR funciona (dedupingInterval=30s)
+- [ ] Fallback edge→RPC em timeout/erro
+- [ ] Validação Zod rejeita input inválido
+- [ ] Export limita 5k linhas
 
 ---
 
-**Migração concluída em:** `[DATA_ATUAL]`  
-**Arquivos afetados:** 13 novos, 1 modificado (App.tsx)  
-**Linhas removidas:** 668 (monolítico)  
-**Linhas adicionadas:** ~1200 (modular)  
-**Cobertura:** 100% do comportamento original preservado
+**Feature Flag:** `FEATURES.PEDIDOS_IMPROVED` (default: `false`)  
+**Arquivos novos:** 13 componentes + services + hooks  
+**Compatibilidade:** 100% backward compatible quando flag OFF  
+**Melhorias:** Só ativas quando flag ON

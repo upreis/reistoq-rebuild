@@ -3,6 +3,9 @@ export const FEATURES = {
   // Disable client mutations to historico_vendas (read via RPC only)
   VENDAS_MUTATE_UI: false,
   
+  // Improved pedidos page with modular architecture (default OFF)
+  PEDIDOS_IMPROVED: false,
+  
   // Other feature flags
   SYNC_AUTOMATICO: true,
   ALERTAS_TEMPO_REAL: true,

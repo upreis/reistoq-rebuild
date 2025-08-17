@@ -14,6 +14,8 @@ import NotFound from '@/pages/NotFound';
 import { Dashboard } from '@/components/pages/Dashboard';
 import { Estoque } from '@/components/pages/Estoque';
 import { Pedidos } from '@/components/pages/Pedidos';
+import OrdersPage from '@/pages/OrdersPage';
+import { FEATURES } from '@/config/features';
 import DePara from '@/components/pages/DePara';
 import { Historico } from '@/components/pages/Historico';
 import { Scanner } from '@/components/pages/Scanner';
@@ -125,7 +127,7 @@ const App = () => {
                     <ProtectedRoute>
                       <MainLayout>
                         <PermissionGate required="pedidos:view">
-                          <Pedidos />
+                          {FEATURES.PEDIDOS_IMPROVED ? <OrdersPage /> : <Pedidos />}
                         </PermissionGate>
                       </MainLayout>
                     </ProtectedRoute>
